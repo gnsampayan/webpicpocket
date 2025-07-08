@@ -1,15 +1,30 @@
 // src/components/NavBar.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { clearAllStorage } from '../utils/storage';
 import './NavBar.css';
 
 const NavBar: React.FC = () => {
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        console.log('Logging out...');
-        // Add your logout logic here
-        navigate('/'); // Navigate to the landing page
+    const handleLogout = async () => {
+        try {
+            console.log('Logging out...');
+
+            // Clear all user data and authentication tokens
+            await clearAllStorage();
+
+            console.log('✅ User logged out successfully');
+
+            // Navigate to the landing page
+            navigate('/');
+        } catch (error) {
+            console.error('❌ Error during logout:', error);
+
+            // Even if there's an error, still navigate to landing page
+            // as the user wants to log out
+            navigate('/');
+        }
     };
 
     return (
