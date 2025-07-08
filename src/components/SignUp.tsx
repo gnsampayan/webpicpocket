@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { api, isAuthError, AUTH_ERRORS } from '../services';
+import type { RegisterData } from '../services';
 import './SignUp.css';
 
 const SignUp: React.FC = () => {
     const [formData, setFormData] = useState({
+        username: '',
         firstName: '',
         lastName: '',
         email: '',
@@ -13,6 +16,7 @@ const SignUp: React.FC = () => {
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState<string>('');
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,10 +29,22 @@ const SignUp: React.FC = () => {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
+        // Clear API error when user starts typing
+        if (apiError) {
+            setApiError('');
+        }
     };
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
+
+        if (!formData.username.trim()) {
+            newErrors.username = 'Username is required';
+        } else if (formData.username.trim().length < 3) {
+            newErrors.username = 'Username must be at least 3 characters';
+        } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) {
+            newErrors.username = 'Username can only contain letters, numbers, and underscores';
+        }
 
         if (!formData.firstName.trim()) {
             newErrors.firstName = 'First name is required';
@@ -72,24 +88,58 @@ const SignUp: React.FC = () => {
         if (!validateForm()) return;
 
         setIsLoading(true);
+        setApiError('');
 
-        // Simulate API call
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            // Handle successful sign up
-            console.log('Sign up successful:', formData);
+            const registerData: RegisterData = {
+                username: formData.username.trim(),
+                first_name: formData.firstName.trim(),
+                last_name: formData.lastName.trim(),
+                email: formData.email.trim(),
+                password: formData.password
+            };
+
+            const response = await api.register(registerData);
+
+            console.log('Sign up successful:', response);
+
+            // Show success message and redirect to signin
+            alert('Registration successful! Please sign in with your new account.');
+            navigate('/signin');
+
         } catch (error) {
             console.error('Sign up failed:', error);
+
+            if (isAuthError(error)) {
+                // Handle specific auth errors with user-friendly messages
+                if (error.message === AUTH_ERRORS.EMAIL_ALREADY_REGISTERED) {
+                    setApiError('This email is already registered. Please try signing in instead.');
+                } else if (error.message === AUTH_ERRORS.NETWORK_ERROR) {
+                    setApiError('Unable to connect to server. Please check your internet connection.');
+                } else {
+                    setApiError(error.message);
+                }
+            } else if (error instanceof Error) {
+                // Handle other specific errors
+                if (error.message.includes('username') && error.message.includes('already')) {
+                    setApiError('This username is already taken. Please choose another one.');
+                } else if (error.message.includes('email') && error.message.includes('already')) {
+                    setApiError('This email is already registered. Please try signing in instead.');
+                } else {
+                    setApiError(error.message);
+                }
+            } else {
+                setApiError('An unexpected error occurred. Please try again.');
+            }
         } finally {
             setIsLoading(false);
-            // Redirect to dashboard
-            navigate('/dashboard');
         }
     };
 
     const handleSocialSignUp = (provider: string) => {
         console.log(`Signing up with ${provider}`);
-        // Handle social sign up
+        // TODO: Implement social sign up
+        setApiError(`${provider} sign up is not yet implemented.`);
     };
 
     const getPasswordStrength = () => {
@@ -127,6 +177,28 @@ const SignUp: React.FC = () => {
                     </div>
 
                     <form className="signup-form" onSubmit={handleSubmit}>
+                        {apiError && (
+                            <div className="api-error">
+                                <span className="error-message">{apiError}</span>
+                            </div>
+                        )}
+
+                        <div className="form-group">
+                            <label htmlFor="username">Username</label>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                                className={errors.username ? 'error' : ''}
+                                placeholder="Choose a unique username"
+                                disabled={isLoading}
+                                autoComplete="username"
+                            />
+                            {errors.username && <span className="error-message">{errors.username}</span>}
+                        </div>
+
                         <div className="name-group">
                             <div className="form-group">
                                 <label htmlFor="firstName">First name</label>
@@ -139,6 +211,7 @@ const SignUp: React.FC = () => {
                                     className={errors.firstName ? 'error' : ''}
                                     placeholder="Enter your first name"
                                     disabled={isLoading}
+                                    autoComplete="given-name"
                                 />
                                 {errors.firstName && <span className="error-message">{errors.firstName}</span>}
                             </div>
@@ -154,6 +227,7 @@ const SignUp: React.FC = () => {
                                     className={errors.lastName ? 'error' : ''}
                                     placeholder="Enter your last name"
                                     disabled={isLoading}
+                                    autoComplete="family-name"
                                 />
                                 {errors.lastName && <span className="error-message">{errors.lastName}</span>}
                             </div>
@@ -170,6 +244,7 @@ const SignUp: React.FC = () => {
                                 className={errors.email ? 'error' : ''}
                                 placeholder="Enter your email"
                                 disabled={isLoading}
+                                autoComplete="email"
                             />
                             {errors.email && <span className="error-message">{errors.email}</span>}
                         </div>
@@ -185,6 +260,7 @@ const SignUp: React.FC = () => {
                                 className={errors.password ? 'error' : ''}
                                 placeholder="Create a strong password"
                                 disabled={isLoading}
+                                autoComplete="new-password"
                             />
                             {formData.password && (
                                 <div className="password-strength">
@@ -216,6 +292,7 @@ const SignUp: React.FC = () => {
                                 className={errors.confirmPassword ? 'error' : ''}
                                 placeholder="Confirm your password"
                                 disabled={isLoading}
+                                autoComplete="new-password"
                             />
                             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
                         </div>

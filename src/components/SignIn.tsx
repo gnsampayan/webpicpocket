@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { api, isAuthError, AUTH_ERRORS } from '../services';
+import type { LoginData } from '../services';
 import './SignIn.css';
 
 const SignIn: React.FC = () => {
     const [formData, setFormData] = useState({
-        email: '',
+        username: '',
         password: '',
         rememberMe: false
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState<string>('');
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,15 +25,19 @@ const SignIn: React.FC = () => {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
+        // Clear API error when user starts typing
+        if (apiError) {
+            setApiError('');
+        }
     };
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
 
-        if (!formData.email) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
+        if (!formData.username.trim()) {
+            newErrors.username = 'Username is required';
+        } else if (formData.username.trim().length < 3) {
+            newErrors.username = 'Username must be at least 3 characters';
         }
 
         if (!formData.password) {
@@ -49,24 +56,49 @@ const SignIn: React.FC = () => {
         if (!validateForm()) return;
 
         setIsLoading(true);
+        setApiError('');
 
-        // Simulate API call
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            // Handle successful sign in
-            console.log('Sign in successful:', formData);
+            const loginData: LoginData = {
+                username: formData.username.trim(),
+                password: formData.password
+            };
+
+            const response = await api.login(loginData);
+
+            console.log('Sign in successful:', response);
+
+            // Handle successful sign in - redirect to dashboard
+            navigate('/dashboard');
+
         } catch (error) {
             console.error('Sign in failed:', error);
+
+            if (isAuthError(error)) {
+                // Handle specific auth errors with user-friendly messages
+                if (error.message.includes('Invalid') || error.message.includes('credentials')) {
+                    setApiError('Invalid username or password. Please try again.');
+                } else if (error.message === AUTH_ERRORS.EMAIL_NOT_VERIFIED) {
+                    setApiError('Please verify your email address before signing in.');
+                } else if (error.message === AUTH_ERRORS.NETWORK_ERROR) {
+                    setApiError('Unable to connect to server. Please check your internet connection.');
+                } else {
+                    setApiError(error.message);
+                }
+            } else if (error instanceof Error) {
+                setApiError(error.message);
+            } else {
+                setApiError('An unexpected error occurred. Please try again.');
+            }
         } finally {
             setIsLoading(false);
-            // Redirect to dashboard
-            navigate('/dashboard');
         }
     };
 
     const handleSocialSignIn = (provider: string) => {
         console.log(`Signing in with ${provider}`);
-        // Handle social sign in
+        // TODO: Implement social sign in
+        setApiError(`${provider} sign in is not yet implemented.`);
     };
 
     return (
@@ -82,19 +114,26 @@ const SignIn: React.FC = () => {
                     </div>
 
                     <form className="signin-form" onSubmit={handleSubmit}>
+                        {apiError && (
+                            <div className="api-error">
+                                <span className="error-message">{apiError}</span>
+                            </div>
+                        )}
+
                         <div className="form-group">
-                            <label htmlFor="email">Email address</label>
+                            <label htmlFor="username">Username</label>
                             <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
-                                className={errors.email ? 'error' : ''}
-                                placeholder="Enter your email"
+                                className={errors.username ? 'error' : ''}
+                                placeholder="Enter your username"
                                 disabled={isLoading}
+                                autoComplete="username"
                             />
-                            {errors.email && <span className="error-message">{errors.email}</span>}
+                            {errors.username && <span className="error-message">{errors.username}</span>}
                         </div>
 
                         <div className="form-group">
@@ -108,6 +147,7 @@ const SignIn: React.FC = () => {
                                 className={errors.password ? 'error' : ''}
                                 placeholder="Enter your password"
                                 disabled={isLoading}
+                                autoComplete="current-password"
                             />
                             {errors.password && <span className="error-message">{errors.password}</span>}
                         </div>

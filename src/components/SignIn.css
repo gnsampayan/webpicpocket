@@ -57,6 +57,22 @@
   margin-bottom: 2rem;
 }
 
+/* API Error Display */
+.api-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.api-error .error-message {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin: 0;
+  display: block;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }

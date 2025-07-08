@@ -1,0 +1,310 @@
+/**
+ * TypeScript interfaces for API requests and responses
+ */
+
+// =============================================
+// AUTHENTICATION INTERFACES
+// =============================================
+export interface RegisterData {
+	username: string;
+	first_name: string;
+	last_name: string;
+	password: string;
+	email: string;
+}
+
+export interface LoginData {
+	username: string;
+	password: string;
+}
+
+export interface UserInfo {
+	id: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
+export interface RegisterResponse {
+	id: string;
+	username: string;
+	email: string;
+	first_name: string;
+	last_name: string;
+}
+
+export interface AuthResponse {
+	user_info: UserInfo;
+	access_token: string;
+	refresh_token: string;
+}
+
+export interface ApiError {
+	error: string;
+}
+
+export interface LoginResponse {
+	user_info: UserInfo;
+	access_token: string;
+	refresh_token: string;
+}
+
+export interface VerifyEmailResponse {
+	email_address: string;
+	next_attempt: string;
+	expires_at: string;
+}
+
+export interface ValidateEmailResponse {
+	access_token: string;
+}
+
+// =============================================
+// UPLOAD INTERFACES
+// =============================================
+export type MimeType =
+	| "image/jpeg"
+	| "image/png"
+	| "video/mp4"
+	| "audio/mpeg"
+	| "image/webp";
+
+export interface UploadRequest {
+	files: string[];
+	type?: "profile" | "cover" | "photo" | "video" | "comment";
+}
+
+export interface UploadResponse {
+	uploads: {
+		filename: string;
+		object_key: string;
+		upload_url: string;
+	}[];
+}
+
+export interface UpdateProfileRequest {
+	profile_object_key?: string;
+	first_name?: string;
+	last_name?: string;
+	email?: string;
+	old_password?: string;
+	new_password?: string;
+}
+
+export type AcceptedMimeTypes = {
+	profile: ("image/jpeg" | "image/png" | "image/webp")[];
+	cover: ("image/jpeg" | "image/png" | "image/webp")[];
+	photo: ("image/jpeg" | "image/png" | "image/webp")[];
+	video: "video/mp4"[];
+	comment: "audio/mpeg"[];
+};
+
+// =============================================
+// CONTACT INTERFACES
+// =============================================
+export interface ContactUser {
+	id: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
+export interface ContactRequest {
+	id: string;
+	status: "pending" | "accepted" | "rejected";
+	created_at: string;
+	updated_at: string;
+}
+
+export interface ContactRequestResponse {
+	requesting_user: ContactUser;
+	recipient: ContactUser;
+	contact_request: ContactRequest;
+	deleted?: boolean;
+}
+
+export interface ContactsResponse {
+	contacts: ContactUser[];
+	contact_requests_received?: ContactUser[];
+	contact_requests_sent?: ContactUser[];
+}
+
+export interface ContactUpdateRequest {
+	cancel?: boolean;
+	accept?: boolean;
+	reject?: boolean;
+	delete?: boolean;
+}
+
+// =============================================
+// PROFILE PICTURE INTERFACES
+// =============================================
+export interface UserProfilePictureResponse {
+	id: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	email: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
+// =============================================
+// POCKET/ALBUM INTERFACES
+// =============================================
+export interface PocketMember {
+	id: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
+export interface Pocket {
+	pocket_id: string;
+	pocket_title: string;
+	pocket_created_at: string;
+	pocket_members: PocketMember[];
+	cover_photo?: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
+export interface CreatePocketRequest {
+	title: string;
+	members?: string[];
+	cover_photo_object_key?: string;
+}
+
+export interface UpdatePocketRequest {
+	title?: string;
+	cover_photo_object_key?: string;
+	members?: string[];
+}
+
+// =============================================
+// COMMENT INTERFACES
+// =============================================
+export interface Comment {
+	id: string;
+	photo_id: string;
+	text: string;
+	created_at: string;
+	updated_at: string;
+	deleted_at: string | null;
+}
+
+export interface CreateCommentRequest {
+	text: string;
+}
+
+export interface EditCommentRequest {
+	text: string;
+}
+
+// =============================================
+// PHOTO INTERFACES
+// =============================================
+export type MediaTypeInEvent = "photo" | "video";
+
+export interface MediaToAddInEvent {
+	object_key: string;
+	metadata?: string | null | Record<string, any>;
+}
+
+export interface AddPhotoRequest {
+	add_photos: MediaToAddInEvent[];
+}
+
+export interface PhotoView {
+	id: string;
+	object_key: string;
+	metadata: string;
+	author: PocketMember;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface PhotoCommentView {
+	id: string;
+	author: PocketMember;
+	object_url?: string;
+	content?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+// =============================================
+// SUB-ALBUM/EVENT INTERFACES
+// =============================================
+export interface PhotoMetadata {
+	camera_model?: string;
+	taken_at?: string;
+	location?: string;
+	[key: string]: any;
+}
+
+export interface PreviewPhoto {
+	id: string;
+	sub_album_id: string;
+	owner: PocketMember;
+	photo_url: string;
+	metadata: PhotoMetadata;
+	created_at: string;
+	updated_at: string;
+	deleted_at: string | null;
+}
+
+export interface Event {
+	id: string;
+	title: string;
+	description: string;
+	members: PocketMember[];
+	preview_photos: PreviewPhoto[];
+	created_at: string;
+	updated_at: string;
+	deleted_at: string | null;
+}
+
+export interface CreateEventRequest {
+	title: string;
+	pocket_id: string;
+	description?: string;
+	members?: string[]; // Additional members to add to the event that are not in the pocket
+}
+
+export interface EditEventRequest {
+	title?: string;
+	description?: string;
+	members_to_add?: string[];
+	members_to_remove?: string[];
+	pocket_id?: string;
+}
