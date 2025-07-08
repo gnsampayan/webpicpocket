@@ -31,8 +31,8 @@ const Pockets: React.FC = () => {
                 {/* Header */}
                 <header className="media-header">
                     <div className="header-left">
-                        <h1>Media Library</h1>
-                        <p>Manage and organize your photos and videos</p>
+                        <h1>Pockets</h1>
+                        <p>Manage and organize your photos, videos, pockets, events, and members</p>
                     </div>
                     <div className="header-right">
                         <button className="upload-button">
