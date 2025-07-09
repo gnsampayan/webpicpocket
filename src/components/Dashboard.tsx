@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import NavBar from './NavBar';
+import UserAvatar from './UserAvatar';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -44,7 +45,7 @@ const Dashboard: React.FC = () => {
                             Upload Photos
                         </button>
                         <div className="user-menu">
-                            <img src="https://picsum.photos/40/40?random=1" alt="User" className="user-avatar" />
+                            <UserAvatar size="medium" />
                         </div>
                     </div>
                 </header>

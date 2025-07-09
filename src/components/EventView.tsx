@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './EventView.css';
 import NavBar from './NavBar';
+import UserAvatar from './UserAvatar';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../types';
 
 interface EventViewProps {
@@ -318,9 +319,7 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
                             <h1 className="pocket-title">{pocket.pocket_title}</h1>
                         </div>
                         <div className="header-actions">
-                            <button className="profile-button">
-                                <img src="https://picsum.photos/40/40?random=1" alt="Profile" />
-                            </button>
+                            <UserAvatar size="medium" />
                         </div>
                     </div>
                     <div className="header-bottom">

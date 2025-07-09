@@ -110,3 +110,22 @@ export const getCurrentUserId = async (): Promise<string | null> => {
 export const clearCurrentUserId = async (): Promise<void> => {
 	await removeStorageItem(STORAGE_KEYS.CURRENT_USER_ID);
 };
+
+/**
+ * Get current user data
+ */
+export const getUserData = async (): Promise<any | null> => {
+	try {
+		const userKeys = await getCurrentUserStorageKeys();
+		const userDataString = await getStorageItem(userKeys.USER_DATA);
+		
+		if (!userDataString) {
+			return null;
+		}
+
+		return JSON.parse(userDataString);
+	} catch (error) {
+		console.error("❌ [Storage] Failed to get user data:", error);
+		return null;
+	}
+};

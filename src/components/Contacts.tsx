@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Contacts.css';
 import NavBar from './NavBar';
+import UserAvatar from './UserAvatar';
 import { api } from '../services/api';
 import * as ApiTypes from '../types/api';
 
@@ -197,7 +198,7 @@ const Contacts: React.FC = () => {
                             Add Contact
                         </button>
                         <div className="user-menu">
-                            <img src="https://picsum.photos/40/40?random=1" alt="User" className="user-avatar" />
+                            <UserAvatar size="medium" />
                         </div>
                     </div>
                 </header>
@@ -442,7 +443,7 @@ const Contacts: React.FC = () => {
                     </div>
                 </section>
             </main>
-        </div>
+        </div >
     );
 };
 

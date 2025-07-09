@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Pockets.css';
 import NavBar from './NavBar';
+import UserAvatar from './UserAvatar';
 import { api } from '../services/api';
 import { type Pocket, type Event } from '../types';
 import EventView from './EventView';
@@ -175,7 +176,7 @@ const Pockets: React.FC = () => {
                             Upload Media
                         </button>
                         <div className="user-menu">
-                            <img src="https://picsum.photos/40/40?random=1" alt="User" className="user-avatar" />
+                            <UserAvatar size="medium" />
                         </div>
                     </div>
                 </header>

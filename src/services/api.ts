@@ -671,8 +671,14 @@ export const api = {
 
 		const uploadUrl = `${API_URL}${API_CONFIG.endpoints.upload}`;
 		try {
-			const extension = mimeType.split("/")[1];
-			const fileName = `profile.${extension}`;
+			// Use the actual file name instead of generating a generic one
+			const fileName = (file as File).name || `profile.${mimeType.split("/")[1]}`;
+
+			console.log('🔍 [API] Starting profile picture upload:', {
+				fileName,
+				fileSize: `${fileSizeMB.toFixed(2)}MB`,
+				mimeType
+			});
 
 			const uploadResponse = await this.authenticatedRequest(uploadUrl, {
 				method: "POST",
@@ -680,7 +686,6 @@ export const api = {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					type: "profile",
 					files: [fileName],
 				}),
 			});
@@ -695,13 +700,45 @@ export const api = {
 			}
 
 			const uploadData = await uploadResponse.json();
-			await this.uploadFileToS3(uploadData.uploads[0].upload_url, file);
+			console.log('🔍 [API] Upload response received:', uploadData);
 
-			return await this.updateProfile({
+			// Upload file to S3
+			await this.uploadFileToS3(uploadData.uploads[0].upload_url, file);
+			console.log('✅ [API] File uploaded to S3 successfully');
+
+			// Update profile with the object key
+			const profileUpdate = await this.updateProfile({
 				profile_object_key: uploadData.uploads[0].object_key,
 			});
+			console.log('✅ [API] Profile updated successfully:', profileUpdate);
+
+			return profileUpdate;
 		} catch (error) {
 			console.error("❌ [API] Error uploading profile picture:", error);
+			throw error;
+		}
+	},
+
+	async deleteProfilePicture(): Promise<void> {
+		const url = `${API_URL}${API_CONFIG.endpoints.profile}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Delete profile picture failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to delete profile picture");
+			}
+		} catch (error) {
+			console.error("❌ [API] Error deleting profile picture:", error);
 			throw error;
 		}
 	},

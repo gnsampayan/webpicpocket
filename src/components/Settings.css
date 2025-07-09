@@ -5,6 +5,32 @@
   background: #f8f9fa;
 }
 
+/* Error Message */
+.error-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+
+.error-message button {
+  background: none;
+  border: none;
+  color: #e53e3e;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+}
+
+.error-message button:hover {
+  opacity: 0.7;
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
@@ -33,7 +59,7 @@
   font-size: 1.1rem;
 }
 
-.user-avatar {
+.settings-header .user-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -42,8 +68,15 @@
   transition: transform 0.3s ease;
 }
 
-.user-avatar:hover {
+.settings-header .user-avatar:hover {
   transform: scale(1.1);
+}
+
+/* Ensure UserAvatar in profile section has proper width */
+.avatar-section .user-avatar {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
 }
 
 /* Settings Container */
@@ -111,16 +144,12 @@
 .avatar-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 2rem;
+  min-height: 120px;
 }
 
-.profile-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
 
 .change-avatar-btn {
   padding: 0.5rem 1rem;
@@ -137,6 +166,38 @@
   background: #e9ecef;
   border-color: #667eea;
   color: #667eea;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.delete-avatar-btn {
+  padding: 0.5rem 1rem;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  color: #e53e3e;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.delete-avatar-btn:hover {
+  background: #fed7d7;
+  border-color: #e53e3e;
+}
+
+.delete-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.change-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .form-group {

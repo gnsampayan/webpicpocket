@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavBar from './NavBar';
+import UserAvatar from './UserAvatar';
+import { api } from '../services/api';
+import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../utils/storage';
+import type { UserInfo } from '../types/api';
 import './Settings.css';
 
 const Settings: React.FC = () => {
@@ -9,14 +13,162 @@ const Settings: React.FC = () => {
         push: true,
         sms: false
     });
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [profileForm, setProfileForm] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        old_password: '',
+        new_password: ''
+    });
 
-    const userProfile = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        avatar: 'https://picsum.photos/100/100?random=1',
-        phone: '+1 (555) 123-4567',
-        location: 'San Francisco, CA'
+    // Load user data on component mount
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const userData = await getUserData();
+
+                if (!userData) {
+                    throw new Error('No user data found');
+                }
+
+                setUserInfo(userData as UserInfo);
+                setProfileForm({
+                    first_name: userData.first_name || '',
+                    last_name: userData.last_name || '',
+                    email: '', // We'll need to get email from a separate API call
+                    old_password: '',
+                    new_password: ''
+                });
+            } catch (err) {
+                console.error('❌ [Settings] Failed to load user data:', err);
+                setError(err instanceof Error ? err.message : 'Failed to load user data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, []);
+
+
+
+    // Handle file upload for profile picture
+    const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            setError(null);
+
+            console.log('🔍 [Settings] Starting profile picture upload:', {
+                fileName: file.name,
+                fileSize: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+                fileType: file.type
+            });
+
+            // Use the existing uploadProfilePicture function
+            const updatedUserInfo = await api.uploadProfilePicture(file);
+            console.log('✅ [Settings] Profile picture uploaded successfully:', updatedUserInfo);
+
+            // Update the user info with the new data
+            setUserInfo(updatedUserInfo);
+
+            // Update localStorage to keep it in sync
+            const userKeys = await getCurrentUserStorageKeys();
+            await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
+
+            console.log('✅ Profile picture updated successfully');
+        } catch (err) {
+            console.error('❌ [Settings] Failed to upload profile picture:', err);
+            setError(err instanceof Error ? err.message : 'Failed to upload profile picture');
+        } finally {
+            setUploading(false);
+        }
     };
+
+    // Handle profile picture deletion
+    const handleDeleteProfilePicture = async () => {
+        try {
+            setDeleting(true);
+            setError(null);
+
+            await api.deleteProfilePicture();
+
+            // Update the user info to reflect the deletion
+            if (userInfo) {
+                const updatedUserInfo = {
+                    ...userInfo,
+                    profile_picture_default: true,
+                    profile_picture: {}
+                };
+                setUserInfo(updatedUserInfo);
+
+                // Update localStorage to keep it in sync
+                const userKeys = await getCurrentUserStorageKeys();
+                await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
+            }
+
+            console.log('✅ Profile picture deleted successfully');
+        } catch (err) {
+            console.error('❌ [Settings] Failed to delete profile picture:', err);
+            setError(err instanceof Error ? err.message : 'Failed to delete profile picture');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    // Handle profile form submission
+    const handleProfileSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            setError(null);
+
+            const updateData: any = {};
+            if (profileForm.first_name) updateData.first_name = profileForm.first_name;
+            if (profileForm.last_name) updateData.last_name = profileForm.last_name;
+            if (profileForm.email) updateData.email = profileForm.email;
+            if (profileForm.old_password && profileForm.new_password) {
+                updateData.old_password = profileForm.old_password;
+                updateData.new_password = profileForm.new_password;
+            }
+
+            await api.updateProfile(updateData);
+
+            // Refresh user data
+            const userData = await getUserData();
+            if (userData) {
+                setUserInfo(userData as UserInfo);
+            }
+
+            console.log('✅ Profile updated successfully');
+        } catch (err) {
+            console.error('❌ [Settings] Failed to update profile:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update profile');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="settings-page">
+                <NavBar />
+                <main className="main-content">
+                    <div className="loading-state">
+                        <div className="loading-spinner"></div>
+                        <p>Loading settings...</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="settings-page">
@@ -31,9 +183,17 @@ const Settings: React.FC = () => {
                         <p>Manage your account preferences and security</p>
                     </div>
                     <div className="user-menu">
-                        <img src="https://picsum.photos/40/40?random=1" alt="User" className="user-avatar" />
+                        <UserAvatar size="medium" userInfo={userInfo} />
                     </div>
                 </header>
+
+                {/* Error Display */}
+                {error && (
+                    <div className="error-message">
+                        <span>❌ {error}</span>
+                        <button onClick={() => setError(null)}>✕</button>
+                    </div>
+                )}
 
                 {/* Settings Content */}
                 <div className="settings-container">
@@ -83,26 +243,75 @@ const Settings: React.FC = () => {
                                 <h2>Profile Settings</h2>
                                 <div className="profile-form">
                                     <div className="avatar-section">
-                                        <img src={userProfile.avatar} alt="Profile" className="profile-avatar" />
-                                        <button className="change-avatar-btn">Change Photo</button>
+                                        <UserAvatar size="large" userInfo={userInfo} />
+                                        <div className="avatar-actions">
+                                            <label className="change-avatar-btn">
+                                                {uploading ? 'Uploading...' : 'Change Photo'}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleProfilePictureUpload}
+                                                    style={{ display: 'none' }}
+                                                    disabled={uploading}
+                                                />
+                                            </label>
+                                            {userInfo && !userInfo.profile_picture_default && (
+                                                <button
+                                                    className="delete-avatar-btn"
+                                                    onClick={handleDeleteProfilePicture}
+                                                    disabled={deleting}
+                                                >
+                                                    {deleting ? 'Deleting...' : 'Delete Photo'}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label>Full Name</label>
-                                        <input type="text" defaultValue={userProfile.name} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Email</label>
-                                        <input type="email" defaultValue={userProfile.email} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Phone</label>
-                                        <input type="tel" defaultValue={userProfile.phone} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Location</label>
-                                        <input type="text" defaultValue={userProfile.location} />
-                                    </div>
-                                    <button className="save-button">Save Changes</button>
+                                    <form onSubmit={handleProfileSubmit}>
+                                        <div className="form-group">
+                                            <label>First Name</label>
+                                            <input
+                                                type="text"
+                                                value={profileForm.first_name}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, first_name: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Last Name</label>
+                                            <input
+                                                type="text"
+                                                value={profileForm.last_name}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, last_name: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Email</label>
+                                            <input
+                                                type="email"
+                                                value={profileForm.email}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                                                placeholder="Enter new email"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Current Password</label>
+                                            <input
+                                                type="password"
+                                                value={profileForm.old_password}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, old_password: e.target.value }))}
+                                                placeholder="Enter current password"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>New Password</label>
+                                            <input
+                                                type="password"
+                                                value={profileForm.new_password}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, new_password: e.target.value }))}
+                                                placeholder="Enter new password"
+                                            />
+                                        </div>
+                                        <button type="submit" className="save-button">Save Changes</button>
+                                    </form>
                                 </div>
                             </div>
                         )}
