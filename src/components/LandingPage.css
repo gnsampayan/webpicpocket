@@ -42,15 +42,17 @@
   align-items: center;
 }
 
-.nav-link {
-  color: white;
+/* More specific selector to override global link styles */
+.nav-links .nav-link {
+  color: white !important;
   text-decoration: none;
   font-weight: 500;
   transition: opacity 0.3s ease;
 }
 
-.nav-link:hover {
+.nav-links .nav-link:hover {
   opacity: 0.8;
+  color: #646cff !important;
 }
 
 .nav-button {
