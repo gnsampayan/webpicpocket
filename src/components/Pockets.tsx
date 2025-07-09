@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Pockets.css';
 import NavBar from './NavBar';
 import { api } from '../services/api';
-import { type Pocket } from '../types';
+import { type Pocket, type Event } from '../types';
+import EventView from './EventView';
 
 const Pockets: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -10,6 +11,12 @@ const Pockets: React.FC = () => {
     const [pockets, setPockets] = useState<Pocket[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Event View state
+    const [selectedPocket, setSelectedPocket] = useState<Pocket | null>(null);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loadingEvents, setLoadingEvents] = useState(false);
+    const [eventsError, setEventsError] = useState<string | null>(null);
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gQ292ZXIgUGhvdG88L3RleHQ+Cjwvc3ZnPgo=';
@@ -22,6 +29,13 @@ const Pockets: React.FC = () => {
                 setError(null);
                 const pocketsData = await api.getPockets();
                 setPockets(pocketsData);
+
+                // Debug: Log pocket data to help identify cover photo issues
+                console.log('Pockets data received:', pocketsData);
+                if (pocketsData && pocketsData.length > 0) {
+                    console.log('First pocket cover_photo_url:', pocketsData[0].cover_photo_url);
+                    console.log('First pocket cover URL:', getCoverPhotoUrl(pocketsData[0]));
+                }
             } catch (err) {
                 console.error('Error fetching pockets:', err);
                 setError(err instanceof Error ? err.message : 'Failed to load pockets');
@@ -33,25 +47,60 @@ const Pockets: React.FC = () => {
         fetchPockets();
     }, []);
 
-    // Helper function to get the best available cover photo URL
+    // Fetch events when a pocket is selected
+    useEffect(() => {
+        if (selectedPocket) {
+            const fetchEvents = async () => {
+                try {
+                    setLoadingEvents(true);
+                    setEventsError(null);
+                    const eventsData = await api.getEvents(selectedPocket.pocket_id);
+                    setEvents(eventsData);
+                } catch (err) {
+                    console.error('Error fetching events:', err);
+                    setEventsError(err instanceof Error ? err.message : 'Failed to load events');
+                } finally {
+                    setLoadingEvents(false);
+                }
+            };
+
+            fetchEvents();
+        }
+    }, [selectedPocket]);
+
+    // Helper function to get the best available cover photo URL - similar to React Native implementation
     const getCoverPhotoUrl = (pocket: Pocket): string => {
-        // Prioritize medium size first
-        if (pocket.cover_photo?.url_medium) {
-            return pocket.cover_photo.url_medium;
+        // Use the cover_photo_url object from the API response
+        // Prioritize large for best quality, then medium, then small
+        const rawUrl = pocket.cover_photo_url?.url_large ??
+            pocket.cover_photo_url?.url_med ??
+            pocket.cover_photo_url?.url_small;
+
+        if (!rawUrl) {
+            console.log('No cover photo URL found for pocket:', pocket.pocket_title);
+            return DEFAULT_COVER_PLACEHOLDER;
         }
 
-        // Fall back to large size
-        if (pocket.cover_photo?.url_large) {
-            return pocket.cover_photo.url_large;
+        // URLs are already perfect S3 signed URLs - no decoding needed!
+        // If it's already HTTP, return as-is
+        if (rawUrl.startsWith("http")) {
+            return rawUrl;
         }
 
-        // Fall back to small size
-        if (pocket.cover_photo?.url_small) {
-            return pocket.cover_photo.url_small;
-        }
+        // If it doesn't start with http, add https:// (fallback)
+        return `https://${rawUrl}`;
+    };
 
-        // Default placeholder - using a data URI for better reliability
-        return DEFAULT_COVER_PLACEHOLDER;
+    // Handle pocket selection
+    const handlePocketClick = (pocket: Pocket) => {
+        setSelectedPocket(pocket);
+    };
+
+    // Handle back to pockets view
+    const handleBackToPockets = () => {
+        setSelectedPocket(null);
+        setEvents([]);
+        setEventsError(null);
     };
 
     // Mock photos for now (since we don't have a photos API endpoint yet)
@@ -63,6 +112,19 @@ const Pockets: React.FC = () => {
         size: Math.floor(Math.random() * 5000) + 1000 + ' KB',
         album: pockets[Math.floor(Math.random() * pockets.length)]?.pocket_title || 'Unknown Album'
     }));
+
+    // If we're in Event View, render the EventView component
+    if (selectedPocket) {
+        return (
+            <EventView
+                pocket={selectedPocket}
+                events={events}
+                loading={loadingEvents}
+                error={eventsError}
+                onBack={handleBackToPockets}
+            />
+        );
+    }
 
     if (loading) {
         return (
@@ -166,7 +228,12 @@ const Pockets: React.FC = () => {
                     ) : (
                         <div className="albums-grid">
                             {pockets.map((pocket) => (
-                                <div key={pocket.pocket_id} className="album-card">
+                                <div
+                                    key={pocket.pocket_id}
+                                    className="album-card"
+                                    onClick={() => handlePocketClick(pocket)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <img
                                         src={getCoverPhotoUrl(pocket)}
                                         alt={pocket.pocket_title}

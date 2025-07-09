@@ -114,13 +114,8 @@ export interface ContactUser {
 	username: string;
 	first_name: string;
 	last_name: string;
-	profile_picture_default: boolean;
-	profile_picture: {
-		url_small?: string;
-		url_medium?: string;
-		url_large?: string;
-		[key: string]: any;
-	};
+	email: string;
+	profile_picture_url?: string;
 }
 
 export interface ContactRequest {
@@ -188,14 +183,16 @@ export interface PocketMember {
 export interface Pocket {
 	pocket_id: string;
 	pocket_title: string;
-	pocket_created_at: string;
-	pocket_members: PocketMember[];
-	cover_photo?: {
-		url_small?: string;
-		url_medium?: string;
-		url_large?: string;
-		[key: string]: any;
+	cover_photo_default: boolean;
+	cover_photo_url: {
+		url_small: string;
+		url_med: string;
+		url_large: string;
 	};
+	pocket_members: PocketMember[];
+	pocket_created_at: string;
+	pocket_updated_at: string;
+	pocket_last_activity_at: string;
 }
 
 export interface CreatePocketRequest {
@@ -274,24 +271,32 @@ export interface PhotoMetadata {
 
 export interface PreviewPhoto {
 	id: string;
-	sub_album_id: string;
-	owner: PocketMember;
-	photo_url: string;
-	metadata: PhotoMetadata;
+	owner_id: string;
+	photo_url:
+		| string
+		| {
+				url_small: string;
+				url_med: string;
+				url_large?: string;
+		  };
+	is_favorite: boolean;
+	media_type: "photo" | "video";
+	comment_count: number;
 	created_at: string;
+	can_delete: boolean;
+	locks_at: string;
 	updated_at: string;
-	deleted_at: string | null;
 }
 
 export interface Event {
 	id: string;
 	title: string;
-	description: string;
-	members: PocketMember[];
+	photo_count: number;
+	additional_member_count: number;
+	additional_members: ContactUser[];
 	preview_photos: PreviewPhoto[];
 	created_at: string;
 	updated_at: string;
-	deleted_at: string | null;
 }
 
 export interface CreateEventRequest {
