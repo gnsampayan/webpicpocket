@@ -269,6 +269,25 @@ export interface PhotoMetadata {
 	[key: string]: any;
 }
 
+export interface Photo {
+	id: string;
+	owner_id: string;
+	photo_url:
+		| string
+		| {
+				url_small: string;
+				url_med: string;
+				url_large?: string;
+		  };
+	is_favorite: boolean;
+	media_type: "photo" | "video";
+	comment_count: number;
+	created_at: string;
+	can_delete: boolean;
+	locks_at: string;
+	updated_at: string;
+}
+
 export interface PreviewPhoto {
 	id: string;
 	owner_id: string;

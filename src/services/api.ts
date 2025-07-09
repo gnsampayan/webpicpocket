@@ -1327,6 +1327,83 @@ export const api = {
 			throw error;
 		}
 	},
+
+	//TODO: Update with config api.ts
+	async getEventDetails(eventId: string): Promise<any> {
+		const url = `${API_URL}/v1/events/${eventId}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Get event details failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to get event details");
+			}
+			const responseData = await response.json();
+			console.log("✅ [API] Event details fetched successfully");
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error getting event details:", error);
+			throw error;
+		}
+	},
+
+	//TODO: Update with config api.ts
+	async favoritePhoto(photoId: string): Promise<void> {
+		const url = `${API_URL}/v1/photos/${photoId}/favorite`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Favorite photo failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to favorite photo");
+			}
+			console.log("✅ [API] Photo favorited successfully");
+		} catch (error) {
+			console.error("❌ [API] Error favoriting photo:", error);
+			throw error;
+		}
+	},
+
+	//TODO: Update with config api.ts
+	async unfavoritePhoto(photoId: string): Promise<void> {
+		const url = `${API_URL}/v1/photos/${photoId}/favorite`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Unfavorite photo failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to unfavorite photo");
+			}
+			console.log("✅ [API] Photo unfavorited successfully");
+		} catch (error) {
+			console.error("❌ [API] Error unfavoriting photo:", error);
+			throw error;
+		}
+	},
 };
 
 // Export token management functions for external use

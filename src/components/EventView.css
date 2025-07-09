@@ -10,6 +10,10 @@
   flex: 1;
   margin-left: 280px;
   padding: 2rem;
+  overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Loading Container */
@@ -215,10 +219,7 @@
 
 /* Events Section */
 .events-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .empty-events {
@@ -274,6 +275,8 @@
   gap: 1.5rem;
   padding: 0;
 }
+
+
 
 .event-card {
   background: white;
@@ -605,6 +608,10 @@
   margin-bottom: 1.5rem;
   opacity: 0.5;
   filter: grayscale(1);
+}
+
+.no-margin-bottom {
+  margin-bottom: 0;
 }
 
 .empty-photos-placeholder p {
@@ -951,4 +958,19 @@
   .modal-body {
     padding: 1rem;
   }
-} 
+}
+
+
+
+/* Grid Photo View Overlay */
+.grid-photo-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: #f8f9fa;
+}
+
+ 
