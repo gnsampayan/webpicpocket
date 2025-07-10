@@ -8,6 +8,7 @@ import Contacts from './components/Contacts';
 import Settings from './components/Settings';
 import EventView from './components/EventView';
 import GridPhotoView from './components/GridPhotoView';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -18,12 +19,12 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/pockets" element={<Pockets />} />
-          <Route path="/pockets/:pocketId" element={<EventView />} />
-          <Route path="/pockets/:pocketId/:eventId" element={<GridPhotoView />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/pockets" element={<ProtectedRoute><Pockets /></ProtectedRoute>} />
+          <Route path="/pockets/:pocketId" element={<ProtectedRoute><EventView /></ProtectedRoute>} />
+          <Route path="/pockets/:pocketId/:eventId" element={<ProtectedRoute><GridPhotoView /></ProtectedRoute>} />
+          <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         </Routes>
       </div>
     </Router>

@@ -47,7 +47,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
                 setUserInfo(userData as UserInfo);
             } catch (err) {
                 console.error('❌ [UserAvatar] Failed to load user data:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load user data');
+                // Don't set error here since ProtectedRoute will handle the redirect
+                // Just log the error for debugging
             } finally {
                 setLoading(false);
             }

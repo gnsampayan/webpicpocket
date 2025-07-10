@@ -48,7 +48,8 @@ const Settings: React.FC = () => {
                 });
             } catch (err) {
                 console.error('❌ [Settings] Failed to load user data:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load user data');
+                // Don't set error here since ProtectedRoute will handle the redirect
+                // Just log the error for debugging
             } finally {
                 setLoading(false);
             }
