@@ -28,6 +28,7 @@ const Contacts: React.FC = () => {
             setLoading(true);
             setError(null);
             const response = await api.getContacts();
+
             setContacts(response.contacts || []);
             setContactRequestsReceived(response.contact_requests_received || []);
             setContactRequestsSent(response.contact_requests_sent || []);
@@ -135,29 +136,42 @@ const Contacts: React.FC = () => {
         return matchesSearch && matchesFilter;
     });
 
-    // Default placeholder image as data URI for better reliability
+    // Default placeholder image as data URI for better reliability - with explicit width/height to prevent oval shape
     const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
     const getContactAvatar = (contact: ApiTypes.ContactUser): string => {
-        let rawUrl: string | undefined;
-
-        // Handle different profile picture formats from API (like React Native does)
-        if (contact.profile_picture_url) {
-            rawUrl = contact.profile_picture_url;
-        }
-
-        if (!rawUrl) {
+        // If user has default profile picture, use placeholder
+        if (contact.profile_picture_default) {
             return DEFAULT_PROFILE_PLACEHOLDER;
         }
 
-        // URLs are already perfect S3 signed URLs - no decoding needed!
-        // If it's already HTTP, return as-is
-        if (rawUrl.startsWith("http")) {
-            return rawUrl;
+        // Handle profile picture object with different sizes
+        if (contact.profile_picture) {
+            let rawUrl: string | undefined;
+
+            // Use small size for contacts list
+            rawUrl = contact.profile_picture.url_small;
+
+            if (!rawUrl) {
+                return DEFAULT_PROFILE_PLACEHOLDER;
+            }
+
+            // Ensure URL is HTTPS
+            if (rawUrl.startsWith("http://")) {
+                return rawUrl.replace("http://", "https://");
+            }
+
+            // If it's already HTTPS, return as-is
+            if (rawUrl.startsWith("https://")) {
+                return rawUrl;
+            }
+
+            // If it doesn't start with http, add https:// (fallback)
+            return `https://${rawUrl}`;
         }
 
-        // If it doesn't start with http, add https:// (fallback)
-        return `https://${rawUrl}`;
+        // Fallback to placeholder
+        return DEFAULT_PROFILE_PLACEHOLDER;
     };
 
     const getContactName = (contact: ApiTypes.ContactUser) => {

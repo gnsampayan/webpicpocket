@@ -181,6 +181,8 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .user-info h4 {
@@ -432,6 +434,8 @@
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
+  min-width: 50px;
+  min-height: 50px;
 }
 
 .status-indicator {

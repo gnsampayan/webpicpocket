@@ -1046,6 +1046,10 @@ export const api = {
 	): Promise<ApiTypes.Event> {
 		const url = `${API_URL}${API_CONFIG.endpoints.events.create}`;
 		try {
+			console.log("🔍 [API] Creating event at URL:", url);
+			console.log("🔍 [API] Request data:", data);
+			console.log("🔍 [API] Request body JSON:", JSON.stringify(data, null, 2));
+			
 			const response = await this.authenticatedRequest(url, {
 				method: "POST",
 				headers: {

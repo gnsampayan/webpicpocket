@@ -115,7 +115,13 @@ export interface ContactUser {
 	first_name: string;
 	last_name: string;
 	email: string;
-	profile_picture_url?: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
 }
 
 export interface ContactRequest {

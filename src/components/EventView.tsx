@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './EventView.css';
 import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
+import CreateEventModal from './CreateEventModal';
 
 import { api } from '../services/api';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../types';
@@ -13,6 +14,7 @@ const EventView: React.FC = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // State for pocket and events data
     const [pocket, setPocket] = useState<Pocket | null>(null);
@@ -20,8 +22,9 @@ const EventView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Default placeholder image as data URI for better reliability
+    // Default placeholder images as data URI for better reliability
     const DEFAULT_EVENT_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
+    const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
     // Fetch pocket and events data when component mounts or pocketId changes
     useEffect(() => {
@@ -121,15 +124,15 @@ const EventView: React.FC = () => {
     };
 
     // Helper function to get profile picture URL - similar to React Native implementation
-    const getProfilePictureUrl = (member: PocketMember | ContactUser, memberId: string): string => {
+    const getProfilePictureUrl = (member: PocketMember | ContactUser): string => {
         let rawUrl: string | undefined;
 
         // Handle different profile picture formats from API
-        if ('profile_picture_url' in member && member.profile_picture_url) {
-            // ContactUser format with direct URL
-            rawUrl = member.profile_picture_url;
+        if ('profile_picture_default' in member && member.profile_picture_default) {
+            // User has default profile picture, use placeholder
+            return DEFAULT_PROFILE_PLACEHOLDER;
         } else if ('profile_picture' in member && member.profile_picture) {
-            // PocketMember format with object
+            // Both PocketMember and ContactUser now use profile_picture object
             if (typeof member.profile_picture === "string") {
                 rawUrl = member.profile_picture;
             } else if (typeof member.profile_picture === "object") {
@@ -139,7 +142,7 @@ const EventView: React.FC = () => {
         }
 
         if (!rawUrl) {
-            return `https://picsum.photos/30/30?random=${memberId}`;
+            return DEFAULT_PROFILE_PLACEHOLDER;
         }
 
         // URLs are already perfect S3 signed URLs - no decoding needed!
@@ -165,6 +168,12 @@ const EventView: React.FC = () => {
     // Handle open grid photo view
     const handleOpenGridPhotoView = (event: Event) => {
         navigate(`/pockets/${pocketId}/${event.id}`);
+    };
+
+    // Handle event creation
+    const handleEventCreated = (newEvent: Event) => {
+        setEvents(prev => [newEvent, ...prev]);
+        console.log('✅ New event added to list:', newEvent);
     };
 
 
@@ -314,10 +323,10 @@ const EventView: React.FC = () => {
                             {pocket?.pocket_members?.slice(0, 3).map((member) => (
                                 <div key={member.id} className="member-avatar">
                                     <img
-                                        src={getProfilePictureUrl(member, member.id)}
+                                        src={getProfilePictureUrl(member)}
                                         alt={member.first_name}
                                         onError={(e) => {
-                                            e.currentTarget.src = `https://picsum.photos/30/30?random=${member.id}`;
+                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
                                         }}
                                     />
                                 </div>
@@ -326,10 +335,10 @@ const EventView: React.FC = () => {
                             {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
                                 <div key={member.id} className="member-avatar">
                                     <img
-                                        src={getProfilePictureUrl(member, member.id)}
+                                        src={getProfilePictureUrl(member)}
                                         alt={member.first_name}
                                         onError={(e) => {
-                                            e.currentTarget.src = `https://picsum.photos/30/30?random=${member.id}`;
+                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
                                         }}
                                     />
                                 </div>
@@ -395,7 +404,10 @@ const EventView: React.FC = () => {
                         <p>Events and photos in this pocket</p>
                     </div>
                     <div className="header-right">
-                        <button className="upload-button">
+                        <button
+                            className="upload-button"
+                            onClick={() => setShowCreateModal(true)}
+                        >
                             <span>+</span>
                             Create Event
                         </button>
@@ -439,7 +451,7 @@ const EventView: React.FC = () => {
                             <div className="empty-icon">📅</div>
                             <h3>No events in this pocket</h3>
                             <p>This pocket doesn't have any events yet. Create your first event to start sharing photos!</p>
-                            <button className="create-event-button-large">
+                            <button className="create-event-button-large" onClick={() => setShowCreateModal(true)}>
                                 <span>+</span>
                                 Create Your First Event
                             </button>
@@ -482,10 +494,10 @@ const EventView: React.FC = () => {
                                         {pocket?.pocket_members?.map((member) => (
                                             <div key={member.id} className="member-item">
                                                 <img
-                                                    src={getProfilePictureUrl(member, member.id)}
+                                                    src={getProfilePictureUrl(member)}
                                                     alt={member.first_name}
                                                     onError={(e) => {
-                                                        e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
+                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
                                                     }}
                                                 />
                                                 <span>{member.first_name} {member.last_name}</span>
@@ -495,10 +507,10 @@ const EventView: React.FC = () => {
                                         {selectedEvent.additional_members?.map((member) => (
                                             <div key={member.id} className="member-item">
                                                 <img
-                                                    src={getProfilePictureUrl(member, member.id)}
+                                                    src={getProfilePictureUrl(member)}
                                                     alt={member.first_name}
                                                     onError={(e) => {
-                                                        e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
+                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
                                                     }}
                                                 />
                                                 <span>{member.first_name} {member.last_name}</span>
@@ -512,6 +524,13 @@ const EventView: React.FC = () => {
                 )
             }
 
+            {/* Create Event Modal */}
+            <CreateEventModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onEventCreated={handleEventCreated}
+                pocketId={pocketId || ''}
+            />
 
         </div >
     );
