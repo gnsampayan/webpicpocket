@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Photo } from '../types';
+import AddMediaModal from './AddMediaModal';
 import './GridPhotoView.css';
 
 interface EventDetailResponse {
@@ -32,6 +33,9 @@ const GridPhotoView: React.FC = () => {
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
     const [photosPerRow] = useState(3);
+
+    // Modal state
+    const [showAddMediaModal, setShowAddMediaModal] = useState(false);
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
@@ -165,6 +169,23 @@ const GridPhotoView: React.FC = () => {
         setLoadedPhotos(prev => new Set([...prev, photoId]));
     };
 
+    // Handle media added to event
+    const handleMediaAdded = async () => {
+        console.log('✅ [GridPhotoView] Media added, refetching event data');
+
+        // Refetch event data to get the updated photos from the backend
+        try {
+            setLoading(true);
+            const updatedEventData = await api.getEventDetails(eventId || '');
+            setEventData(updatedEventData);
+            console.log('✅ [GridPhotoView] Event data refreshed with new photos');
+        } catch (err) {
+            console.error('❌ [GridPhotoView] Failed to refetch event data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Get photos to show based on loading progress
     const getPhotosToShow = () => {
         if (!eventData) return [];
@@ -262,7 +283,10 @@ const GridPhotoView: React.FC = () => {
                     <div className="header-actions">
                         <span className="photo-count">{eventData.photo_count} photos</span>
                         {eventData.current_user_add_permissions && (
-                            <button className="add-photos-button">
+                            <button
+                                className="add-photos-button"
+                                onClick={() => setShowAddMediaModal(true)}
+                            >
                                 <span>+</span>
                             </button>
                         )}
@@ -278,7 +302,10 @@ const GridPhotoView: React.FC = () => {
                         <h3>No photos in this event</h3>
                         <p>This event doesn't have any photos yet.</p>
                         {eventData.current_user_add_permissions && (
-                            <button className="add-photos-button-large">
+                            <button
+                                className="add-photos-button-large"
+                                onClick={() => setShowAddMediaModal(true)}
+                            >
                                 <span>+</span>
                                 Add Your First Photo
                             </button>
@@ -382,6 +409,14 @@ const GridPhotoView: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Add Media Modal */}
+            <AddMediaModal
+                isOpen={showAddMediaModal}
+                onClose={() => setShowAddMediaModal(false)}
+                onMediaAdded={handleMediaAdded}
+                eventId={eventId || ''}
+            />
         </div>
     );
 };

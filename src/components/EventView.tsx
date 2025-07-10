@@ -530,6 +530,7 @@ const EventView: React.FC = () => {
                 onClose={() => setShowCreateModal(false)}
                 onEventCreated={handleEventCreated}
                 pocketId={pocketId || ''}
+                pocket={pocket}
             />
 
         </div >

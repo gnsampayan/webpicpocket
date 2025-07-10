@@ -1,43 +1,37 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './CreateEventModal.css';
-import UserAvatar from './UserAvatar';
 import { api } from '../services/api';
-import { type ContactUser, type Event } from '../types';
+import { type ContactUser, type Event, type Pocket } from '../types';
 
 interface CreateEventModalProps {
     isOpen: boolean;
     onClose: () => void;
     onEventCreated: (newEvent: Event) => void;
     pocketId: string;
+    pocket?: Pocket | null;
 }
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
     isOpen,
     onClose,
     onEventCreated,
-    pocketId
+    pocketId,
+    pocket
 }) => {
     const [title, setTitle] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<ContactUser[]>([]);
     const [memberSearchTerm, setMemberSearchTerm] = useState('');
-    const [contacts, setContacts] = useState<ContactUser[]>([]);
+    const [searchResults, setSearchResults] = useState<ContactUser[]>([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [loadingContacts, setLoadingContacts] = useState(false);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
+    const [shouldShowDropdown, setShouldShowDropdown] = useState(false);
+    const currentRequestRef = useRef<string | null>(null);
+    const shouldShowDropdownRef = useRef(false);
+    const memberInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Refs for dropdown control
-    const memberInputRef = useRef<HTMLInputElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const [showMemberDropdown, setShowMemberDropdown] = useState(false);
-    const [isLoadingContacts, setIsLoadingContacts] = useState(false);
-    const [abortController, setAbortController] = useState<AbortController | null>(null);
-    const [requestId, setRequestId] = useState<string>('');
-
-    // Fetch contacts when modal opens
-    useEffect(() => {
-        if (isOpen) {
-            fetchContacts();
-        }
-    }, [isOpen]);
 
     // Cleanup on modal close
     useEffect(() => {
@@ -50,79 +44,151 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 abortController.abort();
                 setAbortController(null);
             }
+            setShouldShowDropdown(false);
+            shouldShowDropdownRef.current = false;
+            setShowSearchResults(false);
+            setLoadingContacts(false);
+            currentRequestRef.current = null;
         }
     }, [isOpen, abortController]);
-
-    const fetchContacts = async () => {
-        if (isLoadingContacts) return;
-
-        const newRequestId = Math.random().toString(36);
-        setRequestId(newRequestId);
-        setIsLoadingContacts(true);
-
-        const controller = new AbortController();
-        setAbortController(controller);
-
-        try {
-            const contactsData = await api.getContacts(controller.signal);
-            if (requestId === newRequestId) {
-                setContacts(contactsData.contacts);
-            }
-        } catch (err) {
-            if (requestId === newRequestId && err instanceof Error && err.name !== 'AbortError') {
-                console.error('Error fetching contacts:', err);
-                setError('Failed to load contacts');
-            }
-        } finally {
-            if (requestId === newRequestId) {
-                setIsLoadingContacts(false);
-                setAbortController(null);
-            }
-        }
-    };
-
-    const handleMemberInputClick = () => {
-        if (!showMemberDropdown) {
-            setShowMemberDropdown(true);
-            if (contacts.length === 0) {
-                fetchContacts();
-            }
-        }
-    };
-
-    const handleMemberInputBlur = () => {
-        // Small delay to allow clicking on dropdown items
-        setTimeout(() => {
-            setShowMemberDropdown(false);
-        }, 100);
-    };
-
-    const handleMemberSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setMemberSearchTerm(value);
-
-        if (!showMemberDropdown) {
-            setShowMemberDropdown(true);
-        }
-    };
 
     const handleMemberSelect = (contact: ContactUser) => {
         if (!selectedMembers.find(member => member.id === contact.id)) {
             setSelectedMembers(prev => [...prev, contact]);
         }
         setMemberSearchTerm('');
-        setShowMemberDropdown(false);
     };
 
     const handleRemoveMember = (memberId: string) => {
         setSelectedMembers(prev => prev.filter(member => member.id !== memberId));
     };
 
-    const filteredContacts = contacts.filter(contact =>
-        contact.username?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
-        contact.first_name?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
-        contact.last_name?.toLowerCase().includes(memberSearchTerm.toLowerCase())
-    );
+    const handleMemberSearchClick = async (e: React.MouseEvent<HTMLInputElement>) => {
+        // Ensure we're clicking directly on the input element
+        if (e.target !== e.currentTarget) {
+            return;
+        }
+
+        const input = e.currentTarget;
+        const rect = input.getBoundingClientRect();
+
+        // Check if click is within the input bounds
+        const clickX = e.clientX;
+        const clickY = e.clientY;
+
+        if (clickX < rect.left || clickX > rect.right || clickY < rect.top || clickY > rect.bottom) {
+            return;
+        }
+
+        setDropdownPosition({
+            top: rect.bottom + 8,
+            left: rect.left,
+            width: rect.width
+        });
+
+        // Toggle dropdown visibility
+        const shouldShow = !shouldShowDropdownRef.current;
+        setShouldShowDropdown(shouldShow);
+        shouldShowDropdownRef.current = shouldShow;
+
+        if (shouldShow) {
+            setLoadingContacts(true);
+
+            // Cancel any existing request
+            if (abortController) {
+                abortController.abort();
+            }
+
+            // Create new abort controller and request ID
+            const controller = new AbortController();
+            const requestId = Math.random().toString(36).substr(2, 9);
+            setAbortController(controller);
+            currentRequestRef.current = requestId;
+
+            try {
+                console.log('🔄 Starting API call for contacts');
+                const contacts = await api.getContacts(controller.signal);
+
+                // Check if this is still the current request and dropdown should be shown
+                if (controller.signal.aborted || currentRequestRef.current !== requestId || !shouldShowDropdownRef.current) {
+                    console.log('🔄 Request cancelled or outdated, skipping update');
+                    return;
+                }
+
+                console.log('✅ Loading contacts completed, updating UI');
+                setSearchResults(contacts.contacts);
+                setShowSearchResults(true);
+                setLoadingContacts(false);
+            } catch (err) {
+                console.log('❌ API call failed or was cancelled:', err);
+                // Don't log error if it was cancelled
+                if (!controller.signal.aborted) {
+                    console.error('❌ Failed to load contacts:', err);
+                    setSearchResults([]);
+                }
+                // Always clear loading state on error
+                setLoadingContacts(false);
+            }
+        } else {
+            // Hide dropdown
+            setShowSearchResults(false);
+            setLoadingContacts(false);
+
+            // Cancel any ongoing request
+            if (abortController) {
+                abortController.abort();
+                setAbortController(null);
+            }
+            currentRequestRef.current = null;
+        }
+    };
+
+    const handleModalClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent modal from closing
+
+        const target = e.target as HTMLElement;
+
+        // If clicking on the input field, let the input handle it
+        if (target === memberInputRef.current) {
+            return;
+        }
+
+        // If clicking outside the member search container, hide the dropdown
+        if (!target.closest('.member-search-container')) {
+            console.log('🔄 Clicking outside, hiding dropdown');
+
+            // Cancel any ongoing request
+            if (abortController) {
+                abortController.abort();
+                setAbortController(null);
+            }
+
+            // Clear current request ID
+            currentRequestRef.current = null;
+
+            setShouldShowDropdown(false);
+            shouldShowDropdownRef.current = false;
+            setShowSearchResults(false);
+            setLoadingContacts(false);
+        }
+    };
+
+    // Filter out pocket members from contacts since they're automatically added
+    const filteredContacts = searchResults.filter(contact => {
+        // First filter by search term
+        const matchesSearch = contact.username?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+            contact.first_name?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+            contact.last_name?.toLowerCase().includes(memberSearchTerm.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Then filter out pocket members
+        const isPocketMember = pocket?.pocket_members?.some(pocketMember =>
+            pocketMember.id === contact.id
+        );
+
+        return !isPocketMember;
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -161,7 +227,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         }
     };
 
-    const handleModalClick = (e: React.MouseEvent) => {
+    const handleModalOverlayClick = (e: React.MouseEvent) => {
         if (e.target === e.currentTarget) {
             onClose();
         }
@@ -170,8 +236,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={handleModalClick}>
-            <div className="modal-content">
+        <div className="modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="modal-content" onClick={handleModalClick}>
                 <div className="modal-header">
                     <h2>Create New Event</h2>
                     <button onClick={onClose} className="close-button">
@@ -201,22 +267,28 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
                     <div className="form-group">
                         <label>Add Members (Optional)</label>
-                        <div className="member-input-container">
+                        <div className="member-search-container">
                             <input
                                 ref={memberInputRef}
                                 type="text"
                                 value={memberSearchTerm}
-                                onChange={handleMemberSearchChange}
-                                onClick={handleMemberInputClick}
-                                onBlur={handleMemberInputBlur}
+                                onChange={(e) => setMemberSearchTerm(e.target.value)}
+                                onClick={handleMemberSearchClick}
                                 placeholder="Search contacts to add..."
                                 disabled={loading}
                             />
 
-                            {showMemberDropdown && (
-                                <div ref={dropdownRef} className="member-dropdown">
-                                    {isLoadingContacts ? (
-                                        <div className="dropdown-loading">
+                            {shouldShowDropdown && (showSearchResults || loadingContacts) && (
+                                <div
+                                    className="search-results"
+                                    style={{
+                                        top: dropdownPosition.top,
+                                        left: dropdownPosition.left,
+                                        width: dropdownPosition.width
+                                    }}
+                                >
+                                    {loadingContacts ? (
+                                        <div className="search-result-loading">
                                             <div className="loading-spinner"></div>
                                             <span>Loading contacts...</span>
                                         </div>
@@ -224,16 +296,31 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                                         filteredContacts.map(contact => (
                                             <div
                                                 key={contact.id}
-                                                className="dropdown-item"
+                                                className="search-result-item"
                                                 onClick={() => handleMemberSelect(contact)}
                                             >
-                                                <UserAvatar size="small" />
-                                                <span>{contact.first_name} {contact.last_name}</span>
+                                                <div className="contact-avatar">
+                                                    {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
+                                                </div>
+                                                <div className="contact-info">
+                                                    <span className="contact-name">
+                                                        {contact.first_name} {contact.last_name}
+                                                    </span>
+                                                    <span className="contact-username">
+                                                        @{contact.username}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="dropdown-empty">
-                                            {memberSearchTerm ? 'No contacts found' : 'No contacts available'}
+                                        <div className="search-result-empty">
+                                            <span>No contacts found</span>
+                                            <small>
+                                                {memberSearchTerm ?
+                                                    'Try searching with a different name or username' :
+                                                    'All contacts are already pocket members'
+                                                }
+                                            </small>
                                         </div>
                                     )}
                                 </div>
@@ -242,14 +329,20 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
                         {selectedMembers.length > 0 && (
                             <div className="selected-members">
+                                <small>Selected members:</small>
                                 {selectedMembers.map(member => (
                                     <div key={member.id} className="selected-member">
-                                        <UserAvatar size="small" />
-                                        <span>{member.first_name} {member.last_name}</span>
+                                        <div className="selected-member-info">
+                                            <div className="contact-avatar">
+                                                {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                            </div>
+                                            <span>{member.first_name} {member.last_name}</span>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveMember(member.id)}
                                             className="remove-member-button"
+                                            disabled={loading}
                                         >
                                             ✕
                                         </button>
