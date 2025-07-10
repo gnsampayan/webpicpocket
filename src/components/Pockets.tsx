@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Pockets.css';
 import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
+import CreatePocketModal from './CreatePocketModal';
 import { api } from '../services/api';
-import { type Pocket, type Event } from '../types';
-import EventView from './EventView';
+import { type Pocket } from '../types';
 
 const Pockets: React.FC = () => {
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [filter, setFilter] = useState('all');
     const [pockets, setPockets] = useState<Pocket[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Event View state
-    const [selectedPocket, setSelectedPocket] = useState<Pocket | null>(null);
-    const [events, setEvents] = useState<Event[]>([]);
-    const [loadingEvents, setLoadingEvents] = useState(false);
-    const [eventsError, setEventsError] = useState<string | null>(null);
+    const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gQ292ZXIgUGhvdG88L3RleHQ+Cjwvc3ZnPgo=';
@@ -48,27 +46,6 @@ const Pockets: React.FC = () => {
         fetchPockets();
     }, []);
 
-    // Fetch events when a pocket is selected
-    useEffect(() => {
-        if (selectedPocket) {
-            const fetchEvents = async () => {
-                try {
-                    setLoadingEvents(true);
-                    setEventsError(null);
-                    const eventsData = await api.getEvents(selectedPocket.pocket_id);
-                    setEvents(eventsData);
-                } catch (err) {
-                    console.error('Error fetching events:', err);
-                    setEventsError(err instanceof Error ? err.message : 'Failed to load events');
-                } finally {
-                    setLoadingEvents(false);
-                }
-            };
-
-            fetchEvents();
-        }
-    }, [selectedPocket]);
-
     // Helper function to get the best available cover photo URL - similar to React Native implementation
     const getCoverPhotoUrl = (pocket: Pocket): string => {
         // Use the cover_photo_url object from the API response
@@ -94,38 +71,39 @@ const Pockets: React.FC = () => {
 
     // Handle pocket selection
     const handlePocketClick = (pocket: Pocket) => {
-        setSelectedPocket(pocket);
+        navigate(`/pockets/${pocket.pocket_id}`);
     };
 
-    // Handle back to pockets view
-    const handleBackToPockets = () => {
-        setSelectedPocket(null);
-        setEvents([]);
-        setEventsError(null);
+    // Handle options menu toggle
+    const handleOptionsClick = (e: React.MouseEvent, pocketId: string) => {
+        e.stopPropagation();
+        setOpenOptionsMenu(openOptionsMenu === pocketId ? null : pocketId);
     };
 
-    // Mock photos for now (since we don't have a photos API endpoint yet)
-    const photos = Array.from({ length: 24 }, (_, i) => ({
-        id: i + 1,
-        url: `https://picsum.photos/400/400?random=${i + 1}`,
-        title: `Photo ${i + 1}`,
-        date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        size: Math.floor(Math.random() * 5000) + 1000 + ' KB',
-        album: pockets[Math.floor(Math.random() * pockets.length)]?.pocket_title || 'Unknown Album'
-    }));
+    // Handle option selection
+    const handleOptionSelect = (option: string, pocket: Pocket) => {
+        setOpenOptionsMenu(null);
+        console.log(`Selected option: ${option} for pocket: ${pocket.pocket_title}`);
+        // TODO: Implement actual functionality for each option
+    };
 
-    // If we're in Event View, render the EventView component
-    if (selectedPocket) {
-        return (
-            <EventView
-                pocket={selectedPocket}
-                events={events}
-                loading={loadingEvents}
-                error={eventsError}
-                onBack={handleBackToPockets}
-            />
-        );
-    }
+    // Close options menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setOpenOptionsMenu(null);
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, []);
+
+    // Handle pocket creation
+    const handlePocketCreated = (newPocket: Pocket) => {
+        setPockets(prev => [newPocket, ...prev]);
+        console.log('✅ New pocket added to list:', newPocket);
+    };
 
     if (loading) {
         return (
@@ -171,9 +149,12 @@ const Pockets: React.FC = () => {
                         <p>Manage and organize your photos, videos, pockets, events, and members</p>
                     </div>
                     <div className="header-right">
-                        <button className="upload-button">
-                            <span>📤</span>
-                            Upload Media
+                        <button
+                            className="upload-button"
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <span>+</span>
+                            Create Pocket
                         </button>
                         <div className="user-menu">
                             <UserAvatar size="medium" />
@@ -200,16 +181,22 @@ const Pockets: React.FC = () => {
                         </div>
                         <div className="filter-dropdown">
                             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                                <option value="all">All Media</option>
-                                <option value="photos">Photos Only</option>
-                                <option value="videos">Videos Only</option>
-                                <option value="recent">Recent</option>
+                                <option value="oldest-newest">Oldest to Newest</option>
+                                <option value="newest-oldest">Newest to Oldest</option>
+                                <option value="a-z">A-Z</option>
+                                <option value="z-a">Z-A</option>
+                                <option value="member-high-low">Member Count (High to Low)</option>
+                                <option value="member-low-high">Member Count (Low to High)</option>
+                                <option value="photo-high-low">Photo Count (High to Low)</option>
+                                <option value="photo-low-high">Photo Count (Low to High)</option>
+                                <option value="event-high-low">Event Count (High to Low)</option>
+                                <option value="event-low-high">Event Count (Low to High)</option>
                             </select>
                         </div>
                     </div>
                     <div className="controls-right">
                         <div className="search-box">
-                            <input type="text" placeholder="Search media..." />
+                            <input type="text" placeholder="Search pockets..." />
                             <span>🔍</span>
                         </div>
                     </div>
@@ -221,7 +208,10 @@ const Pockets: React.FC = () => {
                     {pockets.length === 0 ? (
                         <div className="empty-state">
                             <p>No pockets found. Create your first pocket to get started!</p>
-                            <button className="create-pocket-button">
+                            <button
+                                className="create-pocket-button"
+                                onClick={() => setShowCreateModal(true)}
+                            >
                                 <span>➕</span>
                                 Create Pocket
                             </button>
@@ -251,37 +241,53 @@ const Pockets: React.FC = () => {
                                             Created: {new Date(pocket.pocket_created_at).toLocaleDateString()}
                                         </p>
                                     </div>
+
+                                    {/* Options Button */}
+                                    <button
+                                        className="pocket-options-button"
+                                        onClick={(e) => handleOptionsClick(e, pocket.pocket_id)}
+                                    >
+                                        ⋯
+                                    </button>
+
+                                    {/* Options Menu */}
+                                    {openOptionsMenu === pocket.pocket_id && (
+                                        <div className="pocket-options-menu">
+                                            <div className="options-menu-item" onClick={() => handleOptionSelect('add-photos', pocket)}>
+                                                <span className="option-icon">📸</span>
+                                                Add Photos
+                                            </div>
+                                            <div className="options-menu-item" onClick={() => handleOptionSelect('add-people', pocket)}>
+                                                <span className="option-icon">👥</span>
+                                                Add People
+                                            </div>
+                                            <div className="options-menu-item" onClick={() => handleOptionSelect('share', pocket)}>
+                                                <span className="option-icon">📤</span>
+                                                Share
+                                            </div>
+                                            <div className="options-menu-item" onClick={() => handleOptionSelect('edit', pocket)}>
+                                                <span className="option-icon">✏️</span>
+                                                Edit
+                                            </div>
+                                            <div className="options-menu-item" onClick={() => handleOptionSelect('leave', pocket)}>
+                                                <span className="option-icon">🚪</span>
+                                                Leave Event
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
-
-                {/* Media Grid */}
-                <section className="media-section">
-                    <h2>All Media</h2>
-                    <div className={`media-grid ${viewMode}`}>
-                        {photos.map((photo) => (
-                            <div key={photo.id} className="media-item">
-                                <div className="media-thumbnail">
-                                    <img src={photo.url} alt={photo.title} />
-                                    <div className="media-overlay">
-                                        <button className="media-action">👁️</button>
-                                        <button className="media-action">📤</button>
-                                        <button className="media-action">🗑️</button>
-                                    </div>
-                                </div>
-                                <div className="media-info">
-                                    <h4>{photo.title}</h4>
-                                    <p>{photo.date}</p>
-                                    <p className="media-size">{photo.size}</p>
-                                    <span className="media-album">{photo.album}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
             </main>
+
+            {/* Create Pocket Modal */}
+            <CreatePocketModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onPocketCreated={handlePocketCreated}
+            />
         </div>
     );
 };

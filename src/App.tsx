@@ -6,6 +6,8 @@ import Dashboard from './components/Dashboard';
 import Pockets from './components/Pockets';
 import Contacts from './components/Contacts';
 import Settings from './components/Settings';
+import EventView from './components/EventView';
+import GridPhotoView from './components/GridPhotoView';
 import './App.css';
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/pockets" element={<Pockets />} />
+          <Route path="/pockets/:pocketId" element={<EventView />} />
+          <Route path="/pockets/:pocketId/:eventId" element={<GridPhotoView />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

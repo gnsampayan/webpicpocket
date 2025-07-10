@@ -27,6 +27,12 @@ const NavBar: React.FC = () => {
         }
     };
 
+    // Handle Pockets navigation - always go to main pockets page
+    const handlePocketsClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        navigate('/pockets');
+    };
+
     return (
         <nav className="sidebar">
             <div className="sidebar-header">
@@ -40,7 +46,11 @@ const NavBar: React.FC = () => {
                     </Link>
                 </li>
                 <li className="nav-item">
-                    <Link to="/pockets" className="nav-link">
+                    <Link
+                        to="/pockets"
+                        className="nav-link"
+                        onClick={handlePocketsClick}
+                    >
                         <span className="nav-icon">📸</span>
                         Pockets
                     </Link>

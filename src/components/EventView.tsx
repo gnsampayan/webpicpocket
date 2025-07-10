@@ -1,26 +1,67 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './EventView.css';
 import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
-import GridPhotoView from './GridPhotoView';
+
+import { api } from '../services/api';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../types';
 
-interface EventViewProps {
-    pocket: Pocket;
-    events: Event[];
-    loading: boolean;
-    error: string | null;
-    onBack: () => void;
-}
+const EventView: React.FC = () => {
+    const { pocketId } = useParams<{ pocketId: string }>();
+    const navigate = useNavigate();
 
-const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, onBack }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-    const [showGridPhotoView, setShowGridPhotoView] = useState(false);
-    const [selectedEventForGrid, setSelectedEventForGrid] = useState<Event | null>(null);
+
+    // State for pocket and events data
+    const [pocket, setPocket] = useState<Pocket | null>(null);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_EVENT_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
+
+    // Fetch pocket and events data when component mounts or pocketId changes
+    useEffect(() => {
+        const fetchPocketAndEvents = async () => {
+            if (!pocketId) {
+                setError('No pocket ID provided');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Fetch pocket details
+                const pocketsData = await api.getPockets();
+                const currentPocket = pocketsData.find(p => p.pocket_id === pocketId);
+
+                if (!currentPocket) {
+                    throw new Error('Pocket not found');
+                }
+
+                setPocket(currentPocket);
+
+                // Fetch events for this pocket
+                const eventsData = await api.getEvents(pocketId);
+                setEvents(eventsData);
+
+                console.log('EventView loaded pocket:', currentPocket);
+                console.log('EventView loaded events:', eventsData);
+            } catch (err) {
+                console.error('Error fetching pocket and events:', err);
+                setError(err instanceof Error ? err.message : 'Failed to load pocket and events');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPocketAndEvents();
+    }, [pocketId]);
 
     // Debug: Log events data when component mounts or events change
     useEffect(() => {
@@ -36,6 +77,11 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
     const filteredEvents = events.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Handle back to pockets view
+    const handleBackToPockets = () => {
+        navigate('/pockets');
+    };
 
     // Helper function to get photo URL with better fallback logic - similar to React Native implementation
     const getPhotoUrl = (photo: PreviewPhoto): string => {
@@ -118,22 +164,17 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
 
     // Handle open grid photo view
     const handleOpenGridPhotoView = (event: Event) => {
-        setSelectedEventForGrid(event);
-        setShowGridPhotoView(true);
+        navigate(`/pockets/${pocketId}/${event.id}`);
     };
 
-    // Handle close grid photo view
-    const handleCloseGridPhotoView = () => {
-        setShowGridPhotoView(false);
-        setSelectedEventForGrid(null);
-    };
+
 
     // Render event card with photo previews
     const renderEventCard = (event: Event) => {
         // Get up to 5 photos for preview (1 large + 4 small)
         const previewPhotos = event.preview_photos?.slice(0, 5) || [];
         const totalPhotoCount = event.photo_count || 0;
-        const totalMemberCount = (pocket.pocket_members?.length || 0) + (event.additional_member_count || 0);
+        const totalMemberCount = (pocket?.pocket_members?.length || 0) + (event.additional_member_count || 0);
 
         // Debug: Log the entire event object to see its structure
         console.log(`Event "${event.title}" full data:`, event);
@@ -270,7 +311,7 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
                         <span className="member-count">{totalMemberCount} members</span>
                         <div className="member-avatars">
                             {/* Show pocket members first */}
-                            {pocket.pocket_members?.slice(0, 3).map((member) => (
+                            {pocket?.pocket_members?.slice(0, 3).map((member) => (
                                 <div key={member.id} className="member-avatar">
                                     <img
                                         src={getProfilePictureUrl(member, member.id)}
@@ -282,7 +323,7 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
                                 </div>
                             ))}
                             {/* Show additional members if any */}
-                            {event.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member) => (
+                            {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
                                 <div key={member.id} className="member-avatar">
                                     <img
                                         src={getProfilePictureUrl(member, member.id)}
@@ -305,12 +346,13 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
 
 
 
+    // Show loading state
     if (loading) {
         return (
             <div className="event-view-page">
                 <NavBar />
                 <main className="main-content">
-                    <div className="loading-container">
+                    <div className="loading-state">
                         <div className="loading-spinner"></div>
                         <p>Loading events...</p>
                     </div>
@@ -319,16 +361,17 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
         );
     }
 
-    if (error) {
+    // Show error state
+    if (error || !pocket) {
         return (
             <div className="event-view-page">
                 <NavBar />
                 <main className="main-content">
-                    <div className="error-container">
+                    <div className="error-state">
                         <h2>Error Loading Events</h2>
-                        <p>{error}</p>
-                        <button onClick={onBack} className="retry-button">
-                            Go Back
+                        <p>{error || 'Pocket not found'}</p>
+                        <button onClick={handleBackToPockets} className="retry-button">
+                            Back to Pockets
                         </button>
                     </div>
                 </main>
@@ -342,33 +385,52 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
             <main className="main-content">
                 {/* Header */}
                 <header className="event-view-header">
-                    <div className="header-top">
+                    <div className="header-left">
                         <div className="back-button-section">
-                            <button onClick={onBack} className="back-button">
+                            <button onClick={handleBackToPockets} className="back-button">
                                 <span>←</span>
                             </button>
                             <h1 className="pocket-title">{pocket.pocket_title}</h1>
                         </div>
-                        <div className="header-actions">
+                        <p>Events and photos in this pocket</p>
+                    </div>
+                    <div className="header-right">
+                        <button className="upload-button">
+                            <span>+</span>
+                            Create Event
+                        </button>
+                        <div className="user-menu">
                             <UserAvatar size="medium" />
                         </div>
                     </div>
-                    <div className="header-bottom">
-                        <div className="search-container">
-                            <span className="search-icon">🔍</span>
+                </header>
+
+                {/* Controls */}
+                <section className="controls-section">
+                    <div className="controls-left">
+                        <div className="search-box">
                             <input
                                 type="text"
                                 placeholder="Search events..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
                             />
+                            <span>🔍</span>
                         </div>
-                        <button className="create-event-button">
-                            <span>+</span>
-                        </button>
                     </div>
-                </header>
+                    <div className="controls-right">
+                        <div className="filter-dropdown">
+                            <select>
+                                <option value="newest-oldest">Newest to Oldest</option>
+                                <option value="oldest-newest">Oldest to Newest</option>
+                                <option value="a-z">A-Z</option>
+                                <option value="z-a">Z-A</option>
+                                <option value="photo-high-low">Photo Count (High to Low)</option>
+                                <option value="photo-low-high">Photo Count (Low to High)</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
 
                 {/* Events List */}
                 <section className="events-section">
@@ -397,68 +459,61 @@ const EventView: React.FC<EventViewProps> = ({ pocket, events, loading, error, o
             </main>
 
             {/* Event Detail Modal */}
-            {selectedEvent && (
-                <div className="event-detail-modal">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h2>{selectedEvent.title}</h2>
-                            <button onClick={handleCloseEventDetail} className="close-button">
-                                ✕
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <p className="event-description">Event with {selectedEvent.photo_count} photos</p>
-                            <div className="event-dates">
-                                <p className="event-created">Created: {formatDate(selectedEvent.created_at)}</p>
-                                <p className="event-updated">Last updated: {formatDate(selectedEvent.updated_at)}</p>
+            {
+                selectedEvent && (
+                    <div className="event-detail-modal">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h2>{selectedEvent.title}</h2>
+                                <button onClick={handleCloseEventDetail} className="close-button">
+                                    ✕
+                                </button>
                             </div>
-                            <div className="event-members-list">
-                                <h3>Members ({(pocket.pocket_members?.length || 0) + (selectedEvent.additional_member_count || 0)})</h3>
-                                <div className="members-grid">
-                                    {/* Show pocket members first */}
-                                    {pocket.pocket_members?.map((member) => (
-                                        <div key={member.id} className="member-item">
-                                            <img
-                                                src={getProfilePictureUrl(member, member.id)}
-                                                alt={member.first_name}
-                                                onError={(e) => {
-                                                    e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
-                                                }}
-                                            />
-                                            <span>{member.first_name} {member.last_name}</span>
-                                        </div>
-                                    ))}
-                                    {/* Show additional members */}
-                                    {selectedEvent.additional_members?.map((member) => (
-                                        <div key={member.id} className="member-item">
-                                            <img
-                                                src={getProfilePictureUrl(member, member.id)}
-                                                alt={member.first_name}
-                                                onError={(e) => {
-                                                    e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
-                                                }}
-                                            />
-                                            <span>{member.first_name} {member.last_name}</span>
-                                        </div>
-                                    ))}
+                            <div className="modal-body">
+                                <p className="event-description">Event with {selectedEvent.photo_count} photos</p>
+                                <div className="event-dates">
+                                    <p className="event-created">Created: {formatDate(selectedEvent.created_at)}</p>
+                                    <p className="event-updated">Last updated: {formatDate(selectedEvent.updated_at)}</p>
+                                </div>
+                                <div className="event-members-list">
+                                    <h3>Members ({(pocket?.pocket_members?.length || 0) + (selectedEvent.additional_member_count || 0)})</h3>
+                                    <div className="members-grid">
+                                        {/* Show pocket members first */}
+                                        {pocket?.pocket_members?.map((member) => (
+                                            <div key={member.id} className="member-item">
+                                                <img
+                                                    src={getProfilePictureUrl(member, member.id)}
+                                                    alt={member.first_name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
+                                                    }}
+                                                />
+                                                <span>{member.first_name} {member.last_name}</span>
+                                            </div>
+                                        ))}
+                                        {/* Show additional members */}
+                                        {selectedEvent.additional_members?.map((member) => (
+                                            <div key={member.id} className="member-item">
+                                                <img
+                                                    src={getProfilePictureUrl(member, member.id)}
+                                                    alt={member.first_name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `https://picsum.photos/40/40?random=${member.id}`;
+                                                    }}
+                                                />
+                                                <span>{member.first_name} {member.last_name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {/* Grid Photo View - Overlay */}
-            {showGridPhotoView && selectedEventForGrid && (
-                <div className="grid-photo-overlay">
-                    <GridPhotoView
-                        eventId={selectedEventForGrid.id}
-                        eventTitle={selectedEventForGrid.title}
-                        onBack={handleCloseGridPhotoView}
-                    />
-                </div>
-            )}
-        </div>
+
+        </div >
     );
 };
 

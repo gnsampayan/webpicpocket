@@ -746,7 +746,7 @@ export const api = {
 	// =============================================
 	// CONTACT FUNCTIONS
 	// =============================================
-	async getContacts(): Promise<ApiTypes.ContactsResponse> {
+	async getContacts(signal?: AbortSignal): Promise<ApiTypes.ContactsResponse> {
 		const url = `${API_URL}${API_CONFIG.endpoints.contact.list}`;
 		try {
 			const response = await this.authenticatedRequest(url, {
@@ -754,6 +754,7 @@ export const api = {
 				headers: {
 					"Content-Type": "application/json",
 				},
+				signal,
 			});
 			const responseData = await response.json();
 			return responseData;
@@ -941,46 +942,8 @@ export const api = {
 	},
 
 	async createPocket(
-		data: ApiTypes.CreatePocketRequest,
-		coverPhotoFile?: Blob
+		data: ApiTypes.CreatePocketRequest
 	): Promise<ApiTypes.Pocket> {
-		if (coverPhotoFile) {
-			const fileSizeMB = coverPhotoFile.size / (1024 * 1024);
-			if (fileSizeMB > 10) {
-				throw new Error("Cover photo size must be less than 10MB");
-			}
-			const mimeType = coverPhotoFile.type;
-			if (!mimeType.startsWith("image/")) {
-				throw new Error("Cover photo must be an image file");
-			}
-
-			const uploadUrl = `${API_URL}${API_CONFIG.endpoints.upload}`;
-			try {
-				const extension = mimeType.split("/")[1];
-				const fileName = `cover.${extension}`;
-				const uploadResponse = await this.authenticatedRequest(uploadUrl, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						type: "cover",
-						files: [fileName],
-					}),
-				});
-				const uploadData = await uploadResponse.json();
-
-				await this.uploadFileToS3(
-					uploadData.uploads[0].upload_url,
-					coverPhotoFile
-				);
-				data.cover_photo_object_key = uploadData.uploads[0].object_key;
-			} catch (error) {
-				console.error("❌ [API] Error uploading cover photo:", error);
-				throw error;
-			}
-		}
-
 		const url = `${API_URL}${API_CONFIG.endpoints.pocket.create}`;
 		try {
 			const response = await this.authenticatedRequest(url, {

@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Photo } from '../types';
 import './GridPhotoView.css';
-
-interface GridPhotoViewProps {
-    eventId: string;
-    eventTitle: string;
-    onBack: () => void;
-}
 
 interface EventDetailResponse {
     event_id: string;
@@ -27,7 +22,10 @@ interface EventDetailResponse {
     photos: Photo[];
 }
 
-const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBack }) => {
+const GridPhotoView: React.FC = () => {
+    const { pocketId, eventId } = useParams<{ pocketId: string; eventId: string }>();
+    const navigate = useNavigate();
+
     const [eventData, setEventData] = useState<EventDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,6 +38,12 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
 
     useEffect(() => {
         const fetchEventDetails = async () => {
+            if (!eventId) {
+                setError('No event ID provided');
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
                 setError(null);
@@ -60,6 +64,15 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
 
         fetchEventDetails();
     }, [eventId]);
+
+    // Handle back to event view
+    const handleBackToEventView = () => {
+        if (pocketId) {
+            navigate(`/pockets/${pocketId}`);
+        } else {
+            navigate('/pockets');
+        }
+    };
 
     // Helper function to get photo URL
     const getPhotoUrl = (photo: Photo): string => {
@@ -163,6 +176,7 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
         return eventData.photos.slice(0, maxToShow);
     };
 
+    // Show loading state
     if (loading) {
         return (
             <div className="grid-photo-view-page">
@@ -170,10 +184,10 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
                 <header className="grid-photo-header">
                     <div className="header-top">
                         <div className="back-button-section">
-                            <button onClick={onBack} className="back-button">
+                            <button onClick={handleBackToEventView} className="back-button">
                                 <span>←</span>
                             </button>
-                            <h1 className="event-title">{eventTitle}</h1>
+                            <h1 className="event-title">Loading...</h1>
                         </div>
                         <div className="header-actions">
                             <span className="photo-count">Loading...</span>
@@ -198,30 +212,38 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
         );
     }
 
-    if (error) {
+    // Show error state
+    if (error || !eventData) {
         return (
             <div className="grid-photo-view-page">
-                <div className="error-container">
-                    <h2>Error Loading Photos</h2>
-                    <p>{error}</p>
-                    <button onClick={onBack} className="retry-button">
-                        Go Back
-                    </button>
-                </div>
-            </div>
-        );
-    }
+                {/* Header */}
+                <header className="grid-photo-header">
+                    <div className="header-top">
+                        <div className="back-button-section">
+                            <button onClick={handleBackToEventView} className="back-button">
+                                <span>←</span>
+                            </button>
+                            <h1 className="event-title">Error</h1>
+                        </div>
+                        <div className="header-actions">
+                            <span className="photo-count">0 photos</span>
+                            <button className="add-photos-button" disabled>
+                                <span>+</span>
+                            </button>
+                        </div>
+                    </div>
+                </header>
 
-    if (!eventData) {
-        return (
-            <div className="grid-photo-view-page">
-                <div className="error-container">
-                    <h2>No Event Data</h2>
-                    <p>Could not load event details</p>
-                    <button onClick={onBack} className="retry-button">
-                        Go Back
-                    </button>
-                </div>
+                {/* Error Content */}
+                <main className="grid-photo-content">
+                    <div className="error-state">
+                        <h2>Error Loading Photos</h2>
+                        <p>{error || 'Event not found'}</p>
+                        <button onClick={handleBackToEventView} className="retry-button">
+                            Back to Event
+                        </button>
+                    </div>
+                </main>
             </div>
         );
     }
@@ -232,7 +254,7 @@ const GridPhotoView: React.FC<GridPhotoViewProps> = ({ eventId, eventTitle, onBa
             <header className="grid-photo-header">
                 <div className="header-top">
                     <div className="back-button-section">
-                        <button onClick={onBack} className="back-button">
+                        <button onClick={handleBackToEventView} className="back-button">
                             <span>←</span>
                         </button>
                         <h1 className="event-title">{eventData.title}</h1>
