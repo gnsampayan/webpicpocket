@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import NavBar from './NavBar';
-import UserAvatar from './UserAvatar';
-import { api } from '../services/api';
-import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../utils/storage';
-import { useEmailVerification } from '../context/EmailVerificationContext';
-import type { UserInfo } from '../types/api';
+import NavBar from '../ui/NavBar';
+import UserAvatar from '../ui/UserAvatar';
+import { api } from '../../services/api';
+import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../../utils/storage';
+import { useEmailVerification } from '../../context/EmailVerificationContext';
+import type { UserInfo } from '../../types/api';
 import './Settings.css';
 
 const Settings: React.FC = () => {

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Pockets.css';
-import NavBar from './NavBar';
-import UserAvatar from './UserAvatar';
-import CreatePocketModal from './CreatePocketModal';
-import { api } from '../services/api';
-import { useEmailVerification } from '../context/EmailVerificationContext';
-import { type Pocket } from '../types';
+import NavBar from '../ui/NavBar';
+import UserAvatar from '../ui/UserAvatar';
+import CreatePocketModal from '../modals/CreatePocketModal';
+import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
+import AddPocketMembersModal from '../modals/AddPocketMembersModal';
+import { api } from '../../services/api';
+import { useEmailVerification } from '../../context/EmailVerificationContext';
+import { type Pocket } from '../../types';
 
 const Pockets: React.FC = () => {
     const navigate = useNavigate();
@@ -17,6 +19,10 @@ const Pockets: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showAddPhotosModal, setShowAddPhotosModal] = useState(false);
+    const [showAddMembersModal, setShowAddMembersModal] = useState(false);
+    const [selectedPocketForPhotos, setSelectedPocketForPhotos] = useState<Pocket | null>(null);
+    const [selectedPocketForMembers, setSelectedPocketForMembers] = useState<Pocket | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Default placeholder image as data URI for better reliability
@@ -30,13 +36,6 @@ const Pockets: React.FC = () => {
                 setError(null);
                 const pocketsData = await api.getPockets();
                 setPockets(pocketsData);
-
-                // Debug: Log pocket data to help identify cover photo issues
-                console.log('Pockets data received:', pocketsData);
-                if (pocketsData && pocketsData.length > 0) {
-                    console.log('First pocket cover_photo_url:', pocketsData[0].cover_photo_url);
-                    console.log('First pocket cover URL:', getCoverPhotoUrl(pocketsData[0]));
-                }
             } catch (err) {
                 console.error('Error fetching pockets:', err);
                 setError(err instanceof Error ? err.message : 'Failed to load pockets');
@@ -57,7 +56,6 @@ const Pockets: React.FC = () => {
             pocket.cover_photo_url?.url_small;
 
         if (!rawUrl) {
-            console.log('No cover photo URL found for pocket:', pocket.pocket_title);
             return DEFAULT_COVER_PLACEHOLDER;
         }
 
@@ -85,8 +83,31 @@ const Pockets: React.FC = () => {
     // Handle option selection
     const handleOptionSelect = (option: string, pocket: Pocket) => {
         setOpenOptionsMenu(null);
-        console.log(`Selected option: ${option} for pocket: ${pocket.pocket_title}`);
-        // TODO: Implement actual functionality for each option
+
+        switch (option) {
+            case 'add-photos':
+                setSelectedPocketForPhotos(pocket);
+                setShowAddPhotosModal(true);
+                break;
+            case 'add-people':
+                setSelectedPocketForMembers(pocket);
+                setShowAddMembersModal(true);
+                break;
+            case 'share':
+                // TODO: Implement share functionality
+                console.log('Share functionality not implemented yet');
+                break;
+            case 'edit':
+                // TODO: Implement edit functionality
+                console.log('Edit functionality not implemented yet');
+                break;
+            case 'leave':
+                // TODO: Implement leave functionality
+                console.log('Leave functionality not implemented yet');
+                break;
+            default:
+                console.log(`Unknown option: ${option}`);
+        }
     };
 
     // Close options menu when clicking outside
@@ -104,7 +125,48 @@ const Pockets: React.FC = () => {
     // Handle pocket creation
     const handlePocketCreated = (newPocket: Pocket) => {
         setPockets(prev => [newPocket, ...prev]);
-        console.log('✅ New pocket added to list:', newPocket);
+    };
+
+    // Handle media added to pocket
+    const handleMediaAdded = () => {
+        // Refetch pockets data to show updated photo counts without clearing console
+        const fetchPockets = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const pocketsData = await api.getPockets();
+                setPockets(pocketsData);
+                console.log('✅ Pockets data refreshed after adding media');
+            } catch (err) {
+                console.error('Error refreshing pockets after adding media:', err);
+                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPockets();
+    };
+
+    // Handle members added to pocket
+    const handleMembersAdded = () => {
+        // Refetch pockets data to show updated member counts without clearing console
+        const fetchPockets = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const pocketsData = await api.getPockets();
+                setPockets(pocketsData);
+                console.log('✅ Pockets data refreshed after adding members');
+            } catch (err) {
+                console.error('Error refreshing pockets after adding members:', err);
+                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPockets();
     };
 
     if (loading) {
@@ -268,25 +330,40 @@ const Pockets: React.FC = () => {
                                     {/* Options Menu */}
                                     {openOptionsMenu === pocket.pocket_id && (
                                         <div className="pocket-options-menu">
-                                            <div className="options-menu-item" onClick={() => handleOptionSelect('add-photos', pocket)}>
+                                            <div className="options-menu-item" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOptionSelect('add-photos', pocket)
+                                            }}>
                                                 <span className="option-icon">📸</span>
                                                 Add Photos
                                             </div>
-                                            <div className="options-menu-item" onClick={() => handleOptionSelect('add-people', pocket)}>
+                                            <div className="options-menu-item" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOptionSelect('add-people', pocket)
+                                            }}>
                                                 <span className="option-icon">👥</span>
                                                 Add People
                                             </div>
-                                            <div className="options-menu-item" onClick={() => handleOptionSelect('share', pocket)}>
+                                            <div className="options-menu-item" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOptionSelect('share', pocket)
+                                            }}>
                                                 <span className="option-icon">📤</span>
                                                 Share
                                             </div>
-                                            <div className="options-menu-item" onClick={() => handleOptionSelect('edit', pocket)}>
+                                            <div className="options-menu-item" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOptionSelect('edit', pocket)
+                                            }}>
                                                 <span className="option-icon">✏️</span>
                                                 Edit
                                             </div>
-                                            <div className="options-menu-item" onClick={() => handleOptionSelect('leave', pocket)}>
+                                            <div className="options-menu-item" onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOptionSelect('leave', pocket)
+                                            }}>
                                                 <span className="option-icon">🚪</span>
-                                                Leave Event
+                                                Leave Pocket
                                             </div>
                                         </div>
                                     )}
@@ -303,6 +380,35 @@ const Pockets: React.FC = () => {
                 onClose={() => setShowCreateModal(false)}
                 onPocketCreated={handlePocketCreated}
             />
+
+            {/* Add Pocket Photos Modal */}
+            {selectedPocketForPhotos && (
+                <AddPocketPhotosModal
+                    isOpen={showAddPhotosModal}
+                    onClose={() => {
+                        setShowAddPhotosModal(false);
+                        setSelectedPocketForPhotos(null);
+                    }}
+                    onMediaAdded={handleMediaAdded}
+                    pocketId={selectedPocketForPhotos.pocket_id}
+                    pocketTitle={selectedPocketForPhotos.pocket_title}
+                />
+            )}
+
+            {/* Add Pocket Members Modal */}
+            {selectedPocketForMembers && (
+                <AddPocketMembersModal
+                    isOpen={showAddMembersModal}
+                    onClose={() => {
+                        setShowAddMembersModal(false);
+                        setSelectedPocketForMembers(null);
+                    }}
+                    onMembersAdded={handleMembersAdded}
+                    pocketId={selectedPocketForMembers.pocket_id}
+                    pocketTitle={selectedPocketForMembers.pocket_title}
+                    existingMembers={selectedPocketForMembers.pocket_members.map(member => member.id)}
+                />
+            )}
         </div>
     );
 };

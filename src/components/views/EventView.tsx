@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './EventView.css';
-import NavBar from './NavBar';
-import UserAvatar from './UserAvatar';
-import CreateEventModal from './CreateEventModal';
+import NavBar from '../ui/NavBar';
+import UserAvatar from '../ui/UserAvatar';
+import CreateEventModal from '../modals/CreateEventModal';
 
-import { api } from '../services/api';
-import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../types';
+import { api } from '../../services/api';
+import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
 
 const EventView: React.FC = () => {
     const { pocketId } = useParams<{ pocketId: string }>();

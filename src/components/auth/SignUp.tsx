@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, isAuthError, AUTH_ERRORS } from '../services';
-import type { RegisterData } from '../services';
-import { validateSignUpForm } from '../utils/validation';
-import { useEmailVerification } from '../context/EmailVerificationContext';
+import { api, isAuthError, AUTH_ERRORS } from '../../services';
+import type { RegisterData } from '../../services';
+import { validateSignUpForm } from '../../utils/validation';
+import { useEmailVerification } from '../../context/EmailVerificationContext';
 import './SignUp.css';
 
 const SignUp: React.FC = () => {

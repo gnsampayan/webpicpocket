@@ -1,16 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LandingPage from './components/LandingPage';
-import SignIn from './components/SignIn';
-import SignUp from './components/SignUp';
-import Dashboard from './components/Dashboard';
-import Pockets from './components/Pockets';
-import Contacts from './components/Contacts';
-import Settings from './components/Settings';
-import EventView from './components/EventView';
-import GridPhotoView from './components/GridPhotoView';
+import LandingPage from './components/pages/LandingPage';
+import SignIn from './components/auth/SignIn';
+import SignUp from './components/auth/SignUp';
+import Dashboard from './components/pages/Dashboard';
+import Pockets from './components/pages/Pockets';
+import Contacts from './components/pages/Contacts';
+import Settings from './components/pages/Settings';
+import EventView from './components/views/EventView';
+import GridPhotoView from './components/views/GridPhotoView';
 import ProtectedRoute from './components/ProtectedRoute';
 import { EmailVerificationProvider } from './context/EmailVerificationContext';
-import GlobalEmailVerificationModal from './components/GlobalEmailVerificationModal';
+import GlobalEmailVerificationModal from './components/modals/GlobalEmailVerificationModal';
 import './App.css';
 
 function App() {

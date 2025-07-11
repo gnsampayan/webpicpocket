@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEmailVerification } from '../context/EmailVerificationContext';
+import { useEmailVerification } from '../../context/EmailVerificationContext';
 import EmailVerificationModal from './EmailVerificationModal';
 
 const GlobalEmailVerificationModal: React.FC = () => {

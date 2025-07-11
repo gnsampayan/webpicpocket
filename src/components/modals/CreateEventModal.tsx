@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './CreateEventModal.css';
-import { api } from '../services/api';
-import { type ContactUser, type Event, type Pocket } from '../types';
+import { api } from '../../services/api';
+import { type ContactUser, type Event, type Pocket } from '../../types';
 
 interface CreateEventModalProps {
     isOpen: boolean;

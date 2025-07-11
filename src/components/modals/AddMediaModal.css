@@ -22,6 +22,8 @@
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes modalSlideIn {
@@ -79,8 +81,9 @@
 
 .modal-body {
   padding: 2rem;
-  max-height: 60vh;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .error-message {
@@ -91,6 +94,76 @@
   border-radius: 8px;
   margin-bottom: 1rem;
   font-size: 0.9rem;
+}
+
+/* Event Selection Section */
+.event-selection-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+}
+
+.event-selection-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.event-select-dropdown {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5d9;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+.event-select-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.event-select-dropdown:disabled {
+  background: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.loading-indicator {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loading-indicator::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.no-events-message {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.85rem;
+  text-align: center;
 }
 
 /* File Selection Section */
@@ -128,6 +201,7 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  background: #ccc;
 }
 
 .select-files-button span {
@@ -322,6 +396,7 @@
   padding: 1.5rem 2rem;
   border-top: 1px solid #e1e5e9;
   background: #f8f9fa;
+  flex-shrink: 0;
 }
 
 .cancel-button {
@@ -395,19 +470,24 @@
   .add-media-modal {
     width: 95%;
     margin: 1rem;
+    max-height: 95vh;
   }
 
   .modal-header {
     padding: 1rem 1.5rem;
+    flex-shrink: 0;
   }
 
   .modal-body {
     padding: 1.5rem;
+    flex: 1;
+    min-height: 0;
   }
 
   .modal-actions {
     padding: 1rem 1.5rem;
     flex-direction: column;
+    flex-shrink: 0;
   }
 
   .cancel-button,

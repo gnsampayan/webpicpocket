@@ -1,21 +1,25 @@
 import React, { useState, useRef } from 'react';
-import { api } from '../services/api';
-import type { Pocket, ContactUser } from '../types';
-import './CreatePocketModal.css';
-import { API_CONFIG } from '../config/api';
-import env from '../config/env';
+import { api } from '../../services/api';
+import { type ContactUser } from '../../types';
+import './AddPocketMembersModal.css';
 
-interface CreatePocketModalProps {
+interface AddPocketMembersModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPocketCreated: (pocket: Pocket) => void;
+    onMembersAdded: () => void;
+    pocketId: string;
+    pocketTitle: string;
+    existingMembers: string[];
 }
 
-
-const API_URL = env.API_URL;
-
-const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, onPocketCreated }) => {
-    const [title, setTitle] = useState('');
+const AddPocketMembersModal: React.FC<AddPocketMembersModalProps> = ({
+    isOpen,
+    onClose,
+    onMembersAdded,
+    pocketId,
+    pocketTitle,
+    existingMembers
+}) => {
     const [memberSearch, setMemberSearch] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<ContactUser[]>([]);
     const [searchResults, setSearchResults] = useState<ContactUser[]>([]);
@@ -27,127 +31,42 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
     const currentRequestRef = useRef<string | null>(null);
     const shouldShowDropdownRef = useRef(false);
     const memberInputRef = useRef<HTMLInputElement>(null);
-    const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
-    const [coverPhotoUploading, setCoverPhotoUploading] = useState(false);
-    const [coverPhotoObjectKey, setCoverPhotoObjectKey] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!title.trim()) {
-            setError('Pocket title is required');
+    // TODO: Wait for backend to support adding members to existing pockets
+    const handleSubmit = async () => {
+        if (selectedMembers.length === 0) {
+            setError('Please select at least one person to add');
             return;
         }
 
+        setLoading(true);
+        setError(null);
+
         try {
-            setLoading(true);
-            setError(null);
+            const newMemberIds = selectedMembers.map(member => member.id);
 
-            // Prepare request body
-            const requestBody: any = {
-                title: title.trim()
-            };
+            console.log('🔄 Adding members to pocket:', {
+                pocketId,
+                existingMembers: existingMembers.length,
+                newMembers: newMemberIds.length,
+                newMemberIds
+            });
 
-            // Add members if selected
-            if (selectedMembers.length > 0) {
-                requestBody.members = selectedMembers.map(member => member.id);
-            }
+            // Try sending only the new members - the backend might handle adding them to existing
+            await api.updatePocket(pocketId, {
+                members: newMemberIds
+            });
 
-            // Add cover photo object key if available
-            if (coverPhotoObjectKey) {
-                requestBody.cover_photo_object_key = coverPhotoObjectKey;
-            }
-
-            console.log('Creating pocket with data:', requestBody);
-
-            // If cover photo is still uploading, wait for it
-            if (coverPhotoFile && !coverPhotoObjectKey && coverPhotoUploading) {
-                console.log('⏳ Waiting for cover photo upload to complete...');
-                // Wait for upload to complete (this will be handled by the state changes)
-                return;
-            }
-
-            const newPocket = await api.createPocket(requestBody);
-            console.log('✅ Pocket created successfully:', newPocket);
-
-            // Reset form
-            setTitle('');
-            setMemberSearch('');
-            setSelectedMembers([]);
-            setCoverPhotoFile(null);
-            setCoverPhotoObjectKey(null);
-
-            // Call callback and close modal
-            onPocketCreated(newPocket);
-            onClose();
+            console.log('✅ Members added successfully to pocket');
+            onMembersAdded();
+            handleClose();
         } catch (err) {
-            console.error('❌ Failed to create pocket:', err);
-            let errorMessage = 'Failed to create pocket';
-
-            if (err instanceof Error) {
-                if (err.message.includes('Invalid upload response')) {
-                    errorMessage = 'Failed to upload cover photo. Please try again.';
-                } else if (err.message.includes('Cover photo size')) {
-                    errorMessage = 'Cover photo must be less than 10MB.';
-                } else if (err.message.includes('Cover photo must be an image')) {
-                    errorMessage = 'Please select a valid image file for the cover photo.';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-
-            setError(errorMessage);
+            console.error('Error adding members to pocket:', err);
+            setError(err instanceof Error ? err.message : 'Failed to add members to pocket');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-
-        const file = e.target.files?.[0];
-        if (file) {
-            setCoverPhotoFile(file);
-            setCoverPhotoObjectKey(null); // Reset previous object key
-            setCoverPhotoUploading(true);
-
-            try {
-                // Upload to S3 immediately
-                const uploadUrl = `${API_URL}${API_CONFIG.endpoints.upload}`;
-                const fileName = file.name;
-
-                const uploadResponse = await api.authenticatedRequest(uploadUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        files: [fileName],
-                    }),
-                });
-
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadData.uploads || !uploadData.uploads[0]) {
-                    throw new Error("Invalid upload response from server");
-                }
-
-                // Upload file to S3
-                await api.uploadFileToS3(
-                    uploadData.uploads[0].upload_url,
-                    file
-                );
-
-                setCoverPhotoObjectKey(uploadData.uploads[0].object_key);
-                console.log('✅ Cover photo uploaded successfully:', uploadData.uploads[0].object_key);
-            } catch (err) {
-                console.error('❌ Failed to upload cover photo:', err);
-                setError('Failed to upload cover photo. Please try again.');
-                setCoverPhotoFile(null);
-            } finally {
-                setCoverPhotoUploading(false);
-            }
         }
     };
 
@@ -159,11 +78,8 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                 setAbortController(null);
             }
 
-            setTitle('');
             setMemberSearch('');
             setSelectedMembers([]);
-            setCoverPhotoFile(null);
-            setCoverPhotoObjectKey(null);
             setError(null);
             setShouldShowDropdown(false);
             shouldShowDropdownRef.current = false;
@@ -268,8 +184,13 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                     return;
                 }
 
+                // Filter out existing members
+                const availableContacts = contacts.contacts.filter(contact =>
+                    !existingMembers.includes(contact.id)
+                );
+
                 console.log('✅ Loading contacts completed, updating UI');
-                setSearchResults(contacts.contacts);
+                setSearchResults(availableContacts);
                 setShowSearchResults(true);
                 setLoadingContacts(false);
             } catch (err) {
@@ -296,72 +217,34 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
     };
 
+    const handleModalOverlayClick = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) {
+            handleClose();
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="create-pocket-modal-overlay" onClick={handleClose}>
-            <div className="create-pocket-modal" onClick={handleModalClick}>
+        <div className="add-pocket-members-modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="add-pocket-members-modal" onClick={handleModalClick}>
                 <div className="modal-header">
-                    <h2>Create New Pocket</h2>
-                    <button className="close-button" onClick={handleClose} disabled={loading}>
+                    <h2>Add People to {pocketTitle}</h2>
+                    <button onClick={handleClose} className="close-button" disabled={loading}>
                         ✕
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-form">
+                <div className="modal-body">
                     {error && (
                         <div className="error-message">
-                            <span>❌ {error}</span>
+                            {error}
                         </div>
                     )}
 
+                    {/* Member Search Section */}
                     <div className="form-group">
-                        <label htmlFor="cover-photo">Cover Photo (Optional)</label>
-                        <input
-                            id="cover-photo"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            disabled={loading}
-                        />
-                        {coverPhotoFile && (
-                            <div className="selected-file">
-                                <span>📷 {coverPhotoFile.name}</span>
-                                {coverPhotoUploading && (
-                                    <span className="upload-status">⏳ Uploading...</span>
-                                )}
-                                {coverPhotoObjectKey && !coverPhotoUploading && (
-                                    <span className="upload-status success">✅ Uploaded</span>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setCoverPhotoFile(null);
-                                        setCoverPhotoObjectKey(null);
-                                    }}
-                                    disabled={loading}
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="pocket-title">Pocket Title *</label>
-                        <input
-                            id="pocket-title"
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Enter pocket title"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="pocket-members">Add Members (Optional)</label>
+                        <label htmlFor="pocket-members">Select people to add:</label>
                         <div className="member-search-container">
                             <input
                                 ref={memberInputRef}
@@ -409,17 +292,18 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                                         ))
                                     ) : (
                                         <div className="search-result-empty">
-                                            <span>No contacts found</span>
-                                            <small>Try searching with a different name or username</small>
+                                            <span>No available contacts found</span>
+                                            <small>All your contacts may already be in this pocket</small>
                                         </div>
                                     )}
                                 </div>
                             )}
                         </div>
 
+                        {/* Selected Members */}
                         {selectedMembers.length > 0 && (
                             <div className="selected-members">
-                                <small>Selected members:</small>
+                                <small>Selected members ({selectedMembers.length}):</small>
                                 {selectedMembers.map((member) => (
                                     <div key={member.id} className="selected-member">
                                         <div className="selected-member-info">
@@ -440,30 +324,30 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                             </div>
                         )}
                     </div>
+                </div>
 
-                    <div className="modal-actions">
-                        <button
-                            type="button"
-                            className="cancel-button"
-                            onClick={handleClose}
-                            disabled={loading}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="create-button"
-                            disabled={loading || !title.trim() || (!!coverPhotoFile && coverPhotoUploading)}
-                        >
-                            {loading ? 'Creating...' :
-                                coverPhotoFile && coverPhotoUploading ? 'Waiting for upload...' :
-                                    'Create Pocket'}
-                        </button>
-                    </div>
-                </form>
+                <div className="modal-actions">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="cancel-button"
+                        disabled={loading}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="submit-button"
+                        disabled={loading || selectedMembers.length === 0}
+                    >
+                        {loading ? 'Adding Members...' : `Add ${selectedMembers.length} Member${selectedMembers.length !== 1 ? 's' : ''}`}
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
 
-export default CreatePocketModal; 
+export default AddPocketMembersModal; 

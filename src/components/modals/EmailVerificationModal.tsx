@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { api } from '../services';
-import { clearAllStorage, clearCurrentUserId, setStorageItem, getCurrentUserStorageKeys } from '../utils/storage';
+import { api } from '../../services';
+import { clearAllStorage, clearCurrentUserId, setStorageItem, getCurrentUserStorageKeys } from '../../utils/storage';
 import './EmailVerificationModal.css';
 
 interface EmailVerificationModalProps {

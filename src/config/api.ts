@@ -45,7 +45,7 @@ export const API_CONFIG = {
 		pocket: {
 			list: "/v1/pockets",
 			create: "/v1/pockets",
-			edit: "/v1/pockets",
+			edit: "/v1/pockets", // Append with: /{pocket-id}
 			leave: "/v1/pockets",
 		},
 		comments: {

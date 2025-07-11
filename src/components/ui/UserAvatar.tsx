@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getUserData } from '../utils/storage';
-import type { UserInfo } from '../types/api';
+import { getUserData } from '../../utils/storage';
+import type { UserInfo } from '../../types/api';
 import './UserAvatar.css';
 
 interface UserAvatarProps {

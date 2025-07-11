@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import NavBar from './NavBar';
-import UserAvatar from './UserAvatar';
+import NavBar from '../ui/NavBar';
+import UserAvatar from '../ui/UserAvatar';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {

@@ -1,7 +1,7 @@
 // src/components/NavBar.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { clearAllStorage } from '../utils/storage';
+import { clearAllStorage } from '../../utils/storage';
 import './NavBar.css';
 
 const NavBar: React.FC = () => {

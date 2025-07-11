@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-import type { Photo } from '../types';
-import AddMediaModal from './AddMediaModal';
+import { api } from '../../services/api';
+import type { Photo } from '../../types';
+import AddMediaModal from '../modals/AddMediaModal';
 import './GridPhotoView.css';
 
 interface EventDetailResponse {

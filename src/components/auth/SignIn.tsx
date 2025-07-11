@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api, isAuthError, AUTH_ERRORS } from '../services';
-import type { LoginData } from '../services';
+import { api, isAuthError, AUTH_ERRORS } from '../../services';
+import type { LoginData } from '../../services';
 import './SignIn.css';
 
 const SignIn: React.FC = () => {

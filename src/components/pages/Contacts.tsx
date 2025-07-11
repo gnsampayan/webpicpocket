@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './Contacts.css';
-import NavBar from './NavBar';
-import UserAvatar from './UserAvatar';
-import { api } from '../services/api';
-import { useEmailVerification } from '../context/EmailVerificationContext';
-import * as ApiTypes from '../types/api';
+import NavBar from '../ui/NavBar';
+import UserAvatar from '../ui/UserAvatar';
+import { api } from '../../services/api';
+import { useEmailVerification } from '../../context/EmailVerificationContext';
+import * as ApiTypes from '../../types/api';
 
 const Contacts: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
