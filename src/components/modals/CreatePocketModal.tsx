@@ -395,7 +395,25 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                                                 onClick={() => handleMemberSelect(contact)}
                                             >
                                                 <div className="contact-avatar">
-                                                    {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
+                                                    {contact.profile_picture?.url_small ? (
+                                                        <img
+                                                            src={contact.profile_picture.url_small.startsWith('http')
+                                                                ? contact.profile_picture.url_small
+                                                                : `https://${contact.profile_picture.url_small}`}
+                                                            alt={`${contact.first_name} ${contact.last_name}`}
+                                                            onError={(e) => {
+                                                                // Fallback to initials if image fails to load
+                                                                e.currentTarget.style.display = 'none';
+                                                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
+                                                                if (fallback) {
+                                                                    fallback.classList.remove('fallback');
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div className="avatar-fallback">
+                                                        {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
+                                                    </div>
                                                 </div>
                                                 <div className="contact-info">
                                                     <span className="contact-name">
@@ -424,7 +442,25 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                                     <div key={member.id} className="selected-member">
                                         <div className="selected-member-info">
                                             <div className="contact-avatar">
-                                                {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                                {member.profile_picture?.url_small ? (
+                                                    <img
+                                                        src={member.profile_picture.url_small.startsWith('http')
+                                                            ? member.profile_picture.url_small
+                                                            : `https://${member.profile_picture.url_small}`}
+                                                        alt={`${member.first_name} ${member.last_name}`}
+                                                        onError={(e) => {
+                                                            // Fallback to initials if image fails to load
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
+                                                            if (fallback) {
+                                                                fallback.classList.remove('fallback');
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div className="avatar-fallback">
+                                                    {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                                </div>
                                             </div>
                                             <span>{member.first_name} {member.last_name}</span>
                                         </div>

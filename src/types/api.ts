@@ -327,14 +327,10 @@ export interface Event {
 export interface CreateEventRequest {
 	title: string;
 	pocket_id: string;
-	description?: string;
-	members?: string[]; // Additional members to add to the event that are not in the pocket
+	additional_members?: string[]; // Additional members to add to the event that are not in the pocket
 }
 
 export interface EditEventRequest {
 	title?: string;
-	description?: string;
-	members_to_add?: string[];
-	members_to_remove?: string[];
-	pocket_id?: string;
+	members_to_add?: string[]; // Additional members to add to the event that are not in the pocket
 }

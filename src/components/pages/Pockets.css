@@ -271,10 +271,30 @@
   text-align: center;
 }
 
-.pocket-date {
-  margin-top: 0.5rem !important;
-  font-size: 0.75rem !important;
-  color: #999 !important;
+.pocket-dates {
+  margin: 0.5rem 0 0 0;
+}
+
+.pocket-updated,
+.pocket-activity,
+.pocket-created {
+  margin: 0.125rem 0;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.pocket-updated {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.pocket-activity {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.pocket-created {
+  color: #888;
 }
 
 /* Media Section */
@@ -633,6 +653,16 @@
     align-items: flex-start;
     gap: 0.5rem;
   }
+  
+  .pocket-dates {
+    margin: 0.25rem 0 0 0;
+  }
+  
+  .pocket-updated,
+  .pocket-activity,
+  .pocket-created {
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -654,5 +684,16 @@
   
   .media-grid.grid {
     grid-template-columns: 1fr;
+  }
+  
+  .pocket-dates {
+    margin: 0.125rem 0 0 0;
+  }
+  
+  .pocket-updated,
+  .pocket-activity,
+  .pocket-created {
+    font-size: 0.65rem;
+    margin: 0.0625rem 0;
   }
 } 

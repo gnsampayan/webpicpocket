@@ -6,6 +6,7 @@ import UserAvatar from '../ui/UserAvatar';
 import CreatePocketModal from '../modals/CreatePocketModal';
 import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
 import AddPocketMembersModal from '../modals/AddPocketMembersModal';
+import EditPocketModal from '../modals/EditPocketModal';
 import { api } from '../../services/api';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import { type Pocket } from '../../types';
@@ -13,7 +14,7 @@ import { type Pocket } from '../../types';
 const Pockets: React.FC = () => {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState('newest-updated'); // Changed default to newest-updated
     const [pockets, setPockets] = useState<Pocket[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,12 +22,44 @@ const Pockets: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAddPhotosModal, setShowAddPhotosModal] = useState(false);
     const [showAddMembersModal, setShowAddMembersModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedPocketForPhotos, setSelectedPocketForPhotos] = useState<Pocket | null>(null);
     const [selectedPocketForMembers, setSelectedPocketForMembers] = useState<Pocket | null>(null);
+    const [selectedPocketForEdit, setSelectedPocketForEdit] = useState<Pocket | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gQ292ZXIgUGhvdG88L3RleHQ+Cjwvc3ZnPgo=';
+
+    // Helper function to sort pockets based on filter
+    const sortPockets = (pocketsToSort: Pocket[], sortFilter: string): Pocket[] => {
+        const sorted = [...pocketsToSort];
+
+        switch (sortFilter) {
+            case 'newest-updated':
+                return sorted.sort((a, b) => new Date(b.pocket_updated_at).getTime() - new Date(a.pocket_updated_at).getTime());
+            case 'oldest-updated':
+                return sorted.sort((a, b) => new Date(a.pocket_updated_at).getTime() - new Date(b.pocket_updated_at).getTime());
+            case 'newest-activity':
+                return sorted.sort((a, b) => new Date(b.pocket_last_activity_at).getTime() - new Date(a.pocket_last_activity_at).getTime());
+            case 'oldest-activity':
+                return sorted.sort((a, b) => new Date(a.pocket_last_activity_at).getTime() - new Date(b.pocket_last_activity_at).getTime());
+            case 'newest-created':
+                return sorted.sort((a, b) => new Date(b.pocket_created_at).getTime() - new Date(a.pocket_created_at).getTime());
+            case 'oldest-created':
+                return sorted.sort((a, b) => new Date(a.pocket_created_at).getTime() - new Date(b.pocket_created_at).getTime());
+            case 'a-z':
+                return sorted.sort((a, b) => a.pocket_title.localeCompare(b.pocket_title));
+            case 'z-a':
+                return sorted.sort((a, b) => b.pocket_title.localeCompare(a.pocket_title));
+            case 'member-high-low':
+                return sorted.sort((a, b) => b.pocket_members.length - a.pocket_members.length);
+            case 'member-low-high':
+                return sorted.sort((a, b) => a.pocket_members.length - b.pocket_members.length);
+            default:
+                return sorted;
+        }
+    };
 
     // Fetch pockets from API
     useEffect(() => {
@@ -69,6 +102,26 @@ const Pockets: React.FC = () => {
         return `https://${rawUrl}`;
     };
 
+    // Helper function to format date for display
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+        if (diffInHours < 24) {
+            if (diffInHours < 1) {
+                const diffInMinutes = Math.floor(diffInHours * 60);
+                return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+            }
+            return `${Math.floor(diffInHours)} hour${Math.floor(diffInHours) !== 1 ? 's' : ''} ago`;
+        } else if (diffInHours < 168) { // 7 days
+            const diffInDays = Math.floor(diffInHours / 24);
+            return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
+    };
+
     // Handle pocket selection
     const handlePocketClick = (pocket: Pocket) => {
         navigate(`/pockets/${pocket.pocket_id}`);
@@ -98,8 +151,8 @@ const Pockets: React.FC = () => {
                 console.log('Share functionality not implemented yet');
                 break;
             case 'edit':
-                // TODO: Implement edit functionality
-                console.log('Edit functionality not implemented yet');
+                setSelectedPocketForEdit(pocket);
+                setShowEditModal(true);
                 break;
             case 'leave':
                 // TODO: Implement leave functionality
@@ -168,6 +221,30 @@ const Pockets: React.FC = () => {
 
         fetchPockets();
     };
+
+    // Handle pocket updated
+    const handlePocketUpdated = () => {
+        // Refetch pockets data to show updated information
+        const fetchPockets = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const pocketsData = await api.getPockets();
+                setPockets(pocketsData);
+                console.log('✅ Pockets data refreshed after updating pocket');
+            } catch (err) {
+                console.error('Error refreshing pockets after update:', err);
+                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPockets();
+    };
+
+    // Get sorted pockets based on current filter
+    const sortedPockets = sortPockets(pockets, filter);
 
     if (loading) {
         return (
@@ -258,16 +335,16 @@ const Pockets: React.FC = () => {
                         </div>
                         <div className="filter-dropdown">
                             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                                <option value="oldest-newest">Oldest to Newest</option>
-                                <option value="newest-oldest">Newest to Oldest</option>
+                                <option value="newest-updated">Most Recently Updated</option>
+                                <option value="oldest-updated">Least Recently Updated</option>
+                                <option value="newest-activity">Most Recent Activity</option>
+                                <option value="oldest-activity">Least Recent Activity</option>
+                                <option value="newest-created">Newest Created</option>
+                                <option value="oldest-created">Oldest Created</option>
                                 <option value="a-z">A-Z</option>
                                 <option value="z-a">Z-A</option>
                                 <option value="member-high-low">Member Count (High to Low)</option>
                                 <option value="member-low-high">Member Count (Low to High)</option>
-                                <option value="photo-high-low">Photo Count (High to Low)</option>
-                                <option value="photo-low-high">Photo Count (Low to High)</option>
-                                <option value="event-high-low">Event Count (High to Low)</option>
-                                <option value="event-low-high">Event Count (Low to High)</option>
                             </select>
                         </div>
                     </div>
@@ -281,8 +358,8 @@ const Pockets: React.FC = () => {
 
                 {/* Pockets Section */}
                 <section className="albums-section">
-                    <h2>Your Pockets ({pockets.length})</h2>
-                    {pockets.length === 0 ? (
+                    <h2>Your Pockets ({sortedPockets.length})</h2>
+                    {sortedPockets.length === 0 ? (
                         <div className="empty-state">
                             <p>No pockets found. Create your first pocket to get started!</p>
                             <button
@@ -295,7 +372,7 @@ const Pockets: React.FC = () => {
                         </div>
                     ) : (
                         <div className="albums-grid">
-                            {pockets.map((pocket) => (
+                            {sortedPockets.map((pocket) => (
                                 <div
                                     key={pocket.pocket_id}
                                     className="album-card"
@@ -314,9 +391,17 @@ const Pockets: React.FC = () => {
                                     <div className="album-info">
                                         <h3>{pocket.pocket_title}</h3>
                                         <p>{pocket.pocket_members.length} members</p>
-                                        <p className="pocket-date">
-                                            Created: {new Date(pocket.pocket_created_at).toLocaleDateString()}
-                                        </p>
+                                        <div className="pocket-dates">
+                                            <p className="pocket-updated">
+                                                Updated: {formatDate(pocket.pocket_updated_at)}
+                                            </p>
+                                            <p className="pocket-activity">
+                                                Last Activity: {formatDate(pocket.pocket_last_activity_at)}
+                                            </p>
+                                            <p className="pocket-created">
+                                                Created: {formatDate(pocket.pocket_created_at)}
+                                            </p>
+                                        </div>
                                     </div>
 
                                     {/* Options Button */}
@@ -407,6 +492,19 @@ const Pockets: React.FC = () => {
                     pocketId={selectedPocketForMembers.pocket_id}
                     pocketTitle={selectedPocketForMembers.pocket_title}
                     existingMembers={selectedPocketForMembers.pocket_members.map(member => member.id)}
+                />
+            )}
+
+            {/* Edit Pocket Modal */}
+            {selectedPocketForEdit && (
+                <EditPocketModal
+                    isOpen={showEditModal}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedPocketForEdit(null);
+                    }}
+                    onPocketUpdated={handlePocketUpdated}
+                    pocket={selectedPocketForEdit}
                 />
             )}
         </div>
