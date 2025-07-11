@@ -69,6 +69,24 @@
   color: #a00;
 }
 
+.verify-email-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 1rem;
+  transition: all 0.3s ease;
+}
+
+.verify-email-button:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
+}
+
 /* Add Contact Modal */
 .add-contact-modal {
   position: fixed;

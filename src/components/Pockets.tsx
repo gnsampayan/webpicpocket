@@ -5,6 +5,7 @@ import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
 import CreatePocketModal from './CreatePocketModal';
 import { api } from '../services/api';
+import { useEmailVerification } from '../context/EmailVerificationContext';
 import { type Pocket } from '../types';
 
 const Pockets: React.FC = () => {
@@ -16,6 +17,7 @@ const Pockets: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Default placeholder image as data URI for better reliability
     const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gQ292ZXIgUGhvdG88L3RleHQ+Cjwvc3ZnPgo=';
@@ -127,6 +129,19 @@ const Pockets: React.FC = () => {
                     <div className="error-state">
                         <h2>Error Loading Pockets</h2>
                         <p>{error}</p>
+                        {error.includes('verify your email') && (
+                            <button
+                                className="verify-email-button"
+                                onClick={() => {
+                                    setEmailVerifiedCallback(() => () => {
+                                        window.location.reload();
+                                    });
+                                    showEmailVerification();
+                                }}
+                            >
+                                Verify Email
+                            </button>
+                        )}
                         <button onClick={() => window.location.reload()} className="retry-button">
                             Try Again
                         </button>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, isAuthError, AUTH_ERRORS } from '../services';
 import type { RegisterData } from '../services';
+import { validateSignUpForm } from '../utils/validation';
+import { useEmailVerification } from '../context/EmailVerificationContext';
 import './SignUp.css';
 
 const SignUp: React.FC = () => {
@@ -18,6 +20,7 @@ const SignUp: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState<string>('');
     const navigate = useNavigate();
+    const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -36,50 +39,15 @@ const SignUp: React.FC = () => {
     };
 
     const validateForm = () => {
-        const newErrors: { [key: string]: string } = {};
+        const result = validateSignUpForm(formData);
 
-        if (!formData.username.trim()) {
-            newErrors.username = 'Username is required';
-        } else if (formData.username.trim().length < 3) {
-            newErrors.username = 'Username must be at least 3 characters';
-        } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) {
-            newErrors.username = 'Username can only contain letters, numbers, and underscores';
+        if (result.success) {
+            setErrors({});
+            return true;
+        } else {
+            setErrors(result.errors || {});
+            return false;
         }
-
-        if (!formData.firstName.trim()) {
-            newErrors.firstName = 'First name is required';
-        }
-
-        if (!formData.lastName.trim()) {
-            newErrors.lastName = 'Last name is required';
-        }
-
-        if (!formData.email) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters';
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-            newErrors.password = 'Password must contain uppercase, lowercase, and number';
-        }
-
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = 'Please confirm your password';
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match';
-        }
-
-        if (!formData.agreeToTerms) {
-            newErrors.agreeToTerms = 'You must agree to the terms and conditions';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -103,9 +71,13 @@ const SignUp: React.FC = () => {
 
             console.log('Sign up successful:', response);
 
-            // Show success message and redirect to signin
-            alert('Registration successful! Please sign in with your new account.');
-            navigate('/signin');
+            // Set up email verification callback to redirect after verification
+            setEmailVerifiedCallback(() => () => {
+                navigate('/signin');
+            });
+
+            // Show email verification modal
+            showEmailVerification();
 
         } catch (error) {
             console.error('Sign up failed:', error);
@@ -147,10 +119,8 @@ const SignUp: React.FC = () => {
 
         let strength = 0;
         if (formData.password.length >= 8) strength++;
-        if (/[a-z]/.test(formData.password)) strength++;
         if (/[A-Z]/.test(formData.password)) strength++;
         if (/\d/.test(formData.password)) strength++;
-        if (/[^A-Za-z0-9]/.test(formData.password)) strength++;
 
         const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
         const colors = ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#2ecc71'];

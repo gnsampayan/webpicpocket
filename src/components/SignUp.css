@@ -166,15 +166,22 @@
   line-height: 1.4;
   margin-bottom: 0;
   width: auto;
+  padding-left: 0;
+  user-select: none;
+  min-height: 24px;
 }
 
 .checkbox-group .checkbox-label input[type="checkbox"] {
-  width: auto;
+  width: 24px;
+  height: 24px;
   margin-right: 0.5rem;
   opacity: 0;
   position: absolute;
-  left: 0;
-  top: 0.1rem;
+  left: -3px;
+  top: -3px;
+  cursor: pointer;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .checkbox-group .checkmark {
@@ -188,6 +195,8 @@
   transition: all 0.3s ease;
   flex-shrink: 0;
   min-width: 18px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .checkbox-group .checkbox-label input[type="checkbox"]:checked + .checkmark {
@@ -216,15 +225,22 @@
   line-height: 1.4;
   margin-bottom: 0;
   width: auto;
+  padding-left: 0;
+  user-select: none;
+  min-height: 24px;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: auto;
+  width: 24px;
+  height: 24px;
   margin-right: 0.5rem;
   opacity: 0;
   position: absolute;
-  left: 0;
-  top: 0.1rem;
+  left: -3px;
+  top: -3px;
+  cursor: pointer;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .checkmark {
@@ -238,6 +254,7 @@
   transition: all 0.3s ease;
   flex-shrink: 0;
   min-width: 18px;
+  pointer-events: none;
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark {

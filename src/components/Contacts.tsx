@@ -3,6 +3,7 @@ import './Contacts.css';
 import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
 import { api } from '../services/api';
+import { useEmailVerification } from '../context/EmailVerificationContext';
 import * as ApiTypes from '../types/api';
 
 const Contacts: React.FC = () => {
@@ -17,6 +18,7 @@ const Contacts: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<ApiTypes.ContactUser[]>([]);
     const [searching, setSearching] = useState(false);
+    const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Fetch contacts on component mount
     useEffect(() => {
@@ -221,6 +223,20 @@ const Contacts: React.FC = () => {
                 {error && (
                     <div className="error-message">
                         <span>❌ {error}</span>
+                        {error.includes('verify your email') && (
+                            <button
+                                className="verify-email-button"
+                                onClick={() => {
+                                    setEmailVerifiedCallback(() => () => {
+                                        setError(null);
+                                        fetchContacts();
+                                    });
+                                    showEmailVerification();
+                                }}
+                            >
+                                Verify Email
+                            </button>
+                        )}
                         <button onClick={() => setError(null)}>✕</button>
                     </div>
                 )}

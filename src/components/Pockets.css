@@ -500,6 +500,23 @@
   transform: translateY(-2px);
 }
 
+.verify-email-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.verify-email-button:hover {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+}
+
 /* Empty State */
 .empty-state {
   display: flex;

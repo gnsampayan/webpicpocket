@@ -197,7 +197,10 @@ const EventView: React.FC = () => {
         }
 
         return (
-            <div key={event.id} className="event-card" onClick={() => handleEventClick(event)}>
+            <div key={event.id} className="event-card"
+                onClick={() => {
+                    handleOpenGridPhotoView(event);
+                }}>
                 {/* Event Header */}
                 <div className="event-header">
                     <div className="event-title-section">
@@ -206,10 +209,6 @@ const EventView: React.FC = () => {
                         </button>
                         <h3
                             className="event-title clickable-title"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenGridPhotoView(event);
-                            }}
                         >
                             {event.title}
                         </h3>
@@ -217,7 +216,13 @@ const EventView: React.FC = () => {
                     <div className="event-meta">
                         <span className="event-date">{totalPhotoCount} photos</span>
                         <span className="event-updated">Updated {formatDate(event.updated_at)}</span>
-                        <button className="event-options-button">
+                        <button
+                            className="event-options-button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEventClick(event);
+                            }}
+                        >
                             <span>⋯</span>
                         </button>
                     </div>
@@ -291,10 +296,6 @@ const EventView: React.FC = () => {
                                             {totalPhotoCount > 5 && (
                                                 <div
                                                     className="more-photos-overlay"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenGridPhotoView(event);
-                                                    }}
                                                 >
                                                     <span>+{totalPhotoCount - 5}</span>
                                                 </div>

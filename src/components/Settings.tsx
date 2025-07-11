@@ -3,6 +3,7 @@ import NavBar from './NavBar';
 import UserAvatar from './UserAvatar';
 import { api } from '../services/api';
 import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../utils/storage';
+import { useEmailVerification } from '../context/EmailVerificationContext';
 import type { UserInfo } from '../types/api';
 import './Settings.css';
 
@@ -18,6 +19,7 @@ const Settings: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
     const [profileForm, setProfileForm] = useState({
         first_name: '',
         last_name: '',
@@ -341,6 +343,23 @@ const Settings: React.FC = () => {
                                             <p>Manage active sessions</p>
                                         </div>
                                         <button className="security-button">View</button>
+                                    </div>
+                                    <div className="security-item">
+                                        <div className="security-info">
+                                            <h3>Email Verification</h3>
+                                            <p>Verify your email address</p>
+                                        </div>
+                                        <button
+                                            className="security-button"
+                                            onClick={() => {
+                                                setEmailVerifiedCallback(() => () => {
+                                                    window.location.reload();
+                                                });
+                                                showEmailVerification();
+                                            }}
+                                        >
+                                            Verify
+                                        </button>
                                     </div>
                                 </div>
                             </div>
