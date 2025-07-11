@@ -56,7 +56,7 @@ const AddPocketMembersModal: React.FC<AddPocketMembersModalProps> = ({
 
             // Try sending only the new members - the backend might handle adding them to existing
             await api.updatePocket(pocketId, {
-                members: newMemberIds
+                add_members: newMemberIds
             });
 
             console.log('✅ Members added successfully to pocket');

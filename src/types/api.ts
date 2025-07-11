@@ -210,7 +210,7 @@ export interface CreatePocketRequest {
 export interface UpdatePocketRequest {
 	title?: string;
 	cover_photo_object_key?: string;
-	members?: string[];
+	add_members?: string[];
 }
 
 // =============================================
