@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Contacts.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
@@ -7,6 +8,7 @@ import { useEmailVerification } from '../../context/EmailVerificationContext';
 import * as ApiTypes from '../../types/api';
 
 const Contacts: React.FC = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ const Contacts: React.FC = () => {
 
         try {
             setSearching(true);
-            const results = await api.getOtherUsersData(query);
+            const results = await api.searchUsers(query);
             setSearchResults(results);
         } catch (err) {
             console.error('Failed to search users:', err);
@@ -111,6 +113,11 @@ const Contacts: React.FC = () => {
             console.error('Failed to send contact request:', err);
             setError(err instanceof Error ? err.message : 'Failed to send contact request');
         }
+    };
+
+    const handleContactClick = (contact: ApiTypes.ContactUser) => {
+        // Navigate to the profile route with the username
+        navigate(`/contacts/${contact.username}`);
     };
 
     // Filter contacts based on search term and filter
@@ -180,6 +187,8 @@ const Contacts: React.FC = () => {
         return `${contact.first_name} ${contact.last_name}`;
     };
 
+
+
     if (loading) {
         return (
             <div className="contacts-page">
@@ -193,6 +202,7 @@ const Contacts: React.FC = () => {
             </div>
         );
     }
+
 
     return (
         <div className="contacts-page">
@@ -344,7 +354,10 @@ const Contacts: React.FC = () => {
                         {/* Contact Requests Received */}
                         {filteredRequestsReceived.map((contact) => (
                             <div key={`received-${contact.id}`} className="contact-item contact-request">
-                                <div className="contact-avatar">
+                                <div
+                                    className="contact-avatar clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <img
                                         src={getContactAvatar(contact)}
                                         alt={getContactName(contact)}
@@ -355,7 +368,10 @@ const Contacts: React.FC = () => {
                                     />
                                     <span className="status-indicator pending"></span>
                                 </div>
-                                <div className="contact-info">
+                                <div
+                                    className="contact-info clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <h3>{getContactName(contact)}</h3>
                                     <p className="contact-username">@{contact.username}</p>
                                     <p className="contact-status">Wants to connect with you</p>
@@ -382,7 +398,10 @@ const Contacts: React.FC = () => {
                         {/* Sent Contact Requests */}
                         {filteredRequestsSent.map((contact) => (
                             <div key={`sent-${contact.id}`} className="contact-item contact-request">
-                                <div className="contact-avatar">
+                                <div
+                                    className="contact-avatar clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <img
                                         src={getContactAvatar(contact)}
                                         alt={getContactName(contact)}
@@ -393,7 +412,10 @@ const Contacts: React.FC = () => {
                                     />
                                     <span className="status-indicator pending"></span>
                                 </div>
-                                <div className="contact-info">
+                                <div
+                                    className="contact-info clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <h3>{getContactName(contact)}</h3>
                                     <p className="contact-username">@{contact.username}</p>
                                     <p className="contact-status">Request sent</p>
@@ -413,7 +435,10 @@ const Contacts: React.FC = () => {
                         {/* Accepted Contacts */}
                         {filteredContacts.map((contact) => (
                             <div key={contact.id} className="contact-item">
-                                <div className="contact-avatar">
+                                <div
+                                    className="contact-avatar clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <img
                                         src={getContactAvatar(contact)}
                                         alt={getContactName(contact)}
@@ -424,7 +449,10 @@ const Contacts: React.FC = () => {
                                     />
                                     <span className="status-indicator online"></span>
                                 </div>
-                                <div className="contact-info">
+                                <div
+                                    className="contact-info clickable"
+                                    onClick={() => handleContactClick(contact)}
+                                >
                                     <h3>{getContactName(contact)}</h3>
                                     <p className="contact-username">@{contact.username}</p>
                                 </div>

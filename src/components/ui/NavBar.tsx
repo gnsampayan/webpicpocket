@@ -1,7 +1,7 @@
 // src/components/NavBar.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { clearAllStorage } from '../../utils/storage';
+import { logout } from '../../utils/auth';
 import './NavBar.css';
 
 const NavBar: React.FC = () => {
@@ -9,20 +9,10 @@ const NavBar: React.FC = () => {
 
     const handleLogout = async () => {
         try {
-            console.log('Logging out...');
-
-            // Clear all user data and authentication tokens
-            await clearAllStorage();
-
-            console.log('✅ User logged out successfully');
-
-            // Navigate to the landing page
-            navigate('/');
+            await logout('/');
         } catch (error) {
             console.error('❌ Error during logout:', error);
-
             // Even if there's an error, still navigate to landing page
-            // as the user wants to log out
             navigate('/');
         }
     };
@@ -31,6 +21,12 @@ const NavBar: React.FC = () => {
     const handlePocketsClick = (e: React.MouseEvent) => {
         e.preventDefault();
         navigate('/pockets');
+    };
+
+    // Handle Contacts navigation - always go to main contacts page
+    const handleContactsClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        navigate('/contacts');
     };
 
     return (
@@ -56,7 +52,11 @@ const NavBar: React.FC = () => {
                     </Link>
                 </li>
                 <li className="nav-item">
-                    <Link to="/contacts" className="nav-link">
+                    <Link
+                        to="/contacts"
+                        className="nav-link"
+                        onClick={handleContactsClick}
+                    >
                         <span className="nav-icon">👥</span>
                         Contacts
                     </Link>

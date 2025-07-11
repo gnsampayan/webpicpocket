@@ -87,6 +87,26 @@
   transform: translateY(-1px);
 }
 
+
+
+/* Clickable Elements */
+.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clickable:hover {
+  transform: scale(1.02);
+}
+
+.contact-avatar.clickable:hover img {
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.contact-info.clickable:hover h3 {
+  color: #667eea;
+}
+
 /* Add Contact Modal */
 .add-contact-modal {
   position: fixed;
@@ -685,6 +705,22 @@
     width: 100%;
     justify-content: flex-start;
   }
+
+  /* Profile View Responsive */
+  .profile-avatar-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .profile-actions {
+    justify-content: center;
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -712,5 +748,23 @@
 
   .contact-actions {
     flex-wrap: wrap;
+  }
+
+  /* Profile View Mobile */
+  .profile-content {
+    padding: 1rem;
+  }
+
+  .profile-avatar img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-actions {
+    flex-direction: column;
   }
 } 

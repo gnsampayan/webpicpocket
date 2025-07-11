@@ -438,14 +438,17 @@ export const api = {
 					if (
 						refreshError instanceof Error &&
 						(refreshError.message === "REFRESH_TOKEN_INVALID" ||
-							refreshError.message === "Failed to refresh token")
+							refreshError.message === "Failed to refresh token" ||
+							refreshError.message === "Refresh token is invalid")
 					) {
 						console.error(
-							"❌ [API] Refresh token invalid, user needs to log in again"
+							"❌ [API] Refresh token invalid, logging out user and redirecting to login"
 						);
-						await clearAccessToken();
-						await clearRefreshToken();
-						await clearUserData();
+
+						// Use centralized logout function
+						const { logout } = await import("../utils/auth");
+						await logout("/signin");
+
 						const err = new AuthError(
 							"Refresh token is invalid",
 							"refresh_token_invalid"
@@ -615,10 +618,17 @@ export const api = {
 		}
 	},
 
-	async getOtherUsersData(query: string): Promise<ApiTypes.ContactUser[]> {
-		const url = `${API_URL}${API_CONFIG.endpoints.profile}/${encodeURIComponent(
-			query
-		)}`;
+	// =============================================
+	// USER SEARCH FUNCTIONS
+	// =============================================
+
+	/**
+	 * Search for users by query (username, first name, or last name)
+	 */
+	async searchUsers(query: string): Promise<ApiTypes.ContactUser[]> {
+		const url = `${API_URL}${
+			API_CONFIG.endpoints.global_user_search
+		}/${encodeURIComponent(query)}`;
 		try {
 			const response = await this.authenticatedRequest(url, {
 				method: "GET",
@@ -626,7 +636,7 @@ export const api = {
 			const responseData = await response.json();
 			return responseData;
 		} catch (error) {
-			console.error("❌ [API] Error searching profile pictures:", error);
+			console.error("❌ [API] Error searching users:", error);
 			throw error;
 		}
 	},
@@ -672,12 +682,13 @@ export const api = {
 		const uploadUrl = `${API_URL}${API_CONFIG.endpoints.upload}`;
 		try {
 			// Use the actual file name instead of generating a generic one
-			const fileName = (file as File).name || `profile.${mimeType.split("/")[1]}`;
+			const fileName =
+				(file as File).name || `profile.${mimeType.split("/")[1]}`;
 
-			console.log('🔍 [API] Starting profile picture upload:', {
+			console.log("🔍 [API] Starting profile picture upload:", {
 				fileName,
 				fileSize: `${fileSizeMB.toFixed(2)}MB`,
-				mimeType
+				mimeType,
 			});
 
 			const uploadResponse = await this.authenticatedRequest(uploadUrl, {
@@ -700,17 +711,17 @@ export const api = {
 			}
 
 			const uploadData = await uploadResponse.json();
-			console.log('🔍 [API] Upload response received:', uploadData);
+			console.log("🔍 [API] Upload response received:", uploadData);
 
 			// Upload file to S3
 			await this.uploadFileToS3(uploadData.uploads[0].upload_url, file);
-			console.log('✅ [API] File uploaded to S3 successfully');
+			console.log("✅ [API] File uploaded to S3 successfully");
 
 			// Update profile with the object key
 			const profileUpdate = await this.updateProfile({
 				profile_object_key: uploadData.uploads[0].object_key,
 			});
-			console.log('✅ [API] Profile updated successfully:', profileUpdate);
+			console.log("✅ [API] Profile updated successfully:", profileUpdate);
 
 			return profileUpdate;
 		} catch (error) {
@@ -728,7 +739,7 @@ export const api = {
 					"Content-Type": "application/json",
 				},
 			});
-			
+
 			if (!response.ok) {
 				const errorText = await response.text();
 				console.error("❌ [API] Delete profile picture failed:", {
@@ -1049,7 +1060,7 @@ export const api = {
 			console.log("🔍 [API] Creating event at URL:", url);
 			console.log("🔍 [API] Request data:", data);
 			console.log("🔍 [API] Request body JSON:", JSON.stringify(data, null, 2));
-			
+
 			const response = await this.authenticatedRequest(url, {
 				method: "POST",
 				headers: {
@@ -1374,4 +1385,4 @@ export const api = {
 };
 
 // Export token management functions for external use
-export { setAccessToken, clearAccessToken };
+export { setAccessToken, clearAccessToken, clearRefreshToken, clearUserData };

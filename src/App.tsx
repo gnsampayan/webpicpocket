@@ -8,6 +8,7 @@ import Contacts from './components/pages/Contacts';
 import Settings from './components/pages/Settings';
 import EventView from './components/views/EventView';
 import GridPhotoView from './components/views/GridPhotoView';
+import ProfileView from './components/views/ProfileView';
 import ProtectedRoute from './components/ProtectedRoute';
 import { EmailVerificationProvider } from './context/EmailVerificationContext';
 import GlobalEmailVerificationModal from './components/modals/GlobalEmailVerificationModal';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/pockets/:pocketId" element={<ProtectedRoute><EventView /></ProtectedRoute>} />
             <Route path="/pockets/:pocketId/:eventId" element={<ProtectedRoute><GridPhotoView /></ProtectedRoute>} />
             <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+            <Route path="/contacts/:username" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           </Routes>
           <GlobalEmailVerificationModal />
