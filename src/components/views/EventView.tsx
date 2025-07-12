@@ -188,14 +188,6 @@ const EventView: React.FC = () => {
         // Debug: Log the entire event object to see its structure
         console.log(`Event "${event.title}" full data:`, event);
 
-        // Debug logging to help identify photo rendering issues
-        if (previewPhotos.length > 0) {
-            console.log(`Event "${event.title}" has ${previewPhotos.length} preview photos:`, previewPhotos);
-            console.log(`First photo URL:`, getPhotoUrl(previewPhotos[0]));
-        } else {
-            console.log(`Event "${event.title}" has no preview photos. Photo count: ${totalPhotoCount}`);
-        }
-
         return (
             <div key={event.id} className="event-card"
                 onClick={() => {
