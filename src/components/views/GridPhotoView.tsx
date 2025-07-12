@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import type { Photo } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
+import PhotoDetailsModal from '../modals/PhotoDetailsModal';
 import './GridPhotoView.css';
 
 interface EventDetailResponse {
@@ -368,47 +369,12 @@ const GridPhotoView: React.FC = () => {
             </main>
 
             {/* Photo Detail Modal */}
-            {selectedPhoto && (
-                <div className="photo-detail-modal">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h2>Photo Details</h2>
-                            <button onClick={handleClosePhotoDetail} className="close-button">
-                                ✕
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="photo-detail-image">
-                                <img
-                                    src={getPhotoUrl(selectedPhoto)}
-                                    alt="Event photo"
-                                    onError={(e) => {
-                                        e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
-                                    }}
-                                />
-                            </div>
-                            <div className="photo-detail-info">
-                                <p className="photo-date">
-                                    Added {new Date(selectedPhoto.created_at).toLocaleDateString()}
-                                </p>
-                                <p className="photo-type">
-                                    Type: {selectedPhoto.media_type}
-                                </p>
-                                {selectedPhoto.comment_count > 0 && (
-                                    <p className="photo-comments">
-                                        Comments: {selectedPhoto.comment_count}
-                                    </p>
-                                )}
-                                {selectedPhoto.locks_at && (
-                                    <p className="photo-locks">
-                                        Locks at: {new Date(selectedPhoto.locks_at).toLocaleDateString()}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <PhotoDetailsModal
+                photo={selectedPhoto}
+                isOpen={!!selectedPhoto}
+                onClose={handleClosePhotoDetail}
+                getPhotoUrl={getPhotoUrl}
+            />
 
             {/* Add Media Modal */}
             <AddMediaModal

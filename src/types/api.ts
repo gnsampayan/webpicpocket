@@ -281,6 +281,12 @@ export interface PhotoCommentView {
 	updated_at: string;
 }
 
+export interface PhotoDetails {
+	photo_author: PocketMember;
+	photo_metadata: Record<string, any>;
+	comments: PhotoCommentView[];
+}
+
 // =============================================
 // SUB-ALBUM/EVENT INTERFACES
 // =============================================

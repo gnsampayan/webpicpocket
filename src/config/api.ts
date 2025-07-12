@@ -51,13 +51,14 @@ export const API_CONFIG = {
 		},
 		comments: {
 			add: "/v1/photo", // Append with: /{photo-id}
-			edit: "/v1/comments", // Append with: /{comment-id}
-			delete: "/v1/comments", // Append with: /{comment-id}
+			edit: "/v1/comment", // Append with: /{comment-id}
+			delete: "/v1/comment", // Append with: /{comment-id}
 		},
 		photos: {
 			upload: "/v1/photos", // Append with: /{event-id}
 			delete: "/v1/photo", // Append with: /{photo-id}
 			getComments: "/v1/photo", // Append with: /{photo-id}
+			getDetails: "/v1/photo", // Append with: /{photo-id}
 		},
 		events: {
 			list: "/v1/pockets", // Append with: /{pocket-id}

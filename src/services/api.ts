@@ -1197,6 +1197,32 @@ export const api = {
 		}
 	},
 
+	async getPhotoDetails(photoId: string): Promise<ApiTypes.PhotoDetails> {
+		const url = `${API_URL}${API_CONFIG.endpoints.photos.getDetails}/${photoId}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Get photo details failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to get photo details");
+			}
+			const responseData = await response.json();
+			console.log("✅ [API] Photo details fetched successfully:", responseData);
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error getting photo details:", error);
+			throw error;
+		}
+	},
+
 	async getPhotoComments(
 		photoId: string
 	): Promise<ApiTypes.PhotoCommentView[]> {
@@ -1217,7 +1243,8 @@ export const api = {
 				throw new Error(errorText || "Failed to get photo comments");
 			}
 			const responseData = await response.json();
-			return responseData;
+			console.log("✅ [API] Photo comments fetched successfully:", responseData);
+			return responseData.comments || [];
 		} catch (error) {
 			console.error("❌ [API] Error getting photo comments:", error);
 			throw error;
@@ -1238,7 +1265,9 @@ export const api = {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify(data),
+				body: JSON.stringify({ content: data.text }), 
+				//TODO: add "object_key" later for audio comments. 
+				// Content and object_key are required but mutually exclusive.
 			});
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -1248,6 +1277,7 @@ export const api = {
 				});
 				throw new Error(errorText || "Failed to add comment");
 			}
+			console.log("✅ [API] Comment added successfully");
 			return await response.json();
 		} catch (error) {
 			console.error("❌ [API] Error adding comment:", error);
@@ -1266,7 +1296,7 @@ export const api = {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ text: data.text }),
+				body: JSON.stringify({ content: data.text }),
 			});
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -1276,6 +1306,7 @@ export const api = {
 				});
 				throw new Error(errorText || "Failed to edit comment");
 			}
+			console.log("✅ [API] Comment edited successfully");
 			return await response.json();
 		} catch (error) {
 			console.error("❌ [API] Error editing comment:", error);
