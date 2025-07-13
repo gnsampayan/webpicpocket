@@ -254,6 +254,14 @@ const GridPhotoView: React.FC = () => {
                 };
             });
 
+            // Also update the selected photo if it's the same photo
+            setSelectedPhoto(prev => {
+                if (prev && prev.id === photo.id) {
+                    return { ...prev, is_favorite: !prev.is_favorite };
+                }
+                return prev;
+            });
+
             console.log('✅ Photo favorite status updated');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to toggle favorite:', err);
@@ -567,6 +575,8 @@ const GridPhotoView: React.FC = () => {
                 isOpen={!!selectedPhoto}
                 onClose={handleClosePhotoDetail}
                 getPhotoUrl={getPhotoUrl}
+                onToggleFavorite={handleToggleFavorite}
+                onDeletePhoto={handleDeletePhoto}
             />
 
             {/* Add Media Modal */}
