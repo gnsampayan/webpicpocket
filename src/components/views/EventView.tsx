@@ -12,7 +12,7 @@ import { api } from '../../services/api';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
 
 const EventView: React.FC = () => {
-    const { pocketId } = useParams<{ pocketId: string }>();
+    const { pocketTitle } = useParams<{ pocketTitle: string }>();
     const navigate = useNavigate();
 
     // Load initial state from localStorage
@@ -83,11 +83,11 @@ const EventView: React.FC = () => {
         }
     };
 
-    // Fetch pocket and events data when component mounts or pocketId changes
+    // Fetch pocket and events data when component mounts or pocketTitle changes
     useEffect(() => {
         const fetchPocketAndEvents = async () => {
-            if (!pocketId) {
-                setError('No pocket ID provided');
+            if (!pocketTitle) {
+                setError('No pocket title provided');
                 setLoading(false);
                 return;
             }
@@ -96,9 +96,16 @@ const EventView: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
+                // Parse pocket ID suffix from URL
+                const decodedPocketTitle = decodeURIComponent(pocketTitle);
+                const lastDashIndex = decodedPocketTitle.lastIndexOf('-');
+                const pocketIdSuffix = lastDashIndex !== -1 ? decodedPocketTitle.substring(lastDashIndex + 1) : '';
+
                 // Fetch pocket details
                 const pocketsData = await api.getPockets();
-                const currentPocket = pocketsData.find(p => p.pocket_id === pocketId);
+                const currentPocket = pocketsData.find(p =>
+                    p.pocket_id.endsWith(pocketIdSuffix)
+                );
 
                 if (!currentPocket) {
                     throw new Error('Pocket not found');
@@ -107,7 +114,7 @@ const EventView: React.FC = () => {
                 setPocket(currentPocket);
 
                 // Fetch events for this pocket
-                const eventsData = await api.getEvents(pocketId);
+                const eventsData = await api.getEvents(currentPocket.pocket_id);
                 setEvents(eventsData);
 
                 console.log('EventView loaded pocket:', currentPocket);
@@ -121,7 +128,7 @@ const EventView: React.FC = () => {
         };
 
         fetchPocketAndEvents();
-    }, [pocketId]);
+    }, [pocketTitle]);
 
     // Debug: Log events data when component mounts or events change
     useEffect(() => {
@@ -249,7 +256,11 @@ const EventView: React.FC = () => {
 
     // Handle open grid photo view
     const handleOpenGridPhotoView = (event: Event) => {
-        navigate(`/pockets/${pocketId}/${event.id}`);
+        const pocketIdSuffix = pocket?.pocket_id.slice(-6) || '';
+        const eventIdSuffix = event.id.slice(-6);
+        const truncatedPocketTitle = pocket?.pocket_title && pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket?.pocket_title || '';
+        const truncatedEventTitle = event.title.length > 50 ? event.title.substring(0, 50) + '...' : event.title;
+        navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}`);
     };
 
     // Handle options menu toggle
@@ -313,7 +324,7 @@ const EventView: React.FC = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const eventsData = await api.getEvents(pocketId || '');
+                const eventsData = await api.getEvents(pocket?.pocket_id || '');
                 setEvents(eventsData);
                 console.log('✅ Events data refreshed after adding media');
             } catch (err) {
@@ -334,7 +345,7 @@ const EventView: React.FC = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const eventsData = await api.getEvents(pocketId || '');
+                const eventsData = await api.getEvents(pocket?.pocket_id || '');
                 setEvents(eventsData);
                 console.log('✅ Events data refreshed after adding members');
             } catch (err) {
@@ -355,7 +366,7 @@ const EventView: React.FC = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const eventsData = await api.getEvents(pocketId || '');
+                const eventsData = await api.getEvents(pocket?.pocket_id || '');
                 setEvents(eventsData);
                 console.log('✅ Events data refreshed after updating event');
             } catch (err) {
@@ -735,7 +746,7 @@ const EventView: React.FC = () => {
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onEventCreated={handleEventCreated}
-                pocketId={pocketId || ''}
+                pocketId={pocket?.pocket_id || ''}
                 pocket={pocket}
             />
 

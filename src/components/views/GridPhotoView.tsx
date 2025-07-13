@@ -31,7 +31,7 @@ interface EventDetailResponse {
 }
 
 const GridPhotoView: React.FC = () => {
-    const { pocketId, eventId } = useParams<{ pocketId: string; eventId: string }>();
+    const { pocketTitle, eventTitle } = useParams<{ pocketTitle: string; eventTitle: string }>();
     const navigate = useNavigate();
 
     const [eventData, setEventData] = useState<EventDetailResponse | null>(null);
@@ -91,8 +91,8 @@ const GridPhotoView: React.FC = () => {
 
     useEffect(() => {
         const fetchEventAndPocketData = async () => {
-            if (!eventId || !pocketId) {
-                setError('No event ID or pocket ID provided');
+            if (!eventTitle || !pocketTitle) {
+                setError('No event title or pocket title provided');
                 setLoading(false);
                 return;
             }
@@ -101,20 +101,43 @@ const GridPhotoView: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
-                console.log('🔍 [GridPhotoView] Fetching event details for event ID:', eventId);
-                console.log('🔍 [GridPhotoView] Fetching pocket data for pocket ID:', pocketId);
+                // Parse pocket title and ID suffix from URL
+                const decodedPocketTitle = decodeURIComponent(pocketTitle);
+                const pocketLastDashIndex = decodedPocketTitle.lastIndexOf('-');
+                const actualPocketTitle = pocketLastDashIndex !== -1 ? decodedPocketTitle.substring(0, pocketLastDashIndex) : decodedPocketTitle;
+                const pocketIdSuffix = pocketLastDashIndex !== -1 ? decodedPocketTitle.substring(pocketLastDashIndex + 1) : '';
 
-                // Fetch both event details and pocket data in parallel
-                const [eventResponse, pocketsData] = await Promise.all([
-                    api.getEventDetails(eventId),
-                    api.getPockets()
-                ]);
+                // Parse event title and ID suffix from URL
+                const decodedEventTitle = decodeURIComponent(eventTitle);
+                const eventLastDashIndex = decodedEventTitle.lastIndexOf('-');
+                const actualEventTitle = eventLastDashIndex !== -1 ? decodedEventTitle.substring(0, eventLastDashIndex) : decodedEventTitle;
+                const eventIdSuffix = eventLastDashIndex !== -1 ? decodedEventTitle.substring(eventLastDashIndex + 1) : '';
 
-                const currentPocket = pocketsData.find(p => p.pocket_id === pocketId);
+                console.log('🔍 [GridPhotoView] Fetching data for pocket:', actualPocketTitle, 'with suffix:', pocketIdSuffix);
+                console.log('🔍 [GridPhotoView] Fetching data for event:', actualEventTitle, 'with suffix:', eventIdSuffix);
+
+                // Fetch pockets data first to find the pocket
+                const pocketsData = await api.getPockets();
+                const currentPocket = pocketsData.find(p =>
+                    p.pocket_id.endsWith(pocketIdSuffix)
+                );
 
                 if (!currentPocket) {
                     throw new Error('Pocket not found');
                 }
+
+                // Fetch events for this pocket to find the event
+                const eventsData = await api.getEvents(currentPocket.pocket_id);
+                const currentEvent = eventsData.find(e =>
+                    e.id.endsWith(eventIdSuffix)
+                );
+
+                if (!currentEvent) {
+                    throw new Error('Event not found');
+                }
+
+                // Fetch event details using the event ID
+                const eventResponse = await api.getEventDetails(currentEvent.id);
 
                 console.log('✅ [GridPhotoView] Event details fetched successfully:', eventResponse);
                 console.log('✅ [GridPhotoView] Pocket data fetched successfully:', currentPocket);
@@ -130,12 +153,12 @@ const GridPhotoView: React.FC = () => {
         };
 
         fetchEventAndPocketData();
-    }, [eventId, pocketId]);
+    }, [eventTitle, pocketTitle]);
 
     // Handle back to event view
     const handleBackToEventView = () => {
-        if (pocketId) {
-            navigate(`/pockets/${pocketId}`);
+        if (pocketTitle) {
+            navigate(`/pockets/${pocketTitle}`);
         } else {
             navigate('/pockets');
         }
@@ -208,10 +231,14 @@ const GridPhotoView: React.FC = () => {
     // Handle photo favorite toggle
     const handleToggleFavorite = async (photo: Photo) => {
         try {
+            console.log('🔄 [GridPhotoView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
+
             if (photo.is_favorite) {
-                await api.unfavoritePhoto(photo.id);
+                console.log('🔄 [GridPhotoView] Removing from favorites...');
+                await api.manageFavorite({ remove_favorite: [photo.id] });
             } else {
-                await api.favoritePhoto(photo.id);
+                console.log('🔄 [GridPhotoView] Adding to favorites...');
+                await api.manageFavorite({ add_favorite: [photo.id] });
             }
 
             // Update the photo in the local state
@@ -230,6 +257,17 @@ const GridPhotoView: React.FC = () => {
             console.log('✅ Photo favorite status updated');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to toggle favorite:', err);
+
+            // Show user-friendly error message
+            if (err instanceof Error) {
+                if (err.message.includes('502')) {
+                    console.error('❌ [GridPhotoView] Server is temporarily unavailable. Please try again later.');
+                } else if (err.message.includes('Network')) {
+                    console.error('❌ [GridPhotoView] Network error. Please check your connection.');
+                } else {
+                    console.error('❌ [GridPhotoView] Unexpected error:', err.message);
+                }
+            }
         }
     };
 
@@ -271,7 +309,7 @@ const GridPhotoView: React.FC = () => {
         // Refetch event data to get the updated photos from the backend
         try {
             setLoading(true);
-            const updatedEventData = await api.getEventDetails(eventId || '');
+            const updatedEventData = await api.getEventDetails(eventData?.event_id || '');
             setEventData(updatedEventData);
             console.log('✅ [GridPhotoView] Event data refreshed with new photos');
         } catch (err) {
@@ -536,7 +574,7 @@ const GridPhotoView: React.FC = () => {
                 isOpen={showAddMediaModal}
                 onClose={() => setShowAddMediaModal(false)}
                 onMediaAdded={handleMediaAdded}
-                eventId={eventId || ''}
+                eventId={eventData?.event_id || ''}
                 eventTitle={eventData.title}
             />
         </div>

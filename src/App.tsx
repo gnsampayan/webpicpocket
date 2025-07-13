@@ -25,8 +25,8 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/pockets" element={<ProtectedRoute><Pockets /></ProtectedRoute>} />
-            <Route path="/pockets/:pocketId" element={<ProtectedRoute><EventView /></ProtectedRoute>} />
-            <Route path="/pockets/:pocketId/:eventId" element={<ProtectedRoute><GridPhotoView /></ProtectedRoute>} />
+            <Route path="/pockets/:pocketTitle" element={<ProtectedRoute><EventView /></ProtectedRoute>} />
+            <Route path="/pockets/:pocketTitle/:eventTitle" element={<ProtectedRoute><GridPhotoView /></ProtectedRoute>} />
             <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
             <Route path="/contacts/:username" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

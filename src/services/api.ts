@@ -1339,7 +1339,7 @@ export const api = {
 
 	//TODO: Update with config api.ts
 	async getEventDetails(eventId: string): Promise<any> {
-		const url = `${API_URL}/v1/events/${eventId}`;
+		const url = `${API_URL}${API_CONFIG.endpoints.events.getDetails}/${eventId}`;
 		try {
 			const response = await this.authenticatedRequest(url, {
 				method: "GET",
@@ -1365,14 +1365,15 @@ export const api = {
 	},
 
 	//TODO: Update with config api.ts
-	async favoritePhoto(photoId: string): Promise<void> {
-		const url = `${API_URL}/v1/photos/${photoId}/favorite`;
+	async manageFavorite(data: ApiTypes.FavoritePhotoRequest): Promise<void> {
+		const url = `${API_URL}${API_CONFIG.endpoints.photos.favorite}`;
 		try {
 			const response = await this.authenticatedRequest(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
+				body: JSON.stringify(data),
 			});
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -1385,31 +1386,6 @@ export const api = {
 			console.log("✅ [API] Photo favorited successfully");
 		} catch (error) {
 			console.error("❌ [API] Error favoriting photo:", error);
-			throw error;
-		}
-	},
-
-	//TODO: Update with config api.ts
-	async unfavoritePhoto(photoId: string): Promise<void> {
-		const url = `${API_URL}/v1/photos/${photoId}/favorite`;
-		try {
-			const response = await this.authenticatedRequest(url, {
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error("❌ [API] Unfavorite photo failed:", {
-					status: response.status,
-					error: errorText,
-				});
-				throw new Error(errorText || "Failed to unfavorite photo");
-			}
-			console.log("✅ [API] Photo unfavorited successfully");
-		} catch (error) {
-			console.error("❌ [API] Error unfavoriting photo:", error);
 			throw error;
 		}
 	},

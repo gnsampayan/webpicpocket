@@ -59,6 +59,7 @@ export const API_CONFIG = {
 			delete: "/v1/photo", // Append with: /{photo-id}
 			getComments: "/v1/photo", // Append with: /{photo-id}
 			getDetails: "/v1/photo", // Append with: /{photo-id}
+			favorite: "/v1/favorite",
 		},
 		events: {
 			list: "/v1/pockets", // Append with: /{pocket-id}
@@ -66,6 +67,7 @@ export const API_CONFIG = {
 			attachPhotos: "/v1/photos", // Append with: /{event-id}
 			getPhotos: "/v1/events", // Append with: /{event-id}
 			edit: "/v1/events", // Append with: /{event-id}
+			getDetails: "/v1/events", // Append with: /{event-id}
 		},
 	},
 

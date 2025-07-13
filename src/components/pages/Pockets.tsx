@@ -185,7 +185,9 @@ const Pockets: React.FC = () => {
 
     // Handle pocket selection
     const handlePocketClick = (pocket: Pocket) => {
-        navigate(`/pockets/${pocket.pocket_id}`);
+        const pocketIdSuffix = pocket.pocket_id.slice(-6); // Last 6 characters of pocket ID
+        const truncatedTitle = pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket.pocket_title;
+        navigate(`/pockets/${encodeURIComponent(truncatedTitle)}-${pocketIdSuffix}`);
     };
 
     // Handle options menu toggle

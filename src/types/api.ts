@@ -287,6 +287,11 @@ export interface PhotoDetails {
 	comments: PhotoCommentView[];
 }
 
+export interface FavoritePhotoRequest {
+	add_favorite?: string[];
+	remove_favorite?: string[];
+}
+
 // =============================================
 // SUB-ALBUM/EVENT INTERFACES
 // =============================================
