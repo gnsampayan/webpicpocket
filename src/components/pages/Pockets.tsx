@@ -9,12 +9,25 @@ import AddPocketMembersModal from '../modals/AddPocketMembersModal';
 import EditPocketModal from '../modals/EditPocketModal';
 import { api } from '../../services/api';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
-import { type Pocket } from '../../types';
+import { type Pocket, type PocketMember } from '../../types';
 
 const Pockets: React.FC = () => {
     const navigate = useNavigate();
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [filter, setFilter] = useState('newest-updated'); // Changed default to newest-updated
+
+    // Load initial state from localStorage
+    const getInitialViewMode = (): 'grid' | 'list' => {
+        const saved = localStorage.getItem('pockets-view-mode');
+        return (saved === 'list' || saved === 'grid') ? saved : 'grid';
+    };
+
+    const getInitialFilter = (): string => {
+        const saved = localStorage.getItem('pockets-sort-filter');
+        return saved || 'newest-updated';
+    };
+
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
+    const [filter, setFilter] = useState(getInitialFilter);
+    const [searchQuery, setSearchQuery] = useState('');
     const [pockets, setPockets] = useState<Pocket[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -28,8 +41,29 @@ const Pockets: React.FC = () => {
     const [selectedPocketForEdit, setSelectedPocketForEdit] = useState<Pocket | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
-    // Default placeholder image as data URI for better reliability
+    // Functions to save state to localStorage
+    const saveViewMode = (mode: 'grid' | 'list') => {
+        localStorage.setItem('pockets-view-mode', mode);
+    };
+
+    const saveFilter = (filterValue: string) => {
+        localStorage.setItem('pockets-sort-filter', filterValue);
+    };
+
+    // Wrapper functions to update state and save to localStorage
+    const handleViewModeChange = (mode: 'grid' | 'list') => {
+        setViewMode(mode);
+        saveViewMode(mode);
+    };
+
+    const handleFilterChange = (filterValue: string) => {
+        setFilter(filterValue);
+        saveFilter(filterValue);
+    };
+
+    // Default placeholder images as data URI for better reliability
     const DEFAULT_COVER_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gQ292ZXIgUGhvdG88L3RleHQ+Cjwvc3ZnPgo=';
+    const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
     // Helper function to sort pockets based on filter
     const sortPockets = (pocketsToSort: Pocket[], sortFilter: string): Pocket[] => {
@@ -90,6 +124,33 @@ const Pockets: React.FC = () => {
 
         if (!rawUrl) {
             return DEFAULT_COVER_PLACEHOLDER;
+        }
+
+        // URLs are already perfect S3 signed URLs - no decoding needed!
+        // If it's already HTTP, return as-is
+        if (rawUrl.startsWith("http")) {
+            return rawUrl;
+        }
+
+        // If it doesn't start with http, add https:// (fallback)
+        return `https://${rawUrl}`;
+    };
+
+    // Helper function to get profile picture URL - similar to EventView implementation
+    const getProfilePictureUrl = (member: PocketMember): string => {
+        let rawUrl: string | undefined;
+
+        // Handle different profile picture formats from API
+        if (member.profile_picture_default) {
+            // User has default profile picture, use placeholder
+            return DEFAULT_PROFILE_PLACEHOLDER;
+        } else if (member.profile_picture) {
+            // Prioritize small for avatars, then medium, then large
+            rawUrl = member.profile_picture?.url_small ?? member.profile_picture?.url_medium ?? member.profile_picture?.url_large;
+        }
+
+        if (!rawUrl) {
+            return DEFAULT_PROFILE_PLACEHOLDER;
         }
 
         // URLs are already perfect S3 signed URLs - no decoding needed!
@@ -243,8 +304,23 @@ const Pockets: React.FC = () => {
         fetchPockets();
     };
 
+    // Filter pockets based on search query
+    const filteredPockets = pockets.filter(pocket => {
+        if (!searchQuery.trim()) return true;
+
+        const query = searchQuery.toLowerCase().trim();
+        return (
+            pocket.pocket_title.toLowerCase().includes(query) ||
+            pocket.pocket_members.some(member =>
+                member.first_name.toLowerCase().includes(query) ||
+                member.last_name.toLowerCase().includes(query) ||
+                member.username.toLowerCase().includes(query)
+            )
+        );
+    });
+
     // Get sorted pockets based on current filter
-    const sortedPockets = sortPockets(pockets, filter);
+    const sortedPockets = sortPockets(filteredPockets, filter);
 
     if (loading) {
         return (
@@ -319,22 +395,43 @@ const Pockets: React.FC = () => {
                 {/* Controls */}
                 <section className="controls-section">
                     <div className="controls-left">
+                        <div className="search-box">
+                            <input
+                                type="text"
+                                placeholder="Search pockets..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <span className="search-icon">🔍</span>
+                            {searchQuery.trim() && (
+                                <button
+                                    className="clear-search-button"
+                                    onClick={() => setSearchQuery('')}
+                                    type="button"
+                                    aria-label="Clear search"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="controls-right">
                         <div className="view-toggle">
                             <button
                                 className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
-                                onClick={() => setViewMode('grid')}
+                                onClick={() => handleViewModeChange('grid')}
                             >
                                 <span>⊞</span>
                             </button>
                             <button
                                 className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
-                                onClick={() => setViewMode('list')}
+                                onClick={() => handleViewModeChange('list')}
                             >
                                 <span>☰</span>
                             </button>
                         </div>
                         <div className="filter-dropdown">
-                            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                            <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
                                 <option value="newest-updated">Most Recently Updated</option>
                                 <option value="oldest-updated">Least Recently Updated</option>
                                 <option value="newest-activity">Most Recent Activity</option>
@@ -348,59 +445,116 @@ const Pockets: React.FC = () => {
                             </select>
                         </div>
                     </div>
-                    <div className="controls-right">
-                        <div className="search-box">
-                            <input type="text" placeholder="Search pockets..." />
-                            <span>🔍</span>
-                        </div>
-                    </div>
                 </section>
 
                 {/* Pockets Section */}
                 <section className="albums-section">
-                    <h2>Your Pockets ({sortedPockets.length})</h2>
+                    <h2>
+                        {searchQuery.trim() ? (
+                            <>
+                                Search Results
+                                <span className="search-results-info">
+                                    {sortedPockets.length} pocket{sortedPockets.length !== 1 ? 's' : ''} found for "{searchQuery}"
+                                </span>
+                            </>
+                        ) : (
+                            `Your Pockets (${sortedPockets.length})`
+                        )}
+                    </h2>
                     {sortedPockets.length === 0 ? (
                         <div className="empty-state">
-                            <p>No pockets found. Create your first pocket to get started!</p>
-                            <button
-                                className="create-pocket-button"
-                                onClick={() => setShowCreateModal(true)}
-                            >
-                                <span>➕</span>
-                                Create Pocket
-                            </button>
+                            <p>
+                                {searchQuery.trim()
+                                    ? `No pockets found matching "${searchQuery}". Try a different search term.`
+                                    : 'No pockets found. Create your first pocket to get started!'
+                                }
+                            </p>
+                            {!searchQuery.trim() && (
+                                <button
+                                    className="create-pocket-button"
+                                    onClick={() => setShowCreateModal(true)}
+                                >
+                                    <span>➕</span>
+                                    Create Pocket
+                                </button>
+                            )}
                         </div>
                     ) : (
-                        <div className="albums-grid">
-                            {sortedPockets.map((pocket) => (
+                        <div className={`pockets-container ${viewMode === 'list' ? 'pockets-list' : 'albums-grid'}`}>
+                            {sortedPockets.map((pocket, index) => (
                                 <div
                                     key={pocket.pocket_id}
-                                    className="album-card"
+                                    className={`pocket-card ${viewMode === 'list' ? 'pocket-list-item' : 'album-card'}`}
                                     onClick={() => handlePocketClick(pocket)}
-                                    style={{ cursor: 'pointer' }}
+                                    style={{
+                                        cursor: 'pointer',
+                                        zIndex: viewMode === 'list' ? sortedPockets.length - index : 1
+                                    }}
                                 >
                                     <img
                                         src={getCoverPhotoUrl(pocket)}
                                         alt={pocket.pocket_title}
-                                        className="album-cover"
+                                        className={viewMode === 'list' ? 'pocket-list-cover' : 'album-cover'}
                                         onError={(e) => {
                                             // Fallback if the cover photo fails to load
                                             e.currentTarget.src = DEFAULT_COVER_PLACEHOLDER;
                                         }}
                                     />
-                                    <div className="album-info">
+                                    <div className={viewMode === 'list' ? 'pocket-list-info' : 'album-info'}>
                                         <h3>{pocket.pocket_title}</h3>
-                                        <p>{pocket.pocket_members.length} members</p>
-                                        <div className="pocket-dates">
-                                            <p className="pocket-updated">
-                                                Updated: {formatDate(pocket.pocket_updated_at)}
-                                            </p>
-                                            <p className="pocket-activity">
-                                                Last Activity: {formatDate(pocket.pocket_last_activity_at)}
-                                            </p>
-                                            <p className="pocket-created">
-                                                Created: {formatDate(pocket.pocket_created_at)}
-                                            </p>
+                                        {viewMode === 'list' && (
+                                            <>
+                                                <p className="member-count">{pocket.pocket_members.length} members</p>
+                                                <div className="pocket-list-dates">
+                                                    <span className="pocket-updated">
+                                                        Updated: {formatDate(pocket.pocket_updated_at)}
+                                                    </span>
+                                                    <span className="pocket-activity">
+                                                        Last Activity: {formatDate(pocket.pocket_last_activity_at)}
+                                                    </span>
+                                                    <span className="pocket-created">
+                                                        Created: {formatDate(pocket.pocket_created_at)}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                        {viewMode === 'grid' && (
+                                            <div className="pocket-dates">
+                                                <p className="pocket-updated">
+                                                    Updated: {formatDate(pocket.pocket_updated_at)}
+                                                </p>
+                                                <p className="pocket-activity">
+                                                    Last Activity: {formatDate(pocket.pocket_last_activity_at)}
+                                                </p>
+                                                <p className="pocket-created">
+                                                    Created: {formatDate(pocket.pocket_created_at)}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Member Avatars Section */}
+                                    <div className="pocket-members">
+                                        {viewMode === 'grid' && (
+                                            <span className="member-count">{pocket.pocket_members.length} members</span>
+                                        )}
+                                        <div className="member-avatars">
+                                            {/* Show up to 3 member avatars */}
+                                            {pocket.pocket_members.slice(0, 3).map((member) => (
+                                                <div key={member.id} className="member-avatar">
+                                                    <img
+                                                        src={getProfilePictureUrl(member)}
+                                                        alt={member.first_name}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {/* Show "+X" if more than 3 members */}
+                                            {pocket.pocket_members.length > 3 && (
+                                                <span className="more-members">+{pocket.pocket_members.length - 3}</span>
+                                            )}
                                         </div>
                                     </div>
 

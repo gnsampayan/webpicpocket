@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
-import type { Photo } from '../../types';
+import type { Photo, Pocket, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
 import PhotoDetailsModal from '../modals/PhotoDetailsModal';
 import './GridPhotoView.css';
@@ -17,7 +17,13 @@ interface EventDetailResponse {
         first_name: string;
         last_name: string;
         email: string;
-        profile_picture_url: string;
+        profile_picture_default: boolean;
+        profile_picture: {
+            url_small?: string;
+            url_medium?: string;
+            url_large?: string;
+            [key: string]: any;
+        };
     }>;
     current_user_added: boolean;
     current_user_add_permissions: boolean;
@@ -29,22 +35,64 @@ const GridPhotoView: React.FC = () => {
     const navigate = useNavigate();
 
     const [eventData, setEventData] = useState<EventDetailResponse | null>(null);
+    const [pocket, setPocket] = useState<Pocket | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // Load initial state from localStorage
+    const getInitialFilter = (): string => {
+        const saved = localStorage.getItem('photos-sort-filter');
+        return saved || 'newest-created';
+    };
+
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
     const [photosPerRow] = useState(3);
+    const [filter, setFilter] = useState(getInitialFilter);
+
+    // Functions to save state to localStorage
+    const saveFilter = (filterValue: string) => {
+        localStorage.setItem('photos-sort-filter', filterValue);
+    };
+
+    // Wrapper function to update state and save to localStorage
+    const handleFilterChange = (filterValue: string) => {
+        setFilter(filterValue);
+        saveFilter(filterValue);
+    };
+
+    // Helper function to sort photos based on filter
+    const sortPhotos = (photosToSort: Photo[], sortFilter: string): Photo[] => {
+        const sorted = [...photosToSort];
+
+        switch (sortFilter) {
+            case 'newest-created':
+                return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            case 'oldest-created':
+                return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            case 'newest-updated':
+                return sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+            case 'oldest-updated':
+                return sorted.sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+            case 'comment-high-low':
+                return sorted.sort((a, b) => b.comment_count - a.comment_count);
+            case 'comment-low-high':
+                return sorted.sort((a, b) => a.comment_count - b.comment_count);
+            default:
+                return sorted;
+        }
+    };
 
     // Modal state
     const [showAddMediaModal, setShowAddMediaModal] = useState(false);
 
-    // Default placeholder image as data URI for better reliability
+    // Default placeholder images as data URI for better reliability
     const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
+    const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
     useEffect(() => {
-        const fetchEventDetails = async () => {
-            if (!eventId) {
-                setError('No event ID provided');
+        const fetchEventAndPocketData = async () => {
+            if (!eventId || !pocketId) {
+                setError('No event ID or pocket ID provided');
                 setLoading(false);
                 return;
             }
@@ -54,21 +102,35 @@ const GridPhotoView: React.FC = () => {
                 setError(null);
 
                 console.log('🔍 [GridPhotoView] Fetching event details for event ID:', eventId);
+                console.log('🔍 [GridPhotoView] Fetching pocket data for pocket ID:', pocketId);
 
-                const response = await api.getEventDetails(eventId);
-                console.log('✅ [GridPhotoView] Event details fetched successfully:', response);
+                // Fetch both event details and pocket data in parallel
+                const [eventResponse, pocketsData] = await Promise.all([
+                    api.getEventDetails(eventId),
+                    api.getPockets()
+                ]);
 
-                setEventData(response);
+                const currentPocket = pocketsData.find(p => p.pocket_id === pocketId);
+
+                if (!currentPocket) {
+                    throw new Error('Pocket not found');
+                }
+
+                console.log('✅ [GridPhotoView] Event details fetched successfully:', eventResponse);
+                console.log('✅ [GridPhotoView] Pocket data fetched successfully:', currentPocket);
+
+                setEventData(eventResponse);
+                setPocket(currentPocket);
             } catch (err) {
-                console.error('❌ [GridPhotoView] Failed to fetch event details:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load event details');
+                console.error('❌ [GridPhotoView] Failed to fetch data:', err);
+                setError(err instanceof Error ? err.message : 'Failed to load event and pocket data');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchEventDetails();
-    }, [eventId]);
+        fetchEventAndPocketData();
+    }, [eventId, pocketId]);
 
     // Handle back to event view
     const handleBackToEventView = () => {
@@ -98,6 +160,38 @@ const GridPhotoView: React.FC = () => {
             return rawUrl;
         }
 
+        return `https://${rawUrl}`;
+    };
+
+    // Helper function to get profile picture URL - similar to EventView implementation
+    const getProfilePictureUrl = (member: PocketMember | ContactUser): string => {
+        let rawUrl: string | undefined;
+
+        // Handle different profile picture formats from API
+        if ('profile_picture_default' in member && member.profile_picture_default) {
+            // User has default profile picture, use placeholder
+            return DEFAULT_PROFILE_PLACEHOLDER;
+        } else if ('profile_picture' in member && member.profile_picture) {
+            // Both PocketMember and ContactUser now use profile_picture object
+            if (typeof member.profile_picture === "string") {
+                rawUrl = member.profile_picture;
+            } else if (typeof member.profile_picture === "object") {
+                // Prioritize small for avatars, then medium, then large
+                rawUrl = member.profile_picture?.url_small ?? member.profile_picture?.url_medium ?? member.profile_picture?.url_large;
+            }
+        }
+
+        if (!rawUrl) {
+            return DEFAULT_PROFILE_PLACEHOLDER;
+        }
+
+        // URLs are already perfect S3 signed URLs - no decoding needed!
+        // If it's already HTTP, return as-is
+        if (rawUrl.startsWith("http")) {
+            return rawUrl;
+        }
+
+        // If it doesn't start with http, add https:// (fallback)
         return `https://${rawUrl}`;
     };
 
@@ -187,15 +281,22 @@ const GridPhotoView: React.FC = () => {
         }
     };
 
-    // Get photos to show based on loading progress
+    // Get photos to show based on loading progress and sorting
     const getPhotosToShow = () => {
         if (!eventData) return [];
 
-        const totalPhotos = eventData.photos.length;
+        const sortedPhotos = sortPhotos(eventData.photos, filter);
+        const totalPhotos = sortedPhotos.length;
         const loadedCount = loadedPhotos.size;
         const maxToShow = Math.min(loadedCount + photosPerRow, totalPhotos);
 
-        return eventData.photos.slice(0, maxToShow);
+        return sortedPhotos.slice(0, maxToShow);
+    };
+
+    // Calculate total member count
+    const getTotalMemberCount = () => {
+        if (!pocket || !eventData) return 0;
+        return (pocket.pocket_members?.length || 0) + (eventData.additional_member_count || 0);
     };
 
     // Show loading state
@@ -235,7 +336,7 @@ const GridPhotoView: React.FC = () => {
     }
 
     // Show error state
-    if (error || !eventData) {
+    if (error || !eventData || !pocket) {
         return (
             <div className="grid-photo-view-page">
                 {/* Header */}
@@ -270,6 +371,8 @@ const GridPhotoView: React.FC = () => {
         );
     }
 
+    const totalMemberCount = getTotalMemberCount();
+
     return (
         <div className="grid-photo-view-page">
             {/* Header */}
@@ -282,7 +385,43 @@ const GridPhotoView: React.FC = () => {
                         <h1 className="event-title">{eventData.title}</h1>
                     </div>
                     <div className="header-actions">
-                        <span className="photo-count">{eventData.photo_count} photos</span>
+                        <div className="header-info">
+                            <span className="photo-count">
+                                📷 {eventData.photo_count} photos
+                            </span>
+                            <div className="event-members">
+                                <span className="member-count">{totalMemberCount} members</span>
+                                <div className="member-avatars">
+                                    {/* Show pocket members first */}
+                                    {pocket.pocket_members?.slice(0, 3).map((member) => (
+                                        <div key={member.id} className="member-avatar">
+                                            <img
+                                                src={getProfilePictureUrl(member)}
+                                                alt={member.first_name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                    {/* Show additional members if any */}
+                                    {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member) => (
+                                        <div key={member.id} className="member-avatar">
+                                            <img
+                                                src={getProfilePictureUrl(member)}
+                                                alt={member.first_name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                    {totalMemberCount > 3 && (
+                                        <span className="more-members">+{totalMemberCount - 3}</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                         {eventData.current_user_add_permissions && (
                             <button
                                 className="add-photos-button"
@@ -294,6 +433,22 @@ const GridPhotoView: React.FC = () => {
                     </div>
                 </div>
             </header>
+
+            {/* Controls */}
+            <section className="controls-section">
+                <div className="controls-right">
+                    <div className="filter-dropdown">
+                        <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
+                            <option value="newest-created">Newest Created</option>
+                            <option value="oldest-created">Oldest Created</option>
+                            <option value="newest-updated">Most Recently Updated</option>
+                            <option value="oldest-updated">Least Recently Updated</option>
+                            <option value="comment-high-low">Comment Count (High to Low)</option>
+                            <option value="comment-low-high">Comment Count (Low to High)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
 
             {/* Photos Grid */}
             <main className="grid-photo-content">
@@ -382,6 +537,7 @@ const GridPhotoView: React.FC = () => {
                 onClose={() => setShowAddMediaModal(false)}
                 onMediaAdded={handleMediaAdded}
                 eventId={eventId || ''}
+                eventTitle={eventData.title}
             />
         </div>
     );

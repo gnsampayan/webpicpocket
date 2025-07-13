@@ -7,6 +7,7 @@ interface AddMediaModalProps {
     onClose: () => void;
     onMediaAdded: () => void;
     eventId: string;
+    eventTitle?: string;
 }
 
 interface SelectedFile {
@@ -23,7 +24,8 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
     isOpen,
     onClose,
     onMediaAdded,
-    eventId
+    eventId,
+    eventTitle
 }) => {
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -311,7 +313,9 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
         <div className="add-media-modal-overlay" onClick={handleModalOverlayClick}>
             <div className="add-media-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>Add Photos to Event</h2>
+                    <h2>
+                        {eventTitle ? `Add Photos to "${eventTitle}"` : 'Add Photos to Event'}
+                    </h2>
                     <button onClick={handleClose} className="close-button" disabled={submitting}>
                         ✕
                     </button>

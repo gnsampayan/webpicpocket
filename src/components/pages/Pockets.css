@@ -131,17 +131,83 @@
 }
 
 .search-box input {
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  width: 250px;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  width: 280px;
+  font-size: 0.95rem;
+  background: white;
+  color: #1a1a1a;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.search-box span {
+.search-box input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+.search-box input::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.search-box .search-icon {
   position: absolute;
-  left: 0.75rem;
-  color: #666;
+  left: 1rem;
+  color: #667eea;
+  font-size: 1.1rem;
+  z-index: 1;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.search-box input:focus + .search-icon {
+  color: #764ba2;
+  transform: scale(1.1);
+}
+
+.clear-search-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f0f4ff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.clear-search-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.clear-search-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Search Results Info */
+.search-results-info {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #667eea;
+  margin-top: 0.25rem;
+  font-style: italic;
 }
 
 /* Albums Section */
@@ -160,6 +226,78 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.5rem;
+}
+
+/* List View Styles */
+.pockets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pocket-list-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  gap: 1rem;
+  z-index: 1;
+}
+
+.pocket-list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.pocket-list-cover {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.pocket-list-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pocket-list-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  height: 1.4rem;
+  line-height: 1.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pocket-list-info .member-count {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.pocket-list-dates {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pocket-list-dates span {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
 }
 
 .album-card {
@@ -184,6 +322,9 @@
 
 .album-info {
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .album-info h3 {
@@ -191,12 +332,128 @@
   font-size: 1rem;
   font-weight: 600;
   color: #1a1a1a;
+  height: 1.2rem;
+  line-height: 1.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .album-info p {
   margin: 0;
   font-size: 0.8rem;
   color: #666;
+}
+
+.album-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.album-card:hover {
+  transform: translateY(-4px);
+}
+
+.member-count {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Pocket Members Section */
+.pocket-members {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0 1rem 1rem 1rem;
+}
+
+/* Grid view specific member styles */
+.album-card .pocket-members {
+  padding: 0 1rem 1rem 1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.album-card .member-count {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.member-avatars {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.member-avatar:hover {
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.member-avatar:hover img {
+  transform: scale(1.05);
+}
+
+.more-members {
+  color: #667eea;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #f0f4ff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 4px;
+}
+
+/* List view specific member styles */
+.pocket-list-item .pocket-members {
+  margin-top: 0.5rem;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.pocket-list-item .member-avatars {
+  gap: 0.2rem;
+}
+
+.pocket-list-item .member-avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.pocket-list-item .more-members {
+  font-size: 0.75rem;
+  padding: 1px 6px;
 }
 
 /* Pocket Options Button */
@@ -235,7 +492,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   padding: 0.5rem 0;
   min-width: 160px;
-  z-index: 20;
+  z-index: 9999;
   animation: slideIn 0.2s ease;
 }
 
@@ -273,6 +530,7 @@
 
 .pocket-dates {
   margin: 0.5rem 0 0 0;
+  margin-top: auto;
 }
 
 .pocket-updated,
@@ -613,11 +871,21 @@
   .header-left h1 {
     font-size: 2rem;
   }
+
+  .search-results-info {
+    font-size: 0.85rem;
+  }
+
+  .clear-search-button {
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
+  }
   
   .controls-section {
-    flex-direction: column;
+    flex-direction: row;
     gap: 1rem;
-    align-items: stretch;
+    align-items: center;
   }
   
   .controls-left {
@@ -626,10 +894,64 @@
   
   .search-box input {
     width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    font-size: 0.9rem;
+    padding-right: 3rem;
   }
   
   .albums-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  /* List view responsive */
+  .pocket-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pocket-list-cover {
+    width: 100%;
+    height: 120px;
+  }
+
+  .pocket-list-dates {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .pocket-list-dates span {
+    font-size: 0.7rem;
+  }
+
+  /* Member avatars responsive */
+  .pocket-members {
+    margin-top: 0.5rem;
+    padding: 0 0.75rem 0.75rem 0.75rem;
+  }
+
+  .album-card .pocket-members {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .pocket-list-item .pocket-members {
+    padding: 0;
+  }
+
+  .member-avatars {
+    gap: 0.2rem;
+  }
+
+  .member-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .more-members {
+    font-size: 0.75rem;
+    padding: 1px 6px;
   }
   
   .media-grid.grid {
@@ -656,6 +978,7 @@
   
   .pocket-dates {
     margin: 0.25rem 0 0 0;
+    margin-top: auto;
   }
   
   .pocket-updated,
@@ -677,9 +1000,68 @@
   .header-left h1 {
     font-size: 1.75rem;
   }
+
+  .search-results-info {
+    font-size: 0.8rem;
+  }
+
+  .clear-search-button {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
   
   .albums-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* List view responsive for small screens */
+  .pocket-list-item {
+    padding: 0.75rem;
+  }
+
+  .pocket-list-cover {
+    height: 100px;
+  }
+
+  .pocket-list-info h3 {
+    font-size: 1rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+  }
+
+  .pocket-list-info .member-count {
+    font-size: 0.8rem;
+  }
+
+  /* Member avatars responsive for small screens */
+  .pocket-members {
+    margin-top: 0.4rem;
+    padding: 0 0.5rem 0.5rem 0.5rem;
+  }
+
+  .album-card .pocket-members {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+
+  .pocket-list-item .pocket-members {
+    padding: 0;
+  }
+
+  .member-avatars {
+    gap: 0.15rem;
+  }
+
+  .member-avatar {
+    width: 20px;
+    height: 20px;
+  }
+
+  .more-members {
+    font-size: 0.7rem;
+    padding: 1px 4px;
   }
   
   .media-grid.grid {
@@ -688,6 +1070,7 @@
   
   .pocket-dates {
     margin: 0.125rem 0 0 0;
+    margin-top: auto;
   }
   
   .pocket-updated,

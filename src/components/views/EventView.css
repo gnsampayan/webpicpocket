@@ -123,6 +123,37 @@
   color: #667eea;
 }
 
+.pocket-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pocket-cover-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.pocket-cover-avatar:hover {
+  transform: scale(1.05);
+}
+
+.pocket-cover-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.pocket-cover-avatar:hover img {
+  transform: scale(1.1);
+}
+
 .pocket-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -186,6 +217,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
 }
 
 .search-box {
@@ -195,23 +227,90 @@
 }
 
 .search-box input {
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  width: 250px;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  width: 280px;
+  font-size: 0.95rem;
+  background: white;
+  color: #1a1a1a;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.search-box span {
+.search-box input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+.search-box input::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.search-box .search-icon {
   position: absolute;
-  left: 0.75rem;
-  color: #666;
+  left: 1rem;
+  color: #667eea;
+  font-size: 1.1rem;
+  z-index: 1;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.search-box input:focus + .search-icon {
+  color: #764ba2;
+  transform: scale(1.1);
+}
+
+.clear-search-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f0f4ff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.clear-search-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.clear-search-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Search Results Info */
+.search-results-info {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #667eea;
+  margin-top: 0.25rem;
+  font-style: italic;
 }
 
 .controls-right {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .filter-dropdown select {
@@ -676,132 +775,50 @@
   margin-left: 4px;
 }
 
-/* Event Detail Modal */
-.event-detail-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
+/* Event Options Menu */
+.event-options-menu {
+  position: absolute;
+  top: 2.5rem;
+  right: 0.5rem;
   background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e1e5e9;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-
-.close-button:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 2rem;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.event-description {
-  margin: 0 0 1rem 0;
-  color: #666;
-  line-height: 1.6;
-}
-
-.event-dates {
-  margin: 0 0 1.5rem 0;
-  padding: 1rem;
-  background: #f8f9fa;
   border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  min-width: 160px;
+  z-index: 9999;
+  animation: slideIn 0.2s ease;
 }
 
-.event-created,
-.event-updated {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 0.25rem 0;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.event-created {
-  font-weight: 500;
-}
-
-.event-updated {
-  font-style: italic;
-}
-
-.event-date {
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.event-members-list h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.members-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.member-item {
+.options-menu-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  color: #333;
 }
 
-.member-item img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+.options-menu-item:hover {
+  background-color: #f8f9fa;
 }
 
-.member-item span {
-  color: #1a1a1a;
-  font-weight: 500;
+.option-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
 }
 
 /* Responsive Design */
@@ -844,18 +861,45 @@
     font-size: 2rem;
   }
 
+  .pocket-info {
+    gap: 0.75rem;
+  }
+
+  .pocket-cover-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
   .controls-section {
-    flex-direction: column;
+    flex-direction: row;
     gap: 1rem;
-    align-items: stretch;
+    align-items: center;
   }
 
   .controls-left {
-    justify-content: center;
+    flex: 1;
+  }
+
+  .controls-right {
+    flex-shrink: 0;
   }
 
   .search-box input {
     width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    font-size: 0.9rem;
+    padding-right: 3rem;
+    min-width: 200px;
+  }
+
+  .search-results-info {
+    font-size: 0.85rem;
+  }
+
+  .clear-search-button {
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
   }
 
   .events-list {
@@ -958,6 +1002,25 @@
   .modal-header,
   .modal-body {
     padding: 1rem;
+  }
+
+  .search-results-info {
+    font-size: 0.8rem;
+  }
+
+  .clear-search-button {
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+  }
+
+  .pocket-info {
+    gap: 0.5rem;
+  }
+
+  .pocket-cover-avatar {
+    width: 36px;
+    height: 36px;
   }
 }
 
