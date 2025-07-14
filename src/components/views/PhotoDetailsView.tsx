@@ -11,6 +11,8 @@ const PhotoDetailsView: React.FC = () => {
     const { pocketTitle, eventTitle, photoShortId } = useParams<{ pocketTitle: string; eventTitle: string; photoShortId: string }>();
     const navigate = useNavigate();
     const [photo, setPhoto] = useState<Photo | null>(null);
+    const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+    const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [commentCount, setCommentCount] = useState(0);
@@ -44,10 +46,13 @@ const PhotoDetailsView: React.FC = () => {
                 // Fetch event details to get all photos
                 const eventResponse = await api.getEventDetails(currentEvent.id);
                 // Find the photo with the matching short ID
-                const foundPhoto = eventResponse.photos.find((p: Photo) => p.id.slice(-6) === photoShortId);
-                if (!foundPhoto) throw new Error('Photo not found');
-                setPhoto(foundPhoto);
-                setCommentCount(foundPhoto.comment_count);
+                const foundPhotoIndex = eventResponse.photos.findIndex((p: Photo) => p.id.slice(-6) === photoShortId);
+                if (foundPhotoIndex === -1) throw new Error('Photo not found');
+
+                setAllPhotos(eventResponse.photos);
+                setPhoto(eventResponse.photos[foundPhotoIndex]);
+                setCurrentPhotoIndex(foundPhotoIndex);
+                setCommentCount(eventResponse.photos[foundPhotoIndex].comment_count);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load photo');
             } finally {
@@ -56,6 +61,39 @@ const PhotoDetailsView: React.FC = () => {
         };
         fetchPhoto();
     }, [pocketTitle, eventTitle, photoShortId]);
+
+    const handlePrevious = () => {
+        if (currentPhotoIndex > 0) {
+            const prevPhoto = allPhotos[currentPhotoIndex - 1];
+            const shortId = prevPhoto.id.slice(-6);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentPhotoIndex < allPhotos.length - 1) {
+            const nextPhoto = allPhotos[currentPhotoIndex + 1];
+            const shortId = nextPhoto.id.slice(-6);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+        }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowLeft') {
+            handlePrevious();
+        } else if (e.key === 'ArrowRight') {
+            handleNext();
+        } else if (e.key === 'Escape') {
+            handleBack();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [currentPhotoIndex, allPhotos]);
 
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -124,10 +162,23 @@ const PhotoDetailsView: React.FC = () => {
                         <button onClick={handleBack} className="back-button"><span>←</span></button>
                         <h1 className="event-title">Photo Details</h1>
                     </div>
+                    <div className="photo-navigation">
+                        <span className="photo-counter">
+                            {currentPhotoIndex + 1} of {allPhotos.length}
+                        </span>
+                    </div>
                 </div>
             </header>
             <div className="photo-detail-content">
                 <div className="photo-detail-image-section">
+                    <button
+                        className="nav-button prev-button"
+                        onClick={handlePrevious}
+                        disabled={currentPhotoIndex === 0}
+                        title="Previous photo (←)"
+                    >
+                        ‹
+                    </button>
                     <div className="photo-detail-image">
                         <img
                             src={getPhotoUrl(photo)}
@@ -137,6 +188,14 @@ const PhotoDetailsView: React.FC = () => {
                             }}
                         />
                     </div>
+                    <button
+                        className="nav-button next-button"
+                        onClick={handleNext}
+                        disabled={currentPhotoIndex === allPhotos.length - 1}
+                        title="Next photo (→)"
+                    >
+                        ›
+                    </button>
                 </div>
                 <div className="photo-detail-sidebar">
                     {photo.can_delete && !isPhotoLocked() && (

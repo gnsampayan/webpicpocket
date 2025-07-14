@@ -303,6 +303,20 @@
         max-height: calc(50vh - 100px);
     }
     
+    .nav-button {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    .prev-button {
+        left: 1rem;
+    }
+    
+    .next-button {
+        right: 1rem;
+    }
+    
     .tabs-header {
         flex-direction: row;
     }
@@ -334,6 +348,20 @@
     .photo-detail-image {
         max-height: calc(60vh - 80px);
         padding: 10px;
+    }
+    
+    .nav-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .prev-button {
+        left: 0.5rem;
+    }
+    
+    .next-button {
+        right: 0.5rem;
     }
     
     .photo-actions-header {
@@ -375,6 +403,20 @@
     .photo-detail-image {
         max-height: calc(50vh - 60px);
         padding: 5px;
+    }
+    
+    .nav-button {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .prev-button {
+        left: 0.25rem;
+    }
+    
+    .next-button {
+        right: 0.25rem;
     }
     
     .photo-detail-sidebar {
@@ -442,4 +484,62 @@
     color: #666;
     font-size: 1rem;
     font-weight: 500;
+} 
+
+/* Photo navigation styles */
+.photo-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.photo-counter {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+.nav-button:hover:not(:disabled) {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%);
+}
+
+.nav-button:disabled:hover {
+    transform: translateY(-50%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.prev-button {
+    left: 2rem;
+}
+
+.next-button {
+    right: 2rem;
 } 
