@@ -5,12 +5,12 @@ import './CommentsSection.css';
 
 interface CommentsSectionProps {
     photoId: string;
-    onCommentAdded?: () => void;
+    onCommentsLoaded?: (comments: PhotoCommentView[]) => void;
 }
 
 const CommentsSection: React.FC<CommentsSectionProps> = ({
     photoId,
-    onCommentAdded
+    onCommentsLoaded
 }) => {
     const [comments, setComments] = useState<PhotoCommentView[]>([]);
     const [newComment, setNewComment] = useState('');
@@ -35,6 +35,9 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             const comments = await api.getPhotoComments(photoId);
             console.log('✅ [CommentsSection] Comments fetched successfully:', comments);
             setComments(comments || []);
+
+            // Notify parent component about loaded comments
+            onCommentsLoaded?.(comments || []);
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to fetch comments:', err);
             setError('Failed to load comments');
@@ -56,11 +59,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             // Clear the input
             setNewComment('');
 
-            // Refresh comments
+            // Refresh comments and notify parent with updated count
             await fetchComments();
-
-            // Notify parent component
-            onCommentAdded?.();
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to add comment:', err);
             setError('Failed to add comment');
@@ -82,11 +82,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             setEditingCommentId(null);
             setEditText('');
 
-            // Refresh comments
+            // Refresh comments and notify parent with updated count
             await fetchComments();
-
-            // Notify parent component
-            onCommentAdded?.();
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to edit comment:', err);
             setError('Failed to edit comment');
@@ -101,11 +98,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
             await api.deleteComment(commentId);
 
-            // Refresh comments
+            // Refresh comments and notify parent with updated count
             await fetchComments();
-
-            // Notify parent component
-            onCommentAdded?.();
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to delete comment:', err);
             setError('Failed to delete comment');
@@ -148,8 +142,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
     return (
         <div className="comments-section">
-            <h3 className="comments-title">Comments ({comments.length})</h3>
-
             {error && (
                 <div className="error-message">
                     {error}
