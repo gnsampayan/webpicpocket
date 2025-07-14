@@ -1,118 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Contacts.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
-import { api } from '../../services/api';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
+import {
+    useContacts,
+    useSearchUsers,
+    useAcceptContactMutation,
+    useRejectContactMutation,
+    useCancelContactMutation,
+    useDeleteContactMutation,
+    useSendContactRequestMutation,
+    getContactAvatar,
+    getContactName,
+} from '../../hooks/useContacts';
 import * as ApiTypes from '../../types/api';
 
 const Contacts: React.FC = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [contacts, setContacts] = useState<ApiTypes.ContactUser[]>([]);
-    const [contactRequestsReceived, setContactRequestsReceived] = useState<ApiTypes.ContactUser[]>([]);
-    const [contactRequestsSent, setContactRequestsSent] = useState<ApiTypes.ContactUser[]>([]);
     const [showAddContact, setShowAddContact] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<ApiTypes.ContactUser[]>([]);
-    const [searching, setSearching] = useState(false);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
-    // Fetch contacts on component mount
-    useEffect(() => {
-        fetchContacts();
-    }, []);
+    // React Query hooks
+    const { data: contactsData, isLoading, error } = useContacts();
+    const { data: searchResults, isLoading: searching } = useSearchUsers(searchQuery);
 
-    const fetchContacts = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await api.getContacts();
+    // Mutations
+    const acceptContactMutation = useAcceptContactMutation();
+    const rejectContactMutation = useRejectContactMutation();
+    const cancelContactMutation = useCancelContactMutation();
+    const deleteContactMutation = useDeleteContactMutation();
+    const sendContactRequestMutation = useSendContactRequestMutation();
 
-            setContacts(response.contacts || []);
-            setContactRequestsReceived(response.contact_requests_received || []);
-            setContactRequestsSent(response.contact_requests_sent || []);
-        } catch (err) {
-            console.error('Failed to fetch contacts:', err);
-            setError(err instanceof Error ? err.message : 'Failed to fetch contacts');
-        } finally {
-            setLoading(false);
-        }
+    // Extract data from contacts response
+    const contacts = contactsData?.contacts || [];
+    const contactRequestsReceived = contactsData?.contact_requests_received || [];
+    const contactRequestsSent = contactsData?.contact_requests_sent || [];
+
+    const handleAcceptContact = (userId: string) => {
+        acceptContactMutation.mutate(userId);
     };
 
-    const handleAcceptContact = async (userId: string) => {
-        try {
-            await api.updateContact(userId, { accept: true });
-            await fetchContacts(); // Refresh the contacts list
-        } catch (err) {
-            console.error('Failed to accept contact:', err);
-            setError(err instanceof Error ? err.message : 'Failed to accept contact request');
-        }
+    const handleRejectContact = (userId: string) => {
+        rejectContactMutation.mutate(userId);
     };
 
-    const handleRejectContact = async (userId: string) => {
-        try {
-            await api.updateContact(userId, { reject: true });
-            await fetchContacts(); // Refresh the contacts list
-        } catch (err) {
-            console.error('Failed to reject contact:', err);
-            setError(err instanceof Error ? err.message : 'Failed to reject contact request');
-        }
+    const handleCancelContact = (userId: string) => {
+        cancelContactMutation.mutate(userId);
     };
 
-    const handleCancelContact = async (userId: string) => {
-        try {
-            await api.updateContact(userId, { cancel: true });
-            await fetchContacts(); // Refresh the contacts list
-        } catch (err) {
-            console.error('Failed to cancel contact:', err);
-            setError(err instanceof Error ? err.message : 'Failed to cancel contact request');
-        }
+    const handleDeleteContact = (userId: string) => {
+        deleteContactMutation.mutate(userId);
     };
 
-    const handleDeleteContact = async (userId: string) => {
-        try {
-            await api.deleteContact(userId);
-            await fetchContacts(); // Refresh the contacts list
-        } catch (err) {
-            console.error('Failed to delete contact:', err);
-            setError(err instanceof Error ? err.message : 'Failed to delete contact');
-        }
-    };
-
-    const handleSearchUsers = async (query: string) => {
-        if (!query.trim()) {
-            setSearchResults([]);
-            return;
-        }
-
-        try {
-            setSearching(true);
-            const results = await api.searchUsers(query);
-            setSearchResults(results);
-        } catch (err) {
-            console.error('Failed to search users:', err);
-            setSearchResults([]);
-        } finally {
-            setSearching(false);
-        }
-    };
-
-    const handleSendContactRequest = async (userId: string) => {
-        try {
-            await api.sendContactRequest(userId);
-            setSearchResults([]);
-            setSearchQuery('');
-            setShowAddContact(false);
-            await fetchContacts(); // Refresh to show the sent request
-        } catch (err) {
-            console.error('Failed to send contact request:', err);
-            setError(err instanceof Error ? err.message : 'Failed to send contact request');
-        }
+    const handleSendContactRequest = (userId: string) => {
+        sendContactRequestMutation.mutate(userId, {
+            onSuccess: () => {
+                setSearchQuery('');
+                setShowAddContact(false);
+            },
+        });
     };
 
     const handleContactClick = (contact: ApiTypes.ContactUser) => {
@@ -145,51 +96,12 @@ const Contacts: React.FC = () => {
         return matchesSearch && matchesFilter;
     });
 
-    // Default placeholder image as data URI for better reliability - with explicit width/height to prevent oval shape
-    const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
-
-    const getContactAvatar = (contact: ApiTypes.ContactUser): string => {
-        // If user has default profile picture, use placeholder
-        if (contact.profile_picture_default) {
-            return DEFAULT_PROFILE_PLACEHOLDER;
-        }
-
-        // Handle profile picture object with different sizes
-        if (contact.profile_picture) {
-            let rawUrl: string | undefined;
-
-            // Use small size for contacts list
-            rawUrl = contact.profile_picture.url_small;
-
-            if (!rawUrl) {
-                return DEFAULT_PROFILE_PLACEHOLDER;
-            }
-
-            // Ensure URL is HTTPS
-            if (rawUrl.startsWith("http://")) {
-                return rawUrl.replace("http://", "https://");
-            }
-
-            // If it's already HTTPS, return as-is
-            if (rawUrl.startsWith("https://")) {
-                return rawUrl;
-            }
-
-            // If it doesn't start with http, add https:// (fallback)
-            return `https://${rawUrl}`;
-        }
-
-        // Fallback to placeholder
-        return DEFAULT_PROFILE_PLACEHOLDER;
-    };
-
-    const getContactName = (contact: ApiTypes.ContactUser) => {
-        return `${contact.first_name} ${contact.last_name}`;
-    };
+    // Get error message for display
+    const errorMessage = error instanceof Error ? error.message : error;
 
 
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="contacts-page">
                 <NavBar />
@@ -232,14 +144,14 @@ const Contacts: React.FC = () => {
                 {/* Error Display */}
                 {error && (
                     <div className="error-message">
-                        <span>❌ {error}</span>
-                        {error.includes('verify your email') && (
+                        <span>❌ {errorMessage}</span>
+                        {typeof errorMessage === 'string' && errorMessage.includes('verify your email') && (
                             <button
                                 className="verify-email-button"
                                 onClick={() => {
                                     setEmailVerifiedCallback(() => () => {
-                                        setError(null);
-                                        fetchContacts();
+                                        // Refetch contacts after email verification
+                                        window.location.reload();
                                     });
                                     showEmailVerification();
                                 }}
@@ -247,7 +159,7 @@ const Contacts: React.FC = () => {
                                 Verify Email
                             </button>
                         )}
-                        <button onClick={() => setError(null)}>✕</button>
+                        <button onClick={() => window.location.reload()}>✕</button>
                     </div>
                 )}
 
@@ -264,15 +176,12 @@ const Contacts: React.FC = () => {
                                     type="text"
                                     placeholder="Search by username, first name, or last name..."
                                     value={searchQuery}
-                                    onChange={(e) => {
-                                        setSearchQuery(e.target.value);
-                                        handleSearchUsers(e.target.value);
-                                    }}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                                 {searching && <div className="searching-indicator">Searching...</div>}
                             </div>
                             <div className="search-results">
-                                {searchResults.map((user) => (
+                                {searchResults?.map((user) => (
                                     <div key={user.id} className="search-result-item">
                                         <div className="user-info">
                                             <img
@@ -280,7 +189,7 @@ const Contacts: React.FC = () => {
                                                 alt={getContactName(user)}
                                                 onError={(e) => {
                                                     // Fallback if the profile picture fails to load
-                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                    e.currentTarget.src = getContactAvatar(user);
                                                 }}
                                             />
                                             <div>
@@ -296,7 +205,7 @@ const Contacts: React.FC = () => {
                                         </button>
                                     </div>
                                 ))}
-                                {searchQuery && !searching && searchResults.length === 0 && (
+                                {searchQuery && !searching && (!searchResults || searchResults.length === 0) && (
                                     <p className="no-results">No users found</p>
                                 )}
                             </div>
@@ -363,7 +272,7 @@ const Contacts: React.FC = () => {
                                         alt={getContactName(contact)}
                                         onError={(e) => {
                                             // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                            e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
                                     <span className="status-indicator pending"></span>
@@ -407,7 +316,7 @@ const Contacts: React.FC = () => {
                                         alt={getContactName(contact)}
                                         onError={(e) => {
                                             // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                            e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
                                     <span className="status-indicator pending"></span>
@@ -444,7 +353,7 @@ const Contacts: React.FC = () => {
                                         alt={getContactName(contact)}
                                         onError={(e) => {
                                             // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                            e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
                                     <span className="status-indicator online"></span>
