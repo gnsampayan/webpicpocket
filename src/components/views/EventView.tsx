@@ -8,7 +8,7 @@ import AddMediaModal from '../modals/AddMediaModal';
 import AddEventMembersModal from '../modals/AddEventMembersModal';
 import EditEventModal from '../modals/EditEventModal';
 
-import { api } from '../../services/api';
+import { usePocketFromUrl, useEvents } from '../../hooks/usePhotos';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
 
 const EventView: React.FC = () => {
@@ -43,11 +43,14 @@ const EventView: React.FC = () => {
         saveFilter(filterValue);
     };
 
-    // State for pocket and events data
-    const [pocket, setPocket] = useState<Pocket | null>(null);
-    const [events, setEvents] = useState<Event[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // React Query hooks
+    const { pocket, isLoading: isLoadingPocket, error: pocketError } = usePocketFromUrl(pocketTitle);
+    const { data: eventsData, isLoading: isLoadingEvents, error: eventsError } = useEvents(pocket?.pocket_id);
+
+    // Combined loading and error states
+    const isLoading = isLoadingPocket || isLoadingEvents;
+    const error = pocketError || eventsError;
+    const events = eventsData || [];
 
     // Default placeholder images as data URI for better reliability
     const DEFAULT_EVENT_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
@@ -83,52 +86,7 @@ const EventView: React.FC = () => {
         }
     };
 
-    // Fetch pocket and events data when component mounts or pocketTitle changes
-    useEffect(() => {
-        const fetchPocketAndEvents = async () => {
-            if (!pocketTitle) {
-                setError('No pocket title provided');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError(null);
-
-                // Parse pocket ID suffix from URL
-                const decodedPocketTitle = decodeURIComponent(pocketTitle);
-                const lastDashIndex = decodedPocketTitle.lastIndexOf('-');
-                const pocketIdSuffix = lastDashIndex !== -1 ? decodedPocketTitle.substring(lastDashIndex + 1) : '';
-
-                // Fetch pocket details
-                const pocketsData = await api.getPockets();
-                const currentPocket = pocketsData.find(p =>
-                    p.pocket_id.endsWith(pocketIdSuffix)
-                );
-
-                if (!currentPocket) {
-                    throw new Error('Pocket not found');
-                }
-
-                setPocket(currentPocket);
-
-                // Fetch events for this pocket
-                const eventsData = await api.getEvents(currentPocket.pocket_id);
-                setEvents(eventsData);
-
-                console.log('EventView loaded pocket:', currentPocket);
-                console.log('EventView loaded events:', eventsData);
-            } catch (err) {
-                console.error('Error fetching pocket and events:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load pocket and events');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPocketAndEvents();
-    }, [pocketTitle]);
+    // React Query handles data fetching automatically
 
     // Debug: Log events data when component mounts or events change
     useEffect(() => {
@@ -313,71 +271,26 @@ const EventView: React.FC = () => {
 
     // Handle event creation
     const handleEventCreated = (newEvent: Event) => {
-        setEvents(prev => [newEvent, ...prev]);
         console.log('✅ New event added to list:', newEvent);
+        // React Query will automatically update the cache
     };
 
     // Handle media added to event
     const handleMediaAdded = () => {
-        // Refetch events data to show updated photo counts without clearing console
-        const fetchEvents = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const eventsData = await api.getEvents(pocket?.pocket_id || '');
-                setEvents(eventsData);
-                console.log('✅ Events data refreshed after adding media');
-            } catch (err) {
-                console.error('Error refreshing events after adding media:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh events');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchEvents();
+        console.log('✅ Events data refreshed after adding media');
+        // React Query will automatically update the cache
     };
 
     // Handle members added to event
     const handleMembersAdded = () => {
-        // Refetch events data to show updated member counts without clearing console
-        const fetchEvents = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const eventsData = await api.getEvents(pocket?.pocket_id || '');
-                setEvents(eventsData);
-                console.log('✅ Events data refreshed after adding members');
-            } catch (err) {
-                console.error('Error refreshing events after adding members:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh events');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchEvents();
+        console.log('✅ Events data refreshed after adding members');
+        // React Query will automatically update the cache
     };
 
     // Handle event updated
     const handleEventUpdated = () => {
-        // Refetch events data to show updated event data
-        const fetchEvents = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const eventsData = await api.getEvents(pocket?.pocket_id || '');
-                setEvents(eventsData);
-                console.log('✅ Events data refreshed after updating event');
-            } catch (err) {
-                console.error('Error refreshing events after updating event:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh events');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchEvents();
+        console.log('✅ Events data refreshed after updating event');
+        // React Query will automatically update the cache
     };
 
 
@@ -588,7 +501,7 @@ const EventView: React.FC = () => {
 
 
     // Show loading state
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="event-view-page">
                 <NavBar />
@@ -610,7 +523,7 @@ const EventView: React.FC = () => {
                 <main className="main-content">
                     <div className="error-state">
                         <h2>Error Loading Events</h2>
-                        <p>{error || 'Pocket not found'}</p>
+                        <p>{typeof error === 'string' ? error : error?.message || 'Pocket not found'}</p>
                         <button onClick={handleBackToPockets} className="retry-button">
                             Back to Pockets
                         </button>

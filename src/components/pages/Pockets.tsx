@@ -7,7 +7,7 @@ import CreatePocketModal from '../modals/CreatePocketModal';
 import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
 import AddPocketMembersModal from '../modals/AddPocketMembersModal';
 import EditPocketModal from '../modals/EditPocketModal';
-import { api } from '../../services/api';
+import { usePockets } from '../../hooks/usePhotos';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import { type Pocket, type PocketMember } from '../../types';
 
@@ -28,9 +28,6 @@ const Pockets: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
     const [filter, setFilter] = useState(getInitialFilter);
     const [searchQuery, setSearchQuery] = useState('');
-    const [pockets, setPockets] = useState<Pocket[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAddPhotosModal, setShowAddPhotosModal] = useState(false);
@@ -40,6 +37,11 @@ const Pockets: React.FC = () => {
     const [selectedPocketForMembers, setSelectedPocketForMembers] = useState<Pocket | null>(null);
     const [selectedPocketForEdit, setSelectedPocketForEdit] = useState<Pocket | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
+
+    // React Query hooks
+    const { data: pocketsData, isLoading, error } = usePockets();
+
+    const pockets = pocketsData || [];
 
     // Functions to save state to localStorage
     const saveViewMode = (mode: 'grid' | 'list') => {
@@ -95,24 +97,7 @@ const Pockets: React.FC = () => {
         }
     };
 
-    // Fetch pockets from API
-    useEffect(() => {
-        const fetchPockets = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const pocketsData = await api.getPockets();
-                setPockets(pocketsData);
-            } catch (err) {
-                console.error('Error fetching pockets:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load pockets');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPockets();
-    }, []);
+    // React Query handles data fetching automatically
 
     // Helper function to get the best available cover photo URL - similar to React Native implementation
     const getCoverPhotoUrl = (pocket: Pocket): string => {
@@ -240,70 +225,26 @@ const Pockets: React.FC = () => {
 
     // Handle pocket creation
     const handlePocketCreated = (newPocket: Pocket) => {
-        setPockets(prev => [newPocket, ...prev]);
+        console.log('✅ New pocket created:', newPocket);
+        // React Query will automatically update the cache
     };
 
     // Handle media added to pocket
     const handleMediaAdded = () => {
-        // Refetch pockets data to show updated photo counts without clearing console
-        const fetchPockets = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const pocketsData = await api.getPockets();
-                setPockets(pocketsData);
-                console.log('✅ Pockets data refreshed after adding media');
-            } catch (err) {
-                console.error('Error refreshing pockets after adding media:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPockets();
+        console.log('✅ Pockets data refreshed after adding media');
+        // React Query will automatically update the cache
     };
 
     // Handle members added to pocket
     const handleMembersAdded = () => {
-        // Refetch pockets data to show updated member counts without clearing console
-        const fetchPockets = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const pocketsData = await api.getPockets();
-                setPockets(pocketsData);
-                console.log('✅ Pockets data refreshed after adding members');
-            } catch (err) {
-                console.error('Error refreshing pockets after adding members:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPockets();
+        console.log('✅ Pockets data refreshed after adding members');
+        // React Query will automatically update the cache
     };
 
     // Handle pocket updated
     const handlePocketUpdated = () => {
-        // Refetch pockets data to show updated information
-        const fetchPockets = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const pocketsData = await api.getPockets();
-                setPockets(pocketsData);
-                console.log('✅ Pockets data refreshed after updating pocket');
-            } catch (err) {
-                console.error('Error refreshing pockets after update:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh pockets');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPockets();
+        console.log('✅ Pockets data refreshed after updating pocket');
+        // React Query will automatically update the cache
     };
 
     // Filter pockets based on search query
@@ -324,7 +265,7 @@ const Pockets: React.FC = () => {
     // Get sorted pockets based on current filter
     const sortedPockets = sortPockets(filteredPockets, filter);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="media-page">
                 <NavBar />
@@ -339,14 +280,15 @@ const Pockets: React.FC = () => {
     }
 
     if (error) {
+        const errorMessage = typeof error === 'string' ? error : error?.message || 'Failed to load pockets';
         return (
             <div className="media-page">
                 <NavBar />
                 <main className="main-content">
                     <div className="error-state">
                         <h2>Error Loading Pockets</h2>
-                        <p>{error}</p>
-                        {error.includes('verify your email') && (
+                        <p>{errorMessage}</p>
+                        {errorMessage.includes('verify your email') && (
                             <button
                                 className="verify-email-button"
                                 onClick={() => {

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './CreateEventModal.css';
 import { api } from '../../services/api';
+import { useCreateEventMutation } from '../../hooks/usePhotos';
 import { type ContactUser, type Event, type Pocket } from '../../types';
 
 interface CreateEventModalProps {
@@ -32,6 +33,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     const memberInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // React Query mutation
+    const createEventMutation = useCreateEventMutation();
 
     // Cleanup on modal close
     useEffect(() => {
@@ -197,17 +201,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         setError(null);
 
         try {
-            const eventData: any = {
+            const eventData = {
                 title: title.trim(),
-                pocket_id: pocketId
+                pocket_id: pocketId,
+                additional_members: selectedMembers.length > 0 ? selectedMembers.map(member => member.id) : undefined
             };
 
-            // Only include members if there are selected members
-            if (selectedMembers.length > 0) {
-                eventData.additional_members = selectedMembers.map(member => member.id);
-            }
-
-            const newEvent = await api.createEvent(eventData);
+            const newEvent = await createEventMutation.mutateAsync(eventData);
 
             onEventCreated(newEvent);
             onClose();

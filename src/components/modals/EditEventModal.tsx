@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
+import { useEditEventMutation } from '../../hooks/usePhotos';
 import { type Event, type ContactUser, type Pocket } from '../../types';
 import './EditEventModal.css';
 
@@ -33,6 +34,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // React Query mutation
+    const editEventMutation = useEditEventMutation();
 
     // Reset form when modal opens with new event
     useEffect(() => {
@@ -199,7 +203,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
             if (Object.keys(updateData).length > 0) {
                 console.log('🔄 [EditEventModal] Update data:', updateData);
 
-                await api.editEvent(event.id, updateData);
+                await editEventMutation.mutateAsync({ eventId: event.id, data: updateData, pocketId: pocket.pocket_id });
                 console.log('✅ [EditEventModal] Event updated successfully');
 
                 setSuccess('Event updated successfully!');

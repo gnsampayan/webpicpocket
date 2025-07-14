@@ -1,99 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Photo, PhotoCommentView } from '../../types/api';
-import { api } from '../../services/api';
+import type { Photo } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
+import { usePhotoByShortId, useFavoriteMutation, useComments } from '../../hooks/usePhotos';
+import { getCurrentSortFilter, sortPhotos } from '../../utils/sorting';
 import './PhotoDetailsView.css';
 
-const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMjAwIDE1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiM2NjdlZWEiLz4KPHJlY3QgeD0iNDAiIHk9IjQwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjcwIiByeD0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjIiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iNjUiIHI9IjE1IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuNiIvPgo8cGF0aCBkPSJNOTAgNzVMOTUgODBMMTA1IDcwTDExNSA4MEwxMjAgNzUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2Utb3BhY2l0eT0iMC42Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTMwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBQaG90b3M8L3RleHQ+Cjwvc3ZnPgo=';
+const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
 
 const PhotoDetailsView: React.FC = () => {
     const { pocketTitle, eventTitle, photoShortId } = useParams<{ pocketTitle: string; eventTitle: string; photoShortId: string }>();
     const navigate = useNavigate();
-    const [photo, setPhoto] = useState<Photo | null>(null);
-    const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
-    const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [commentCount, setCommentCount] = useState(0);
     const [activeTab, setActiveTab] = useState<'comments' | 'info'>('comments');
 
-    useEffect(() => {
-        const fetchPhoto = async () => {
-            if (!pocketTitle || !eventTitle || !photoShortId) {
-                setError('Missing URL parameters');
-                setLoading(false);
-                return;
-            }
-            try {
-                setLoading(true);
-                setError(null);
-                // Parse pocket and event IDs from URL
-                const decodedPocketTitle = decodeURIComponent(pocketTitle);
-                const pocketLastDashIndex = decodedPocketTitle.lastIndexOf('-');
-                const pocketIdSuffix = pocketLastDashIndex !== -1 ? decodedPocketTitle.substring(pocketLastDashIndex + 1) : '';
-                const decodedEventTitle = decodeURIComponent(eventTitle);
-                const eventLastDashIndex = decodedEventTitle.lastIndexOf('-');
-                const eventIdSuffix = eventLastDashIndex !== -1 ? decodedEventTitle.substring(eventLastDashIndex + 1) : '';
-                // Fetch pockets to get the pocket ID
-                const pocketsData = await api.getPockets();
-                const currentPocket = pocketsData.find(p => p.pocket_id.endsWith(pocketIdSuffix));
-                if (!currentPocket) throw new Error('Pocket not found');
-                // Fetch events for this pocket to get the event ID
-                const eventsData = await api.getEvents(currentPocket.pocket_id);
-                const currentEvent = eventsData.find(e => e.id.endsWith(eventIdSuffix));
-                if (!currentEvent) throw new Error('Event not found');
-                // Fetch event details to get all photos
-                const eventResponse = await api.getEventDetails(currentEvent.id);
-                // Find the photo with the matching short ID
-                const foundPhotoIndex = eventResponse.photos.findIndex((p: Photo) => p.id.slice(-6) === photoShortId);
-                if (foundPhotoIndex === -1) throw new Error('Photo not found');
+    // React Query hooks
+    const {
+        data: photoData,
+        isLoading,
+        error
+    } = usePhotoByShortId(pocketTitle, eventTitle, photoShortId);
 
-                setAllPhotos(eventResponse.photos);
-                setPhoto(eventResponse.photos[foundPhotoIndex]);
-                setCurrentPhotoIndex(foundPhotoIndex);
-                setCommentCount(eventResponse.photos[foundPhotoIndex].comment_count);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load photo');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPhoto();
-    }, [pocketTitle, eventTitle, photoShortId]);
+    const favoriteMutation = useFavoriteMutation();
 
-    const handlePrevious = () => {
-        if (currentPhotoIndex > 0) {
-            const prevPhoto = allPhotos[currentPhotoIndex - 1];
-            const shortId = prevPhoto.id.slice(-6);
-            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
-        }
-    };
+    // Get comments data for the current photo
+    const {
+        data: comments = []
+    } = useComments(photoData?.photo?.id);
 
-    const handleNext = () => {
-        if (currentPhotoIndex < allPhotos.length - 1) {
-            const nextPhoto = allPhotos[currentPhotoIndex + 1];
-            const shortId = nextPhoto.id.slice(-6);
-            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
-        }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowLeft') {
-            handlePrevious();
-        } else if (e.key === 'ArrowRight') {
-            handleNext();
-        } else if (e.key === 'Escape') {
-            handleBack();
-        }
-    };
-
-    useEffect(() => {
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [currentPhotoIndex, allPhotos]);
+    // Get current sort filter and sorted photos for navigation
+    const currentSortFilter = getCurrentSortFilter();
+    const sortedPhotos = photoData?.allPhotos ? sortPhotos(photoData.allPhotos, currentSortFilter) : [];
+    const currentPhotoIndex = sortedPhotos.findIndex(photo => photo.id === photoData?.photo?.id);
 
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -106,13 +43,9 @@ const PhotoDetailsView: React.FC = () => {
         });
     };
 
-    const handleCommentsLoaded = (comments: PhotoCommentView[]) => {
-        setCommentCount(comments.length);
-    };
-
     const isPhotoLocked = () => {
-        if (!photo?.locks_at) return false;
-        const lockDate = new Date(photo.locks_at);
+        if (!photoData?.photo?.locks_at) return false;
+        const lockDate = new Date(photoData.photo.locks_at);
         const now = new Date();
         return now > lockDate;
     };
@@ -130,28 +63,10 @@ const PhotoDetailsView: React.FC = () => {
         try {
             console.log('🔄 [PhotoDetailsView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
 
-            if (photo.is_favorite) {
-                console.log('🔄 [PhotoDetailsView] Removing from favorites...');
-                await api.manageFavorite({ remove_favorite: [photo.id] });
-            } else {
-                console.log('🔄 [PhotoDetailsView] Adding to favorites...');
-                await api.manageFavorite({ add_favorite: [photo.id] });
-            }
-
-            // Update the photo in the local state
-            setPhoto(prev => {
-                if (!prev) return prev;
-                return { ...prev, is_favorite: !prev.is_favorite };
+            await favoriteMutation.mutateAsync({
+                photoId: photo.id,
+                isFavorite: photo.is_favorite
             });
-
-            // Also update the photo in allPhotos array
-            setAllPhotos(prev =>
-                prev.map(p =>
-                    p.id === photo.id
-                        ? { ...p, is_favorite: !p.is_favorite }
-                        : p
-                )
-            );
 
             console.log('✅ Photo favorite status updated');
         } catch (err) {
@@ -182,7 +97,40 @@ const PhotoDetailsView: React.FC = () => {
         return `https://${rawUrl}`;
     };
 
-    if (loading) {
+    const handlePrevious = () => {
+        if (currentPhotoIndex > 0) {
+            const prevPhoto = sortedPhotos[currentPhotoIndex - 1];
+            const shortId = prevPhoto.id.slice(-6);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentPhotoIndex < sortedPhotos.length - 1) {
+            const nextPhoto = sortedPhotos[currentPhotoIndex + 1];
+            const shortId = nextPhoto.id.slice(-6);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+        }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowLeft') {
+            handlePrevious();
+        } else if (e.key === 'ArrowRight') {
+            handleNext();
+        } else if (e.key === 'Escape') {
+            handleBack();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [currentPhotoIndex, sortedPhotos]);
+
+    if (isLoading) {
         return (
             <div className="photo-detail-view">
                 <div className="photo-detail-content">
@@ -194,9 +142,19 @@ const PhotoDetailsView: React.FC = () => {
             </div>
         );
     }
-    if (error || !photo) {
-        return <div className="photo-detail-view"><div className="photo-detail-content"><div className="error-message">{error || 'Photo not found'}</div><button onClick={handleBack} className="retry-button">Back</button></div></div>;
+
+    if (error || !photoData?.photo) {
+        return (
+            <div className="photo-detail-view">
+                <div className="photo-detail-content">
+                    <div className="error-message">{typeof error === 'string' ? error : error?.message || 'Photo not found'}</div>
+                    <button onClick={handleBack} className="retry-button">Back</button>
+                </div>
+            </div>
+        );
     }
+
+    const { photo } = photoData;
 
     return (
         <div className="photo-detail-view">
@@ -208,7 +166,7 @@ const PhotoDetailsView: React.FC = () => {
                     </div>
                     <div className="photo-navigation">
                         <span className="photo-counter">
-                            {currentPhotoIndex + 1} of {allPhotos.length}
+                            {currentPhotoIndex + 1} of {sortedPhotos.length}
                         </span>
                     </div>
                 </div>
@@ -239,6 +197,7 @@ const PhotoDetailsView: React.FC = () => {
                                 handleToggleFavorite(photo);
                             }}
                             title={photo.is_favorite ? "Remove from favorites" : "Add to favorites"}
+                            disabled={favoriteMutation.isPending}
                         >
                             {photo.is_favorite ? '❤️' : '🤍'}
                         </button>
@@ -246,7 +205,7 @@ const PhotoDetailsView: React.FC = () => {
                     <button
                         className="nav-button next-button"
                         onClick={handleNext}
-                        disabled={currentPhotoIndex === allPhotos.length - 1}
+                        disabled={currentPhotoIndex === sortedPhotos.length - 1}
                         title="Next photo (→)"
                     >
                         ›
@@ -266,7 +225,7 @@ const PhotoDetailsView: React.FC = () => {
                                 className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('comments')}
                             >
-                                Comments ({commentCount})
+                                Comments ({comments.length})
                             </button>
                             <button
                                 className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
@@ -280,7 +239,6 @@ const PhotoDetailsView: React.FC = () => {
                                 <div className="comments-tab">
                                     <CommentsSection
                                         photoId={photo.id}
-                                        onCommentsLoaded={handleCommentsLoaded}
                                     />
                                 </div>
                             )}
@@ -295,10 +253,10 @@ const PhotoDetailsView: React.FC = () => {
                                             <span className="info-label">Type:</span>
                                             <span className="info-value">{photo.media_type}</span>
                                         </div>
-                                        {commentCount > 0 && (
+                                        {comments.length > 0 && (
                                             <div className="info-row">
                                                 <span className="info-label">Comments:</span>
-                                                <span className="info-value">{commentCount}</span>
+                                                <span className="info-value">{comments.length}</span>
                                             </div>
                                         )}
                                         {photo.locks_at && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/api';
 import type { PhotoCommentView, PocketMember } from '../../types/api';
+import { useComments, useAddCommentMutation, useEditCommentMutation, useDeleteCommentMutation } from '../../hooks/usePhotos';
 import './CommentsSection.css';
 
 interface CommentsSectionProps {
@@ -12,60 +12,55 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     photoId,
     onCommentsLoaded
 }) => {
-    const [comments, setComments] = useState<PhotoCommentView[]>([]);
     const [newComment, setNewComment] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editText, setEditText] = useState('');
-    const [editing, setEditing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
-    // Fetch comments when component mounts
+    // React Query hooks
+    const {
+        data: comments = [],
+        isLoading,
+        error: fetchError
+    } = useComments(photoId);
+
+    const addCommentMutation = useAddCommentMutation();
+    const editCommentMutation = useEditCommentMutation();
+    const deleteCommentMutation = useDeleteCommentMutation();
+
+    // Notify parent component about loaded comments
     useEffect(() => {
-        fetchComments();
-    }, [photoId]);
-
-    const fetchComments = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            console.log('🔄 [CommentsSection] Fetching comments for photo:', photoId);
-            const comments = await api.getPhotoComments(photoId);
-            console.log('✅ [CommentsSection] Comments fetched successfully:', comments);
-            setComments(comments || []);
-
-            // Notify parent component about loaded comments
-            onCommentsLoaded?.(comments || []);
-        } catch (err) {
-            console.error('❌ [CommentsSection] Failed to fetch comments:', err);
-            setError('Failed to load comments');
-        } finally {
-            setLoading(false);
+        if (comments && onCommentsLoaded) {
+            onCommentsLoaded(comments);
         }
-    };
+    }, [comments, onCommentsLoaded]);
+
+    // Handle fetch errors
+    useEffect(() => {
+        if (fetchError) {
+            setError('Failed to load comments');
+        } else {
+            setError(null);
+        }
+    }, [fetchError]);
 
     const handleSubmitComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newComment.trim()) return;
 
         try {
-            setSubmitting(true);
             setError(null);
-
-            await api.addComment(photoId, { text: newComment.trim() });
+            await addCommentMutation.mutateAsync({
+                photoId,
+                text: newComment.trim()
+            });
 
             // Clear the input
             setNewComment('');
-
-            // Refresh comments and notify parent with updated count
-            await fetchComments();
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to add comment:', err);
             setError('Failed to add comment');
-        } finally {
-            setSubmitting(false);
         }
     };
 
@@ -73,33 +68,26 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         if (!editText.trim()) return;
 
         try {
-            setEditing(true);
             setError(null);
-
-            await api.editComment(commentId, { text: editText.trim() });
+            await editCommentMutation.mutateAsync({
+                commentId,
+                text: editText.trim(),
+                photoId
+            });
 
             // Clear edit state
             setEditingCommentId(null);
             setEditText('');
-
-            // Refresh comments and notify parent with updated count
-            await fetchComments();
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to edit comment:', err);
             setError('Failed to edit comment');
-        } finally {
-            setEditing(false);
         }
     };
 
     const handleDeleteComment = async (commentId: string) => {
         try {
             setError(null);
-
-            await api.deleteComment(commentId);
-
-            // Refresh comments and notify parent with updated count
-            await fetchComments();
+            await deleteCommentMutation.mutateAsync(commentId);
         } catch (err) {
             console.error('❌ [CommentsSection] Failed to delete comment:', err);
             setError('Failed to delete comment');
@@ -133,7 +121,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     };
 
     const getProfilePictureUrl = (member: PocketMember): string => {
-
         if (member.profile_picture_default) {
             return DEFAULT_PROFILE_PLACEHOLDER;
         }
@@ -150,7 +137,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
             {/* Comments List */}
             <div className="comments-list">
-                {loading ? (
+                {isLoading ? (
                     <div className="loading-comments">
                         <div className="loading-spinner"></div>
                         <span>Loading comments...</span>
@@ -192,14 +179,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                         <div className="edit-actions">
                                             <button
                                                 onClick={() => handleEditComment(comment.id)}
-                                                disabled={editing || !editText.trim()}
+                                                disabled={editCommentMutation.isPending || !editText.trim()}
                                                 className="save-edit-button"
                                             >
-                                                {editing ? 'Saving...' : 'Save'}
+                                                {editCommentMutation.isPending ? 'Saving...' : 'Save'}
                                             </button>
                                             <button
                                                 onClick={cancelEditing}
-                                                disabled={editing}
+                                                disabled={editCommentMutation.isPending}
                                                 className="cancel-edit-button"
                                             >
                                                 Cancel
@@ -221,6 +208,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteComment(comment.id)}
+                                                disabled={deleteCommentMutation.isPending}
                                                 className="delete-comment-button"
                                                 title="Delete comment"
                                             >
@@ -243,15 +231,15 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Add a comment..."
-                        disabled={submitting}
+                        disabled={addCommentMutation.isPending}
                         className="comment-input"
                     />
                     <button
                         type="submit"
-                        disabled={submitting || !newComment.trim()}
+                        disabled={addCommentMutation.isPending || !newComment.trim()}
                         className="submit-comment-button"
                     >
-                        {submitting ? 'Posting...' : 'Post'}
+                        {addCommentMutation.isPending ? 'Posting...' : 'Post'}
                     </button>
                 </div>
             </form>

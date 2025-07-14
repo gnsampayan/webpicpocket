@@ -1,85 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
-import type { Photo, Pocket, PocketMember, ContactUser } from '../../types';
+import type { Photo, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
+import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation } from '../../hooks/usePhotos';
+import { getInitialSortFilter, saveSortFilter, sortPhotos } from '../../utils/sorting';
 import './GridPhotoView.css';
-
-interface EventDetailResponse {
-    event_id: string;
-    title: string;
-    photo_count: number;
-    additional_member_count: number;
-    additional_members: Array<{
-        id: string;
-        username: string;
-        first_name: string;
-        last_name: string;
-        email: string;
-        profile_picture_default: boolean;
-        profile_picture: {
-            url_small?: string;
-            url_medium?: string;
-            url_large?: string;
-            [key: string]: any;
-        };
-    }>;
-    current_user_added: boolean;
-    current_user_add_permissions: boolean;
-    photos: Photo[];
-}
 
 const GridPhotoView: React.FC = () => {
     const { pocketTitle, eventTitle } = useParams<{ pocketTitle: string; eventTitle: string }>();
     const navigate = useNavigate();
 
-    const [eventData, setEventData] = useState<EventDetailResponse | null>(null);
-    const [pocket, setPocket] = useState<Pocket | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    // Load initial state from localStorage
-    const getInitialFilter = (): string => {
-        const saved = localStorage.getItem('photos-sort-filter');
-        return saved || 'newest-created';
-    };
-
-    // Remove selectedPhoto state
-    // const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
     const [photosPerRow] = useState(3);
-    const [filter, setFilter] = useState(getInitialFilter);
+    const [filter, setFilter] = useState(getInitialSortFilter);
 
-    // Functions to save state to localStorage
-    const saveFilter = (filterValue: string) => {
-        localStorage.setItem('photos-sort-filter', filterValue);
-    };
+    // React Query hooks - using shared cached data
+    const { pocket, event, isLoading: isLoadingPocketEvent, error: pocketEventError } = usePocketAndEventFromUrl(pocketTitle, eventTitle);
+    const { data: eventData, isLoading: isLoadingEventPhotos, error: eventPhotosError } = useEventPhotos(event?.id);
+    const favoriteMutation = useFavoriteMutation();
+    const deletePhotoMutation = useDeletePhotoMutation();
+
+    // Combined loading and error states
+    const isLoading = isLoadingPocketEvent || isLoadingEventPhotos;
+    const error = pocketEventError || eventPhotosError;
 
     // Wrapper function to update state and save to localStorage
     const handleFilterChange = (filterValue: string) => {
         setFilter(filterValue);
-        saveFilter(filterValue);
-    };
-
-    // Helper function to sort photos based on filter
-    const sortPhotos = (photosToSort: Photo[], sortFilter: string): Photo[] => {
-        const sorted = [...photosToSort];
-
-        switch (sortFilter) {
-            case 'newest-created':
-                return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            case 'oldest-created':
-                return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-            case 'newest-updated':
-                return sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-            case 'oldest-updated':
-                return sorted.sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
-            case 'comment-high-low':
-                return sorted.sort((a, b) => b.comment_count - a.comment_count);
-            case 'comment-low-high':
-                return sorted.sort((a, b) => a.comment_count - b.comment_count);
-            default:
-                return sorted;
-        }
+        saveSortFilter(filterValue);
     };
 
     // Modal state
@@ -88,72 +36,6 @@ const GridPhotoView: React.FC = () => {
     // Default placeholder images as data URI for better reliability
     const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
     const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
-
-    useEffect(() => {
-        const fetchEventAndPocketData = async () => {
-            if (!eventTitle || !pocketTitle) {
-                setError('No event title or pocket title provided');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError(null);
-
-                // Parse pocket title and ID suffix from URL
-                const decodedPocketTitle = decodeURIComponent(pocketTitle);
-                const pocketLastDashIndex = decodedPocketTitle.lastIndexOf('-');
-                const actualPocketTitle = pocketLastDashIndex !== -1 ? decodedPocketTitle.substring(0, pocketLastDashIndex) : decodedPocketTitle;
-                const pocketIdSuffix = pocketLastDashIndex !== -1 ? decodedPocketTitle.substring(pocketLastDashIndex + 1) : '';
-
-                // Parse event title and ID suffix from URL
-                const decodedEventTitle = decodeURIComponent(eventTitle);
-                const eventLastDashIndex = decodedEventTitle.lastIndexOf('-');
-                const actualEventTitle = eventLastDashIndex !== -1 ? decodedEventTitle.substring(0, eventLastDashIndex) : decodedEventTitle;
-                const eventIdSuffix = eventLastDashIndex !== -1 ? decodedEventTitle.substring(eventLastDashIndex + 1) : '';
-
-                console.log('🔍 [GridPhotoView] Fetching data for pocket:', actualPocketTitle, 'with suffix:', pocketIdSuffix);
-                console.log('🔍 [GridPhotoView] Fetching data for event:', actualEventTitle, 'with suffix:', eventIdSuffix);
-
-                // Fetch pockets data first to find the pocket
-                const pocketsData = await api.getPockets();
-                const currentPocket = pocketsData.find(p =>
-                    p.pocket_id.endsWith(pocketIdSuffix)
-                );
-
-                if (!currentPocket) {
-                    throw new Error('Pocket not found');
-                }
-
-                // Fetch events for this pocket to find the event
-                const eventsData = await api.getEvents(currentPocket.pocket_id);
-                const currentEvent = eventsData.find(e =>
-                    e.id.endsWith(eventIdSuffix)
-                );
-
-                if (!currentEvent) {
-                    throw new Error('Event not found');
-                }
-
-                // Fetch event details using the event ID
-                const eventResponse = await api.getEventDetails(currentEvent.id);
-
-                console.log('✅ [GridPhotoView] Event details fetched successfully:', eventResponse);
-                console.log('✅ [GridPhotoView] Pocket data fetched successfully:', currentPocket);
-
-                setEventData(eventResponse);
-                setPocket(currentPocket);
-            } catch (err) {
-                console.error('❌ [GridPhotoView] Failed to fetch data:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load event and pocket data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchEventAndPocketData();
-    }, [eventTitle, pocketTitle]);
 
     // Handle back to event view
     const handleBackToEventView = () => {
@@ -227,41 +109,15 @@ const GridPhotoView: React.FC = () => {
         }
     };
 
-    // Remove handleBackToGrid and all selectedPhoto logic
-
     // Handle photo favorite toggle
     const handleToggleFavorite = async (photo: Photo) => {
         try {
             console.log('🔄 [GridPhotoView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
 
-            if (photo.is_favorite) {
-                console.log('🔄 [GridPhotoView] Removing from favorites...');
-                await api.manageFavorite({ remove_favorite: [photo.id] });
-            } else {
-                console.log('🔄 [GridPhotoView] Adding to favorites...');
-                await api.manageFavorite({ add_favorite: [photo.id] });
-            }
-
-            // Update the photo in the local state
-            setEventData(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    photos: prev.photos.map(p =>
-                        p.id === photo.id
-                            ? { ...p, is_favorite: !p.is_favorite }
-                            : p
-                    )
-                };
+            await favoriteMutation.mutateAsync({
+                photoId: photo.id,
+                isFavorite: photo.is_favorite
             });
-
-            // Also update the selected photo if it's the same photo
-            // setSelectedPhoto(prev => { // This line is removed
-            //     if (prev && prev.id === photo.id) {
-            //         return { ...prev, is_favorite: !prev.is_favorite };
-            //     }
-            //     return prev;
-            // });
 
             console.log('✅ Photo favorite status updated');
         } catch (err) {
@@ -288,18 +144,7 @@ const GridPhotoView: React.FC = () => {
         }
 
         try {
-            await api.deletePhoto(photo.id);
-
-            // Remove the photo from the local state
-            setEventData(prev => {
-                if (!prev) return prev;
-                return {
-                    ...prev,
-                    photos: prev.photos.filter(p => p.id !== photo.id),
-                    photo_count: prev.photo_count - 1
-                };
-            });
-
+            await deletePhotoMutation.mutateAsync(photo.id);
             console.log('✅ Photo deleted successfully');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to delete photo:', err);
@@ -314,18 +159,7 @@ const GridPhotoView: React.FC = () => {
     // Handle media added to event
     const handleMediaAdded = async () => {
         console.log('✅ [GridPhotoView] Media added, refetching event data');
-
-        // Refetch event data to get the updated photos from the backend
-        try {
-            setLoading(true);
-            const updatedEventData = await api.getEventDetails(eventData?.event_id || '');
-            setEventData(updatedEventData);
-            console.log('✅ [GridPhotoView] Event data refreshed with new photos');
-        } catch (err) {
-            console.error('❌ [GridPhotoView] Failed to refetch event data:', err);
-        } finally {
-            setLoading(false);
-        }
+        // React Query will automatically refetch the data
     };
 
     // Get photos to show based on loading progress and sorting
@@ -347,7 +181,7 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Show loading state
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="grid-photo-view-page">
                 {/* Header */}
@@ -408,7 +242,7 @@ const GridPhotoView: React.FC = () => {
                 <main className="grid-photo-content">
                     <div className="error-state">
                         <h2>Error Loading Photos</h2>
-                        <p>{error || 'Event not found'}</p>
+                        <p>{typeof error === 'string' ? error : error?.message || 'Event not found'}</p>
                         <button onClick={handleBackToEventView} className="retry-button">
                             Back to Event
                         </button>
@@ -452,7 +286,7 @@ const GridPhotoView: React.FC = () => {
                                         </div>
                                     ))}
                                     {/* Show additional members if any */}
-                                    {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member) => (
+                                    {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member: any) => (
                                         <div key={member.id} className="member-avatar">
                                             <img
                                                 src={getProfilePictureUrl(member)}
@@ -535,6 +369,7 @@ const GridPhotoView: React.FC = () => {
                                                 e.stopPropagation();
                                                 handleToggleFavorite(photo);
                                             }}
+                                            disabled={favoriteMutation.isPending}
                                         >
                                             {photo.is_favorite ? '❤️' : '🤍'}
                                         </button>
@@ -545,6 +380,7 @@ const GridPhotoView: React.FC = () => {
                                                     e.stopPropagation();
                                                     handleDeletePhoto(photo);
                                                 }}
+                                                disabled={deletePhotoMutation.isPending}
                                             >
                                                 🗑️
                                             </button>

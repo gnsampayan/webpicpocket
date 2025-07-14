@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
+import { useCreatePocketMutation } from '../../hooks/usePhotos';
 import type { Pocket, ContactUser } from '../../types';
 import './CreatePocketModal.css';
 import { API_CONFIG } from '../../config/api';
@@ -32,6 +33,9 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
     const [coverPhotoObjectKey, setCoverPhotoObjectKey] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // React Query mutation
+    const createPocketMutation = useCreatePocketMutation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +73,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                 return;
             }
 
-            const newPocket = await api.createPocket(requestBody);
+            const newPocket = await createPocketMutation.mutateAsync(requestBody);
             console.log('✅ Pocket created successfully:', newPocket);
 
             // Reset form

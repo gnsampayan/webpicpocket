@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
+import { useAddMediaMutation } from '../../hooks/usePhotos';
 import './AddMediaModal.css';
 
 interface AddMediaModalProps {
@@ -32,6 +33,9 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // React Query mutation hook
+    const addMediaMutation = useAddMediaMutation();
 
     // Helper function to extract EXIF data from image files
     const extractImageMetadata = (file: File): Promise<any> => {
@@ -238,27 +242,21 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
         try {
             console.log('🔄 [AddMediaModal] Adding media to event');
 
-            // Prepare the add_media array - only include files that have been uploaded and are still selected
-            const addMedia = selectedFiles
+            // Get the actual File objects from selected files
+            const mediaFiles = selectedFiles
                 .filter(file => file.objectKey) // Only include files that have been uploaded
-                .map(file => ({
-                    media_type: 'photo' as const, // For now, only photos are supported
-                    object_key: file.objectKey!
-                }));
+                .map(file => file.file);
 
             console.log('🔄 [AddMediaModal] Selected files:', selectedFiles.length);
             console.log('🔄 [AddMediaModal] Files with object keys:', selectedFiles.filter(f => f.objectKey).length);
-            console.log('🔄 [AddMediaModal] Add media array:', addMedia);
+            console.log('🔄 [AddMediaModal] Media files to upload:', mediaFiles.length);
 
-            // Make the API call to add media to event using the existing uploadPhotosToEvent method
-            const addPhotoRequest = {
-                add_photos: addMedia.map(media => ({
-                    object_key: media.object_key,
-                    metadata: null
-                }))
-            };
+            // Use the React Query mutation
+            await addMediaMutation.mutateAsync({
+                eventId,
+                mediaFiles
+            });
 
-            await api.uploadPhotosToEvent(eventId, addPhotoRequest);
             console.log('✅ [AddMediaModal] Media added successfully to backend');
 
             // Call the callback to trigger a refetch of event data
@@ -441,12 +439,13 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                         className="submit-button"
                         disabled={
                             submitting ||
+                            addMediaMutation.isPending ||
                             hasUploadingFiles ||
                             selectedFiles.length === 0 ||
                             readyFiles.length !== selectedFiles.length
                         }
                     >
-                        {submitting ? 'Adding to Event...' : 'Add to Event'}
+                        {submitting || addMediaMutation.isPending ? 'Adding to Event...' : 'Add to Event'}
                     </button>
                 </div>
             </div>

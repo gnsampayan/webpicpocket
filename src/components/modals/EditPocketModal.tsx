@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
+import { useUpdatePocketMutation } from '../../hooks/usePhotos';
 import { type Pocket, type ContactUser } from '../../types';
 import './EditPocketModal.css';
 
@@ -42,6 +43,9 @@ const EditPocketModal: React.FC<EditPocketModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // React Query mutation
+    const updatePocketMutation = useUpdatePocketMutation();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Reset form when modal opens with new pocket
@@ -289,7 +293,7 @@ const EditPocketModal: React.FC<EditPocketModalProps> = ({
             if (Object.keys(updateData).length > 0) {
                 console.log('🔄 [EditPocketModal] Update data:', updateData);
 
-                await api.updatePocket(pocket.pocket_id, updateData);
+                await updatePocketMutation.mutateAsync({ pocketId: pocket.pocket_id, data: updateData });
                 console.log('✅ [EditPocketModal] Pocket updated successfully');
 
                 setSuccess('Pocket updated successfully!');
