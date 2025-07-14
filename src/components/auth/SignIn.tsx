@@ -64,7 +64,7 @@ const SignIn: React.FC = () => {
                 password: formData.password
             };
 
-            const response = await api.login(loginData);
+            const response = await api.login(loginData, formData.rememberMe);
 
             console.log('Sign in successful:', response);
 

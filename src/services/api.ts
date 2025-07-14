@@ -8,10 +8,12 @@ import { API_CONFIG } from "../config/api";
 import {
 	getUserStorageKeys,
 	getCurrentUserStorageKeys,
-	setStorageItem,
-	getStorageItem,
 	removeStorageItem,
 	setCurrentUserId,
+	setStorageItemWithRememberMe,
+	setRememberMe,
+	getRememberMe,
+	getStorageItemWithFallback,
 } from "../utils/storage";
 import {
 	AUTH_ERRORS,
@@ -38,7 +40,7 @@ const getAccessToken = async () => {
 	if (!currentAccessToken) {
 		try {
 			const userKeys = await getCurrentUserStorageKeys();
-			currentAccessToken = await getStorageItem(userKeys.ACCESS_TOKEN);
+			currentAccessToken = await getStorageItemWithFallback(userKeys.ACCESS_TOKEN);
 		} catch (error) {
 			// No current user for token access, ignore error
 			return null;
@@ -47,13 +49,13 @@ const getAccessToken = async () => {
 	return currentAccessToken;
 };
 
-const setAccessToken = async (token: string, userId?: string) => {
+const setAccessToken = async (token: string, userId?: string, rememberMe: boolean = false) => {
 	currentAccessToken = token;
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
 			: await getCurrentUserStorageKeys();
-		await setStorageItem(userKeys.ACCESS_TOKEN, token);
+		await setStorageItemWithRememberMe(userKeys.ACCESS_TOKEN, token, rememberMe);
 	} catch (error) {
 		console.error("❌ [API] Failed to save access token:", error);
 	}
@@ -74,19 +76,19 @@ const clearAccessToken = async () => {
 const getRefreshToken = async () => {
 	try {
 		const userKeys = await getCurrentUserStorageKeys();
-		return await getStorageItem(userKeys.REFRESH_TOKEN);
+		return await getStorageItemWithFallback(userKeys.REFRESH_TOKEN);
 	} catch (error) {
 		// No current user for refresh token access, ignore error
 		return null;
 	}
 };
 
-const setRefreshToken = async (token: string, userId?: string) => {
+const setRefreshToken = async (token: string, userId?: string, rememberMe: boolean = false) => {
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
 			: await getCurrentUserStorageKeys();
-		await setStorageItem(userKeys.REFRESH_TOKEN, token);
+		await setStorageItemWithRememberMe(userKeys.REFRESH_TOKEN, token, rememberMe);
 	} catch (error) {
 		console.error("❌ [API] Failed to save refresh token:", error);
 	}
@@ -103,12 +105,12 @@ const clearRefreshToken = async () => {
 };
 
 // User data management
-const setUserData = async (data: string, userId?: string) => {
+const setUserData = async (data: string, userId?: string, rememberMe: boolean = false) => {
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
 			: await getCurrentUserStorageKeys();
-		await setStorageItem(userKeys.USER_DATA, data);
+		await setStorageItemWithRememberMe(userKeys.USER_DATA, data, rememberMe);
 	} catch (error) {
 		console.error("❌ [API] Failed to save user data:", error);
 	}
@@ -193,7 +195,7 @@ export const api = {
 	/**
 	 * Logs in a user
 	 */
-	async login(data: ApiTypes.LoginData): Promise<ApiTypes.LoginResponse> {
+	async login(data: ApiTypes.LoginData, rememberMe: boolean = false): Promise<ApiTypes.LoginResponse> {
 		const url = `${API_URL}${API_CONFIG.endpoints.auth.login}`;
 		try {
 			const response = await fetch(url, {
@@ -220,10 +222,15 @@ export const api = {
 
 			// Store tokens after successful login
 			const userId = responseData.user_info.id;
-			await setCurrentUserId(userId);
-			await setAccessToken(responseData.access_token, userId);
-			await setRefreshToken(responseData.refresh_token, userId);
-			await setUserData(JSON.stringify(responseData.user_info), userId);
+			
+			// Store remember me preference
+			await setRememberMe(rememberMe);
+			
+			// Store user data with remember me setting
+			await setCurrentUserId(userId, rememberMe);
+			await setAccessToken(responseData.access_token, userId, rememberMe);
+			await setRefreshToken(responseData.refresh_token, userId, rememberMe);
+			await setUserData(JSON.stringify(responseData.user_info), userId, rememberMe);
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Login error:", error);
@@ -313,9 +320,10 @@ export const api = {
 
 				const responseData = await response.json();
 
-				// Store new tokens
-				await setAccessToken(responseData.access_token);
-				await setRefreshToken(responseData.refresh_token);
+				// Store new tokens with current remember me setting
+				const rememberMe = await getRememberMe();
+				await setAccessToken(responseData.access_token, undefined, rememberMe);
+				await setRefreshToken(responseData.refresh_token, undefined, rememberMe);
 
 				console.log("✅ [API] Token refresh successful");
 				return responseData;
