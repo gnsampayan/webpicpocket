@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import type { Photo, Pocket, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
-import PhotoDetailsView from './PhotoDetailsView';
 import './GridPhotoView.css';
 
 interface EventDetailResponse {
@@ -44,7 +43,8 @@ const GridPhotoView: React.FC = () => {
         return saved || 'newest-created';
     };
 
-    const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+    // Remove selectedPhoto state
+    // const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
     const [photosPerRow] = useState(3);
     const [filter, setFilter] = useState(getInitialFilter);
@@ -220,31 +220,14 @@ const GridPhotoView: React.FC = () => {
 
     // Handle photo click
     const handlePhotoClick = (photo: Photo) => {
-        setSelectedPhoto(photo);
-    };
-
-    // Handle back to grid view
-    const handleBackToGrid = async () => {
-        // Refresh the photo data before closing the detail view
-        if (selectedPhoto) {
-            try {
-                // Get updated photo details from the API
-                const updatedEventData = await api.getEventDetails(eventData?.event_id || '');
-                setEventData(updatedEventData);
-
-                // Find the updated photo in the new data
-                const updatedPhoto = updatedEventData.photos.find((p: Photo) => p.id === selectedPhoto.id);
-                if (updatedPhoto) {
-                    // Update the selected photo with fresh data
-                    setSelectedPhoto(updatedPhoto);
-                }
-            } catch (err) {
-                console.error('❌ [GridPhotoView] Failed to refresh photo data:', err);
-            }
+        // Navigate to the new photo details route
+        if (pocketTitle && eventTitle) {
+            const shortId = photo.id.slice(-6);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
         }
-
-        setSelectedPhoto(null);
     };
+
+    // Remove handleBackToGrid and all selectedPhoto logic
 
     // Handle photo favorite toggle
     const handleToggleFavorite = async (photo: Photo) => {
@@ -273,12 +256,12 @@ const GridPhotoView: React.FC = () => {
             });
 
             // Also update the selected photo if it's the same photo
-            setSelectedPhoto(prev => {
-                if (prev && prev.id === photo.id) {
-                    return { ...prev, is_favorite: !prev.is_favorite };
-                }
-                return prev;
-            });
+            // setSelectedPhoto(prev => { // This line is removed
+            //     if (prev && prev.id === photo.id) {
+            //         return { ...prev, is_favorite: !prev.is_favorite };
+            //     }
+            //     return prev;
+            // });
 
             console.log('✅ Photo favorite status updated');
         } catch (err) {
@@ -443,182 +426,147 @@ const GridPhotoView: React.FC = () => {
             <header className="grid-photo-header">
                 <div className="header-top">
                     <div className="back-button-section">
-                        {selectedPhoto ? (
-                            // Show back to grid button when viewing photo details
-                            <button onClick={handleBackToGrid} className="back-button">
-                                <span>←</span>
-                            </button>
-                        ) : (
-                            // Show back to event button when viewing grid
-                            <button onClick={handleBackToEventView} className="back-button">
-                                <span>←</span>
-                            </button>
-                        )}
-                        <h1 className="event-title">
-                            {selectedPhoto ? 'Photo Details' : eventData.title}
-                        </h1>
+                        <button onClick={handleBackToEventView} className="back-button">
+                            <span>←</span>
+                        </button>
+                        <h1 className="event-title">{eventData.title}</h1>
                     </div>
                     <div className="header-actions">
-                        {selectedPhoto ? (
-                            // Show favorite button in header when viewing photo details
-                            <button
-                                className={`header-favorite-button ${selectedPhoto.is_favorite ? 'favorited' : ''}`}
-                                onClick={() => handleToggleFavorite(selectedPhoto)}
-                                title={selectedPhoto.is_favorite ? "Remove from favorites" : "Add to favorites"}
-                            >
-                                {selectedPhoto.is_favorite ? '❤️' : '🤍'}
-                            </button>
-                        ) : (
-                            <>
-                                <div className="header-info">
-                                    <span className="photo-count">
-                                        📷 {eventData.photo_count} photos
-                                    </span>
-                                    <div className="event-members">
-                                        <span className="member-count">{totalMemberCount} members</span>
-                                        <div className="member-avatars">
-                                            {/* Show pocket members first */}
-                                            {pocket.pocket_members?.slice(0, 3).map((member) => (
-                                                <div key={member.id} className="member-avatar">
-                                                    <img
-                                                        src={getProfilePictureUrl(member)}
-                                                        alt={member.first_name}
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
-                                                        }}
-                                                    />
-                                                </div>
-                                            ))}
-                                            {/* Show additional members if any */}
-                                            {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member) => (
-                                                <div key={member.id} className="member-avatar">
-                                                    <img
-                                                        src={getProfilePictureUrl(member)}
-                                                        alt={member.first_name}
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
-                                                        }}
-                                                    />
-                                                </div>
-                                            ))}
-                                            {totalMemberCount > 3 && (
-                                                <span className="more-members">+{totalMemberCount - 3}</span>
-                                            )}
+                        <div className="header-info">
+                            <span className="photo-count">
+                                📷 {eventData.photo_count} photos
+                            </span>
+                            <div className="event-members">
+                                <span className="member-count">{totalMemberCount} members</span>
+                                <div className="member-avatars">
+                                    {/* Show pocket members first */}
+                                    {pocket.pocket_members?.slice(0, 3).map((member) => (
+                                        <div key={member.id} className="member-avatar">
+                                            <img
+                                                src={getProfilePictureUrl(member)}
+                                                alt={member.first_name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
                                         </div>
-                                    </div>
+                                    ))}
+                                    {/* Show additional members if any */}
+                                    {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member) => (
+                                        <div key={member.id} className="member-avatar">
+                                            <img
+                                                src={getProfilePictureUrl(member)}
+                                                alt={member.first_name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                    {totalMemberCount > 3 && (
+                                        <span className="more-members">+{totalMemberCount - 3}</span>
+                                    )}
                                 </div>
-                                {eventData.current_user_add_permissions && (
-                                    <button
-                                        className="add-photos-button"
-                                        onClick={() => setShowAddMediaModal(true)}
-                                    >
-                                        <span>+</span>
-                                    </button>
-                                )}
-                            </>
+                            </div>
+                        </div>
+                        {eventData.current_user_add_permissions && (
+                            <button
+                                className="add-photos-button"
+                                onClick={() => setShowAddMediaModal(true)}
+                            >
+                                <span>+</span>
+                            </button>
                         )}
                     </div>
                 </div>
             </header>
 
             {/* Controls - Only show when viewing grid */}
-            {!selectedPhoto && (
-                <section className="controls-section">
-                    <div className="controls-right">
-                        <div className="filter-dropdown">
-                            <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
-                                <option value="newest-created">Newest Created</option>
-                                <option value="oldest-created">Oldest Created</option>
-                                <option value="newest-updated">Most Recently Updated</option>
-                                <option value="oldest-updated">Least Recently Updated</option>
-                                <option value="comment-high-low">Comment Count (High to Low)</option>
-                                <option value="comment-low-high">Comment Count (Low to High)</option>
-                            </select>
-                        </div>
+            <section className="controls-section">
+                <div className="controls-right">
+                    <div className="filter-dropdown">
+                        <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
+                            <option value="newest-created">Newest Created</option>
+                            <option value="oldest-created">Oldest Created</option>
+                            <option value="newest-updated">Most Recently Updated</option>
+                            <option value="oldest-updated">Least Recently Updated</option>
+                            <option value="comment-high-low">Comment Count (High to Low)</option>
+                            <option value="comment-low-high">Comment Count (Low to High)</option>
+                        </select>
                     </div>
-                </section>
-            )}
+                </div>
+            </section>
 
-            {/* Main Content - Show either grid or photo detail */}
+            {/* Main Content - Only show grid */}
             <main className="grid-photo-content">
-                {selectedPhoto ? (
-                    // Show photo detail view
-                    <PhotoDetailsView
-                        photo={selectedPhoto}
-                        getPhotoUrl={getPhotoUrl}
-                        onDeletePhoto={handleDeletePhoto}
-                    />
+                {eventData.photos.length === 0 ? (
+                    <div className="empty-photos">
+                        <div className="empty-icon">📷</div>
+                        <h3>No photos in this event</h3>
+                        <p>This event doesn't have any photos yet.</p>
+                        {eventData.current_user_add_permissions && (
+                            <button
+                                className="add-photos-button-large"
+                                onClick={() => setShowAddMediaModal(true)}
+                            >
+                                <span>+</span>
+                                Add Your First Photo
+                            </button>
+                        )}
+                    </div>
                 ) : (
-                    // Show photos grid
-                    eventData.photos.length === 0 ? (
-                        <div className="empty-photos">
-                            <div className="empty-icon">📷</div>
-                            <h3>No photos in this event</h3>
-                            <p>This event doesn't have any photos yet.</p>
-                            {eventData.current_user_add_permissions && (
-                                <button
-                                    className="add-photos-button-large"
-                                    onClick={() => setShowAddMediaModal(true)}
-                                >
-                                    <span>+</span>
-                                    Add Your First Photo
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="photos-grid">
-                            {getPhotosToShow().map((photo) => (
-                                <div key={photo.id} className="photo-item" onClick={() => handlePhotoClick(photo)}>
-                                    <img
-                                        src={getPhotoUrl(photo)}
-                                        alt="Event photo"
-                                        onLoad={() => handlePhotoLoad(photo.id)}
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
-                                            handlePhotoLoad(photo.id); // Mark as loaded even on error
-                                        }}
-                                    />
-                                    <div className="photo-overlay">
-                                        <div className="photo-actions">
+                    <div className="photos-grid">
+                        {getPhotosToShow().map((photo) => (
+                            <div key={photo.id} className="photo-item" onClick={() => handlePhotoClick(photo)}>
+                                <img
+                                    src={getPhotoUrl(photo)}
+                                    alt="Event photo"
+                                    onLoad={() => handlePhotoLoad(photo.id)}
+                                    onError={(e) => {
+                                        e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
+                                        handlePhotoLoad(photo.id); // Mark as loaded even on error
+                                    }}
+                                />
+                                <div className="photo-overlay">
+                                    <div className="photo-actions">
+                                        <button
+                                            className={`favorite-button ${photo.is_favorite ? 'favorited' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleToggleFavorite(photo);
+                                            }}
+                                        >
+                                            {photo.is_favorite ? '❤️' : '🤍'}
+                                        </button>
+                                        {photo.can_delete && (
                                             <button
-                                                className={`favorite-button ${photo.is_favorite ? 'favorited' : ''}`}
+                                                className="delete-button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleToggleFavorite(photo);
+                                                    handleDeletePhoto(photo);
                                                 }}
                                             >
-                                                {photo.is_favorite ? '❤️' : '🤍'}
+                                                🗑️
                                             </button>
-                                            {photo.can_delete && (
-                                                <button
-                                                    className="delete-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeletePhoto(photo);
-                                                    }}
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                        </div>
-                                        {photo.comment_count > 0 && (
-                                            <div className="comment-count">
-                                                💬 {photo.comment_count}
-                                            </div>
                                         )}
                                     </div>
+                                    {photo.comment_count > 0 && (
+                                        <div className="comment-count">
+                                            💬 {photo.comment_count}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                            {/* Show remaining skeleton placeholders only if not all photos are loaded */}
-                            {loadedPhotos.size < eventData.photos.length &&
-                                Array.from({ length: Math.max(0, photosPerRow - (getPhotosToShow().length % photosPerRow)) }, (_, index) => (
-                                    <div key={`skeleton-${index}`} className="photo-item photo-skeleton">
-                                        <div className="photo-skeleton-content"></div>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    )
+                            </div>
+                        ))}
+                        {/* Show remaining skeleton placeholders only if not all photos are loaded */}
+                        {loadedPhotos.size < eventData.photos.length &&
+                            Array.from({ length: Math.max(0, photosPerRow - (getPhotosToShow().length % photosPerRow)) }, (_, index) => (
+                                <div key={`skeleton-${index}`} className="photo-item photo-skeleton">
+                                    <div className="photo-skeleton-content"></div>
+                                </div>
+                            ))
+                        }
+                    </div>
                 )}
             </main>
 

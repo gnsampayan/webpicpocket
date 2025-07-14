@@ -1,5 +1,5 @@
 .comments-section {
-    padding: 1rem;
+    padding: 1rem 1rem 0.5rem 1rem;
     border-top: 1px solid #e1e5e9;
     background: #f8f9fa;
     height: 100%;
@@ -27,7 +27,7 @@
 .comments-list {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     min-height: 0;
 }
 
@@ -118,6 +118,7 @@
 .add-comment-form {
     margin-top: auto;
     flex-shrink: 0;
+    padding-bottom: 0.5rem;
 }
 
 .comment-input-container {
