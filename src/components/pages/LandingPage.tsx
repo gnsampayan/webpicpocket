@@ -12,8 +12,8 @@ const LandingPage: React.FC = () => {
                         <h2>PicPocket</h2>
                     </div>
                     <div className="nav-links">
-                        <Link to="/signin" className="nav-link">Sign In</Link>
-                        <Link to="/signup" className="nav-button">Get Started</Link>
+                        <Link to="/signin" className="nav-link btn">Sign In</Link>
+                        <Link to="/signup" className="nav-link btn btn-primary">Get Started</Link>
                     </div>
                 </div>
             </nav>
