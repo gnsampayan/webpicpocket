@@ -126,6 +126,50 @@ const PhotoDetailsView: React.FC = () => {
         }
     };
 
+    const handleToggleFavorite = async (photo: Photo) => {
+        try {
+            console.log('🔄 [PhotoDetailsView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
+
+            if (photo.is_favorite) {
+                console.log('🔄 [PhotoDetailsView] Removing from favorites...');
+                await api.manageFavorite({ remove_favorite: [photo.id] });
+            } else {
+                console.log('🔄 [PhotoDetailsView] Adding to favorites...');
+                await api.manageFavorite({ add_favorite: [photo.id] });
+            }
+
+            // Update the photo in the local state
+            setPhoto(prev => {
+                if (!prev) return prev;
+                return { ...prev, is_favorite: !prev.is_favorite };
+            });
+
+            // Also update the photo in allPhotos array
+            setAllPhotos(prev =>
+                prev.map(p =>
+                    p.id === photo.id
+                        ? { ...p, is_favorite: !p.is_favorite }
+                        : p
+                )
+            );
+
+            console.log('✅ Photo favorite status updated');
+        } catch (err) {
+            console.error('❌ [PhotoDetailsView] Failed to toggle favorite:', err);
+
+            // Show user-friendly error message
+            if (err instanceof Error) {
+                if (err.message.includes('502')) {
+                    console.error('❌ [PhotoDetailsView] Server is temporarily unavailable. Please try again later.');
+                } else if (err.message.includes('Network')) {
+                    console.error('❌ [PhotoDetailsView] Network error. Please check your connection.');
+                } else {
+                    console.error('❌ [PhotoDetailsView] Unexpected error:', err.message);
+                }
+            }
+        }
+    };
+
     const getPhotoUrl = (photo: Photo): string => {
         let rawUrl: string | undefined;
         if (typeof photo.photo_url === 'string') {
@@ -187,6 +231,17 @@ const PhotoDetailsView: React.FC = () => {
                                 e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
                             }}
                         />
+                        {/* Favorite button positioned at top left of photo */}
+                        <button
+                            className={`photo-favorite-button ${photo.is_favorite ? 'favorited' : ''}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavorite(photo);
+                            }}
+                            title={photo.is_favorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                            {photo.is_favorite ? '❤️' : '🤍'}
+                        </button>
                     </div>
                     <button
                         className="nav-button next-button"
