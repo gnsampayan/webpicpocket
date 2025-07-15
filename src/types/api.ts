@@ -30,6 +30,7 @@ export interface UserInfo {
 		url_large?: string;
 		[key: string]: any;
 	};
+	verified?: boolean;
 }
 
 export interface RegisterResponse {
@@ -44,6 +45,7 @@ export interface AuthResponse {
 	user_info: UserInfo;
 	access_token: string;
 	refresh_token: string;
+	verified: boolean;
 }
 
 export interface ApiError {
@@ -54,6 +56,7 @@ export interface LoginResponse {
 	user_info: UserInfo;
 	access_token: string;
 	refresh_token: string;
+	verified: boolean;
 }
 
 export interface VerifyEmailResponse {

@@ -262,6 +262,64 @@
   box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
+/* Security Form Sections */
+.security-form-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e1e5e9;
+}
+
+.security-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.security-form-header:hover {
+  opacity: 0.8;
+}
+
+.security-form-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.expand-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #667eea;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  min-width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.security-form {
+  max-width: 400px;
+  margin-top: 1rem;
+}
+
 /* Security Options */
 .security-options {
   display: flex;
@@ -307,6 +365,25 @@
   border-color: #667eea;
   color: #667eea;
   background: #f8f9ff;
+}
+
+/* Verified Indicator */
+.verified-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f0fff4;
+  border: 1px solid #68d391;
+  border-radius: 8px;
+  color: #38a169;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.verified-icon {
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 /* Notification Options */

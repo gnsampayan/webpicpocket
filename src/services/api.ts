@@ -40,7 +40,9 @@ const getAccessToken = async () => {
 	if (!currentAccessToken) {
 		try {
 			const userKeys = await getCurrentUserStorageKeys();
-			currentAccessToken = await getStorageItemWithFallback(userKeys.ACCESS_TOKEN);
+			currentAccessToken = await getStorageItemWithFallback(
+				userKeys.ACCESS_TOKEN
+			);
 		} catch (error) {
 			// No current user for token access, ignore error
 			return null;
@@ -49,13 +51,21 @@ const getAccessToken = async () => {
 	return currentAccessToken;
 };
 
-const setAccessToken = async (token: string, userId?: string, rememberMe: boolean = false) => {
+const setAccessToken = async (
+	token: string,
+	userId?: string,
+	rememberMe: boolean = false
+) => {
 	currentAccessToken = token;
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
 			: await getCurrentUserStorageKeys();
-		await setStorageItemWithRememberMe(userKeys.ACCESS_TOKEN, token, rememberMe);
+		await setStorageItemWithRememberMe(
+			userKeys.ACCESS_TOKEN,
+			token,
+			rememberMe
+		);
 	} catch (error) {
 		console.error("❌ [API] Failed to save access token:", error);
 	}
@@ -83,12 +93,20 @@ const getRefreshToken = async () => {
 	}
 };
 
-const setRefreshToken = async (token: string, userId?: string, rememberMe: boolean = false) => {
+const setRefreshToken = async (
+	token: string,
+	userId?: string,
+	rememberMe: boolean = false
+) => {
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
 			: await getCurrentUserStorageKeys();
-		await setStorageItemWithRememberMe(userKeys.REFRESH_TOKEN, token, rememberMe);
+		await setStorageItemWithRememberMe(
+			userKeys.REFRESH_TOKEN,
+			token,
+			rememberMe
+		);
 	} catch (error) {
 		console.error("❌ [API] Failed to save refresh token:", error);
 	}
@@ -105,7 +123,11 @@ const clearRefreshToken = async () => {
 };
 
 // User data management
-const setUserData = async (data: string, userId?: string, rememberMe: boolean = false) => {
+const setUserData = async (
+	data: string,
+	userId?: string,
+	rememberMe: boolean = false
+) => {
 	try {
 		const userKeys = userId
 			? getUserStorageKeys(userId)
@@ -195,7 +217,10 @@ export const api = {
 	/**
 	 * Logs in a user
 	 */
-	async login(data: ApiTypes.LoginData, rememberMe: boolean = false): Promise<ApiTypes.LoginResponse> {
+	async login(
+		data: ApiTypes.LoginData,
+		rememberMe: boolean = false
+	): Promise<ApiTypes.LoginResponse> {
 		const url = `${API_URL}${API_CONFIG.endpoints.auth.login}`;
 		try {
 			const response = await fetch(url, {
@@ -222,15 +247,24 @@ export const api = {
 
 			// Store tokens after successful login
 			const userId = responseData.user_info.id;
-			
+
 			// Store remember me preference
 			await setRememberMe(rememberMe);
-			
-			// Store user data with remember me setting
+
+			// Store user data with remember me setting (including verification status)
+			const userDataWithVerification = {
+				...responseData.user_info,
+				verified: responseData.verified,
+			};
+
 			await setCurrentUserId(userId, rememberMe);
 			await setAccessToken(responseData.access_token, userId, rememberMe);
 			await setRefreshToken(responseData.refresh_token, userId, rememberMe);
-			await setUserData(JSON.stringify(responseData.user_info), userId, rememberMe);
+			await setUserData(
+				JSON.stringify(userDataWithVerification),
+				userId,
+				rememberMe
+			);
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Login error:", error);
@@ -323,7 +357,11 @@ export const api = {
 				// Store new tokens with current remember me setting
 				const rememberMe = await getRememberMe();
 				await setAccessToken(responseData.access_token, undefined, rememberMe);
-				await setRefreshToken(responseData.refresh_token, undefined, rememberMe);
+				await setRefreshToken(
+					responseData.refresh_token,
+					undefined,
+					rememberMe
+				);
 
 				console.log("✅ [API] Token refresh successful");
 				return responseData;
@@ -1251,7 +1289,10 @@ export const api = {
 				throw new Error(errorText || "Failed to get photo comments");
 			}
 			const responseData = await response.json();
-			console.log("✅ [API] Photo comments fetched successfully:", responseData);
+			console.log(
+				"✅ [API] Photo comments fetched successfully:",
+				responseData
+			);
 			return responseData.comments || [];
 		} catch (error) {
 			console.error("❌ [API] Error getting photo comments:", error);
@@ -1273,8 +1314,8 @@ export const api = {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ content: data.text }), 
-				//TODO: add "object_key" later for audio comments. 
+				body: JSON.stringify({ content: data.text }),
+				//TODO: add "object_key" later for audio comments.
 				// Content and object_key are required but mutually exclusive.
 			});
 			if (!response.ok) {

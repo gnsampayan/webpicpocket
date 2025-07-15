@@ -22,11 +22,22 @@ const Settings: React.FC = () => {
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
     const [profileForm, setProfileForm] = useState({
         first_name: '',
-        last_name: '',
-        email: '',
-        old_password: '',
-        new_password: ''
+        last_name: ''
     });
+
+    const [passwordForm, setPasswordForm] = useState({
+        new_password: '',
+        confirm_new_password: ''
+    });
+
+    const [emailForm, setEmailForm] = useState({
+        new_email: '',
+        confirm_new_email: ''
+    });
+
+    // Collapsible state
+    const [isPasswordExpanded, setIsPasswordExpanded] = useState(false);
+    const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
     // Load user data on component mount
     useEffect(() => {
@@ -43,10 +54,7 @@ const Settings: React.FC = () => {
                 setUserInfo(userData as UserInfo);
                 setProfileForm({
                     first_name: userData.first_name || '',
-                    last_name: userData.last_name || '',
-                    email: '', // We'll need to get email from a separate API call
-                    old_password: '',
-                    new_password: ''
+                    last_name: userData.last_name || ''
                 });
             } catch (err) {
                 console.error('❌ [Settings] Failed to load user data:', err);
@@ -138,11 +146,6 @@ const Settings: React.FC = () => {
             const updateData: any = {};
             if (profileForm.first_name) updateData.first_name = profileForm.first_name;
             if (profileForm.last_name) updateData.last_name = profileForm.last_name;
-            if (profileForm.email) updateData.email = profileForm.email;
-            if (profileForm.old_password && profileForm.new_password) {
-                updateData.old_password = profileForm.old_password;
-                updateData.new_password = profileForm.new_password;
-            }
 
             await api.updateProfile(updateData);
 
@@ -156,6 +159,66 @@ const Settings: React.FC = () => {
         } catch (err) {
             console.error('❌ [Settings] Failed to update profile:', err);
             setError(err instanceof Error ? err.message : 'Failed to update profile');
+        }
+    };
+
+    // Handle password change submission
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            setError(null);
+
+            // Validate password confirmation
+            if (passwordForm.new_password !== passwordForm.confirm_new_password) {
+                setError('New passwords do not match');
+                return;
+            }
+
+            await api.updateProfile({
+                new_password: passwordForm.new_password
+            });
+
+            // Clear password form
+            setPasswordForm({
+                new_password: '',
+                confirm_new_password: ''
+            });
+
+            console.log('✅ Password updated successfully');
+        } catch (err) {
+            console.error('❌ [Settings] Failed to update password:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update password');
+        }
+    };
+
+    // Handle email change submission
+    const handleEmailSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            setError(null);
+
+            // Validate email confirmation
+            if (emailForm.new_email !== emailForm.confirm_new_email) {
+                setError('New emails do not match');
+                return;
+            }
+
+            await api.updateProfile({
+                email: emailForm.new_email
+            });
+
+            // Clear email form
+            setEmailForm({
+                new_email: '',
+                confirm_new_email: ''
+            });
+
+            console.log('✅ Email updated successfully');
+        } catch (err) {
+            console.error('❌ [Settings] Failed to update email:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update email');
         }
     };
 
@@ -286,33 +349,6 @@ const Settings: React.FC = () => {
                                                 onChange={(e) => setProfileForm(prev => ({ ...prev, last_name: e.target.value }))}
                                             />
                                         </div>
-                                        <div className="form-group">
-                                            <label>Email</label>
-                                            <input
-                                                type="email"
-                                                value={profileForm.email}
-                                                onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
-                                                placeholder="Enter new email"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Current Password</label>
-                                            <input
-                                                type="password"
-                                                value={profileForm.old_password}
-                                                onChange={(e) => setProfileForm(prev => ({ ...prev, old_password: e.target.value }))}
-                                                placeholder="Enter current password"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>New Password</label>
-                                            <input
-                                                type="password"
-                                                value={profileForm.new_password}
-                                                onChange={(e) => setProfileForm(prev => ({ ...prev, new_password: e.target.value }))}
-                                                placeholder="Enter new password"
-                                            />
-                                        </div>
                                         <button type="submit" className="save-button">Save Changes</button>
                                     </form>
                                 </div>
@@ -322,14 +358,75 @@ const Settings: React.FC = () => {
                         {activeTab === 'security' && (
                             <div className="settings-section">
                                 <h2>Security Settings</h2>
-                                <div className="security-options">
-                                    <div className="security-item">
-                                        <div className="security-info">
-                                            <h3>Change Password</h3>
-                                            <p>Update your account password</p>
-                                        </div>
-                                        <button className="security-button">Change</button>
+
+                                {/* Change Password Section */}
+                                <div className="security-form-section">
+                                    <div className="security-form-header" onClick={() => setIsPasswordExpanded(!isPasswordExpanded)}>
+                                        <h3>Change Password</h3>
+                                        <button className="expand-toggle">
+                                            {isPasswordExpanded ? '−' : '+'}
+                                        </button>
                                     </div>
+                                    {isPasswordExpanded && (
+                                        <form onSubmit={handlePasswordSubmit} className="security-form">
+                                            <div className="form-group">
+                                                <label>New Password</label>
+                                                <input
+                                                    type="password"
+                                                    value={passwordForm.new_password}
+                                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
+                                                    placeholder="Enter new password"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Confirm New Password</label>
+                                                <input
+                                                    type="password"
+                                                    value={passwordForm.confirm_new_password}
+                                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm_new_password: e.target.value }))}
+                                                    placeholder="Confirm new password"
+                                                />
+                                            </div>
+                                            <button type="submit" className="save-button">Update Password</button>
+                                        </form>
+                                    )}
+                                </div>
+
+                                {/* Change Email Section */}
+                                <div className="security-form-section">
+                                    <div className="security-form-header" onClick={() => setIsEmailExpanded(!isEmailExpanded)}>
+                                        <h3>Change Email</h3>
+                                        <button className="expand-toggle">
+                                            {isEmailExpanded ? '−' : '+'}
+                                        </button>
+                                    </div>
+                                    {isEmailExpanded && (
+                                        <form onSubmit={handleEmailSubmit} className="security-form">
+                                            <div className="form-group">
+                                                <label>New Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={emailForm.new_email}
+                                                    onChange={(e) => setEmailForm(prev => ({ ...prev, new_email: e.target.value }))}
+                                                    placeholder="Enter new email"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Confirm New Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={emailForm.confirm_new_email}
+                                                    onChange={(e) => setEmailForm(prev => ({ ...prev, confirm_new_email: e.target.value }))}
+                                                    placeholder="Confirm new email"
+                                                />
+                                            </div>
+                                            <button type="submit" className="save-button">Update Email</button>
+                                        </form>
+                                    )}
+                                </div>
+
+                                {/* Other Security Options */}
+                                <div className="security-options">
                                     <div className="security-item">
                                         <div className="security-info">
                                             <h3>Two-Factor Authentication</h3>
@@ -349,17 +446,24 @@ const Settings: React.FC = () => {
                                             <h3>Email Verification</h3>
                                             <p>Verify your email address</p>
                                         </div>
-                                        <button
-                                            className="security-button"
-                                            onClick={() => {
-                                                setEmailVerifiedCallback(() => () => {
-                                                    window.location.reload();
-                                                });
-                                                showEmailVerification();
-                                            }}
-                                        >
-                                            Verify
-                                        </button>
+                                        {userInfo?.verified ? (
+                                            <div className="verified-indicator">
+                                                <span className="verified-icon">✓</span>
+                                                <span>Verified</span>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className="security-button"
+                                                onClick={() => {
+                                                    setEmailVerifiedCallback(() => () => {
+                                                        window.location.reload();
+                                                    });
+                                                    showEmailVerification();
+                                                }}
+                                            >
+                                                Verify
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
