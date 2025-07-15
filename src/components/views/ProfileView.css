@@ -14,6 +14,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Important for flex child scrolling */
 }
 
 /* Loading State */
@@ -92,6 +93,10 @@
   height: fit-content;
   min-height: 600px;
   margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Important for flex child scrolling */
 }
 
 .profile-header {
@@ -124,6 +129,30 @@
 
 .profile-content {
   padding: 2rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Important for flex child scrolling */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Custom scrollbar for webkit browsers */
+.profile-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.profile-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.profile-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .profile-avatar-section {
@@ -437,6 +466,12 @@
   .main-content {
     margin-left: 0;
     padding: 1rem;
+    height: calc(100vh - 60px); /* Adjust for mobile header */
+  }
+
+  .profile-content {
+    padding: 1.5rem;
+    max-height: calc(100vh - 200px); /* Adjust for mobile layout */
   }
 
   .profile-view {
@@ -480,6 +515,12 @@
 @media (max-width: 480px) {
   .main-content {
     padding: 0.5rem;
+    height: calc(100vh - 50px); /* Adjust for smaller mobile header */
+  }
+
+  .profile-content {
+    padding: 1rem;
+    max-height: calc(100vh - 150px); /* Adjust for smaller mobile layout */
   }
 
   .profile-content {

@@ -19,11 +19,30 @@ import * as ApiTypes from '../../types/api';
 
 const Contacts: React.FC = () => {
     const navigate = useNavigate();
+
+    // Load initial state from localStorage
+    const getInitialViewMode = (): 'grid' | 'list' => {
+        const saved = localStorage.getItem('contacts-view-mode');
+        return (saved === 'list' || saved === 'grid') ? saved : 'list';
+    };
+
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [showAddContact, setShowAddContact] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
+
+    // Functions to save state to localStorage
+    const saveViewMode = (mode: 'grid' | 'list') => {
+        localStorage.setItem('contacts-view-mode', mode);
+    };
+
+    // Wrapper functions to update state and save to localStorage
+    const handleViewModeChange = (mode: 'grid' | 'list') => {
+        setViewMode(mode);
+        saveViewMode(mode);
+    };
 
     // React Query hooks
     const { data: contactsData, isLoading, error } = useContacts();
@@ -223,7 +242,17 @@ const Contacts: React.FC = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <span>🔍</span>
+                            <span className="search-icon">🔍</span>
+                            {searchTerm.trim() && (
+                                <button
+                                    className="clear-search-button"
+                                    onClick={() => setSearchTerm('')}
+                                    type="button"
+                                    aria-label="Clear search"
+                                >
+                                    ✕
+                                </button>
+                            )}
                         </div>
                         <div className="filter-dropdown">
                             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
@@ -235,6 +264,20 @@ const Contacts: React.FC = () => {
                         </div>
                     </div>
                     <div className="controls-right">
+                        <div className="view-toggle">
+                            <button
+                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => handleViewModeChange('grid')}
+                            >
+                                <span>⊞</span>
+                            </button>
+                            <button
+                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => handleViewModeChange('list')}
+                            >
+                                <span>☰</span>
+                            </button>
+                        </div>
                         <button className="import-button">
                             <span>📥</span>
                             Import Contacts
@@ -246,23 +289,30 @@ const Contacts: React.FC = () => {
                 <section className="contacts-section">
                     <div className="contacts-header-row">
                         <h2>
-                            {filter === 'all' && 'All Contacts'}
-                            {filter === 'contacts' && 'My Contacts'}
-                            {filter === 'requests' && 'Contact Requests'}
-                            {filter === 'sent' && 'Sent Requests'}
-                            {' '}
-                            ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length})
+                            {searchTerm.trim() ? (
+                                <>
+                                    Search Results
+                                    <span className="search-results-info">
+                                        {filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length} contact{(filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length) !== 1 ? 's' : ''} found for "{searchTerm}"
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    {filter === 'all' && 'All Contacts'}
+                                    {filter === 'contacts' && 'My Contacts'}
+                                    {filter === 'requests' && 'Contact Requests'}
+                                    {filter === 'sent' && 'Sent Requests'}
+                                    {' '}
+                                    ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length})
+                                </>
+                            )}
                         </h2>
-                        <div className="view-options">
-                            <button className="view-option active">List</button>
-                            <button className="view-option">Grid</button>
-                        </div>
                     </div>
 
-                    <div className="contacts-list">
+                    <div className={`contacts-container ${viewMode === 'list' ? 'contacts-list' : 'contacts-grid'}`}>
                         {/* Contact Requests Received */}
                         {filteredRequestsReceived.map((contact) => (
-                            <div key={`received-${contact.id}`} className="contact-item contact-request">
+                            <div key={`received-${contact.id}`} className={`contact-item contact-request ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
                                 <div
                                     className="contact-avatar clickable"
                                     onClick={() => handleContactClick(contact)}
@@ -306,7 +356,7 @@ const Contacts: React.FC = () => {
 
                         {/* Sent Contact Requests */}
                         {filteredRequestsSent.map((contact) => (
-                            <div key={`sent-${contact.id}`} className="contact-item contact-request">
+                            <div key={`sent-${contact.id}`} className={`contact-item contact-request ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
                                 <div
                                     className="contact-avatar clickable"
                                     onClick={() => handleContactClick(contact)}
@@ -343,7 +393,7 @@ const Contacts: React.FC = () => {
 
                         {/* Accepted Contacts */}
                         {filteredContacts.map((contact) => (
-                            <div key={contact.id} className="contact-item">
+                            <div key={contact.id} className={`contact-item ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
                                 <div
                                     className="contact-avatar clickable"
                                     onClick={() => handleContactClick(contact)}
