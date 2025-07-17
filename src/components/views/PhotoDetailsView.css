@@ -113,6 +113,44 @@
     box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
 }
 
+/* Photo delete button */
+.photo-delete-button {
+    position: absolute;
+    top: 74px; /* Position below favorite button (20px + 44px + 10px gap) */
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #dc3545;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+}
+
+.photo-delete-button:hover {
+    background: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.photo-delete-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.photo-delete-button:disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .photo-detail-sidebar {
     width: 400px;
     background: white;
@@ -465,6 +503,14 @@
         left: 15px;
     }
     
+    .photo-delete-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        top: 65px; /* 15px + 40px + 10px gap */
+        left: 15px;
+    }
+    
     .nav-button {
         width: 45px;
         height: 45px;
@@ -546,6 +592,14 @@
         left: 10px;
     }
     
+    .photo-delete-button {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+        top: 56px; /* 10px + 36px + 10px gap */
+        left: 10px;
+    }
+    
     .nav-button {
         width: 40px;
         height: 40px;
@@ -606,6 +660,14 @@
         height: 32px;
         font-size: 0.9rem;
         top: 5px;
+        left: 5px;
+    }
+    
+    .photo-delete-button {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        top: 47px; /* 5px + 32px + 10px gap */
         left: 5px;
     }
     

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Photo } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
-import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails } from '../../hooks/usePhotos';
+import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails, useDeletePhotoMutation } from '../../hooks/usePhotos';
 import { getCurrentSortFilter, sortPhotos } from '../../utils/sorting';
 import { getFlashDescription } from '../../utils/metadata';
 import './PhotoDetailsView.css';
@@ -22,6 +22,7 @@ const PhotoDetailsView: React.FC = () => {
     } = usePhotoByShortId(pocketTitle, eventTitle, photoShortId);
 
     const favoriteMutation = useFavoriteMutation();
+    const deletePhotoMutation = useDeletePhotoMutation();
 
     // Get comments data for the current photo
     const {
@@ -162,6 +163,43 @@ const PhotoDetailsView: React.FC = () => {
         }
     };
 
+    const handleDeletePhoto = async (photo: Photo) => {
+        if (!photo.can_delete) {
+            console.log('❌ User cannot delete this photo');
+            return;
+        }
+
+        // Show confirmation dialog
+        const confirmed = window.confirm('Are you sure you want to delete this photo? This action cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            console.log('🔄 [PhotoDetailsView] Deleting photo:', photo.id);
+
+            await deletePhotoMutation.mutateAsync(photo.id);
+
+            console.log('✅ Photo deleted successfully');
+
+            // Navigate back to the grid view
+            handleBack();
+        } catch (err) {
+            console.error('❌ [PhotoDetailsView] Failed to delete photo:', err);
+
+            // Show user-friendly error message
+            if (err instanceof Error) {
+                if (err.message.includes('502')) {
+                    console.error('❌ [PhotoDetailsView] Server is temporarily unavailable. Please try again later.');
+                } else if (err.message.includes('Network')) {
+                    console.error('❌ [PhotoDetailsView] Network error. Please check your connection.');
+                } else {
+                    console.error('❌ [PhotoDetailsView] Unexpected error:', err.message);
+                }
+            }
+        }
+    };
+
     const getPhotoUrl = (photo: Photo): string => {
         let rawUrl: string | undefined;
         if (typeof photo.photo_url === 'string') {
@@ -278,6 +316,21 @@ const PhotoDetailsView: React.FC = () => {
                         >
                             {photo.is_favorite ? '❤️' : '🤍'}
                         </button>
+
+                        {/* Delete button positioned underneath favorite button */}
+                        {photo.can_delete && (
+                            <button
+                                className="photo-delete-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletePhoto(photo);
+                                }}
+                                title="Delete photo"
+                                disabled={deletePhotoMutation.isPending}
+                            >
+                                🗑️
+                            </button>
+                        )}
                     </div>
                     <button
                         className="nav-button next-button"

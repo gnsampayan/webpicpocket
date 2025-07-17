@@ -143,11 +143,30 @@ const GridPhotoView: React.FC = () => {
             return;
         }
 
+        // Show confirmation dialog
+        const confirmed = window.confirm('Are you sure you want to delete this photo? This action cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
         try {
+            console.log('🔄 [GridPhotoView] Deleting photo:', photo.id);
+
             await deletePhotoMutation.mutateAsync(photo.id);
             console.log('✅ Photo deleted successfully');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to delete photo:', err);
+
+            // Show user-friendly error message
+            if (err instanceof Error) {
+                if (err.message.includes('502')) {
+                    console.error('❌ [GridPhotoView] Server is temporarily unavailable. Please try again later.');
+                } else if (err.message.includes('Network')) {
+                    console.error('❌ [GridPhotoView] Network error. Please check your connection.');
+                } else {
+                    console.error('❌ [GridPhotoView] Unexpected error:', err.message);
+                }
+            }
         }
     };
 
