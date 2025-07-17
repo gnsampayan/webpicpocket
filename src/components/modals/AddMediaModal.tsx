@@ -37,98 +37,16 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
     // React Query mutation hook
     const addMediaMutation = useAddMediaMutation();
 
-    // Helper function to extract EXIF data from image files
-    const extractImageMetadata = (file: File): Promise<any> => {
-        return new Promise((resolve) => {
-            if (!file.type.startsWith('image/')) {
-                resolve(null);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    // Basic image metadata
-                    const basicMetadata = {
-                        width: img.naturalWidth,
-                        height: img.naturalHeight,
-                        aspectRatio: img.naturalWidth / img.naturalHeight,
-                        orientation: img.naturalWidth > img.naturalHeight ? 'landscape' : 'portrait'
-                    };
-
-                    // Try to extract EXIF data using a library or manual parsing
-                    // For now, we'll use a simple approach to detect if EXIF might be present
-                    const arrayBuffer = e.target?.result as ArrayBuffer;
-                    const uint8Array = new Uint8Array(arrayBuffer);
-
-                    // Check for EXIF header (JPEG files)
-                    let exifData = null;
-                    if (file.type === 'image/jpeg') {
-                        // Look for EXIF marker (0xFFE1)
-                        for (let i = 0; i < uint8Array.length - 1; i++) {
-                            if (uint8Array[i] === 0xFF && uint8Array[i + 1] === 0xE1) {
-                                exifData = { hasExif: true, position: i };
-                                break;
-                            }
-                        }
-                    }
-
-                    resolve({
-                        ...basicMetadata,
-                        exifData
-                    });
-                };
-                img.src = e.target?.result as string;
-            };
-            reader.readAsDataURL(file);
-        });
-    };
+    // Note: Metadata extraction is now handled by the useAddMediaMutation hook
+    // which uses our comprehensive metadata extraction utility
 
     // Handle file selection
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        //TODO: Hook this up to the backend.
-        // Extract and log metadata for each file
-        for (let index = 0; index < files.length; index++) {
-            const file = files[index];
-
-            // Basic file metadata
-            const basicMetadata = {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: file.lastModified,
-                lastModifiedDate: new Date(file.lastModified).toISOString(),
-                // Additional properties that might be available
-                webkitRelativePath: (file as any).webkitRelativePath || null,
-                // File extension
-                extension: file.name.split('.').pop()?.toLowerCase() || null,
-                // Size in different units
-                sizeKB: Math.round(file.size / 1024),
-                sizeMB: Math.round((file.size / 1024 / 1024) * 100) / 100
-            };
-
-            // Extract image-specific metadata
-            const imageMetadata = await extractImageMetadata(file);
-
-            // Combine all metadata
-            const fullMetadata = {
-                ...basicMetadata,
-                ...imageMetadata,
-                // Additional computed properties
-                isImage: file.type.startsWith('image/'),
-                isVideo: file.type.startsWith('video/'),
-                fileCategory: file.type.split('/')[0] || 'unknown',
-                // File age (approximate)
-                fileAge: Date.now() - file.lastModified,
-                fileAgeDays: Math.floor((Date.now() - file.lastModified) / (1000 * 60 * 60 * 24))
-            };
-
-            console.log(`📁 [AddMediaModal] File ${index + 1} metadata:`, fullMetadata);
-        }
+        // Note: Metadata extraction is handled during submission by useAddMediaMutation hook
+        console.log(`📁 [AddMediaModal] Selected ${files.length} files for upload`);
 
         const newFiles: SelectedFile[] = files.map(file => ({
             id: Math.random().toString(36).substr(2, 9),

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Photo } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
-import { usePhotoByShortId, useFavoriteMutation, useComments } from '../../hooks/usePhotos';
+import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails } from '../../hooks/usePhotos';
 import { getCurrentSortFilter, sortPhotos } from '../../utils/sorting';
 import './PhotoDetailsView.css';
 
@@ -27,6 +27,52 @@ const PhotoDetailsView: React.FC = () => {
         data: comments = []
     } = useComments(photoData?.photo?.id);
 
+    // Get detailed photo metadata
+    const {
+        data: photoDetails,
+        isLoading: isLoadingPhotoDetails,
+        error: photoDetailsError
+    } = usePhotoDetails(photoData?.photo?.id);
+
+    // Debug logging for metadata
+    React.useEffect(() => {
+        if (photoDetails) {
+            console.log('📸 [PhotoDetailsView] Photo details loaded:', photoDetails);
+            console.log('📸 [PhotoDetailsView] Photo metadata:', photoDetails.photo_metadata);
+            console.log('📸 [PhotoDetailsView] Metadata valid?', photoDetails.photo_metadata?.Valid);
+            if (photoDetails.photo_metadata?.Valid) {
+                console.log('📸 [PhotoDetailsView] Raw metadata message:', photoDetails.photo_metadata.RawMessage);
+            }
+        }
+        if (photoDetailsError) {
+            console.error('❌ [PhotoDetailsView] Error loading photo details:', photoDetailsError);
+        }
+    }, [photoDetails, photoDetailsError]);
+
+    // Parse metadata from API response
+    const getMetadata = () => {
+        if (!photoDetails?.photo_metadata?.Valid) {
+            return null;
+        }
+
+        try {
+            // If RawMessage contains JSON string, parse it
+            if (photoDetails.photo_metadata.RawMessage) {
+                if (typeof photoDetails.photo_metadata.RawMessage === 'string') {
+                    return JSON.parse(photoDetails.photo_metadata.RawMessage);
+                } else {
+                    return photoDetails.photo_metadata.RawMessage;
+                }
+            }
+            return null;
+        } catch (error) {
+            console.error('❌ [PhotoDetailsView] Failed to parse metadata:', error);
+            return null;
+        }
+    };
+
+    const metadata = getMetadata();
+
     // Get current sort filter and sorted photos for navigation
     const currentSortFilter = getCurrentSortFilter();
     const sortedPhotos = photoData?.allPhotos ? sortPhotos(photoData.allPhotos, currentSortFilter) : [];
@@ -41,6 +87,36 @@ const PhotoDetailsView: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
+
+    const formatCameraSettings = (metadata: any): string => {
+        const parts: string[] = [];
+        if (metadata.settings?.fNumber) {
+            parts.push(`f/${metadata.settings.fNumber}`);
+        }
+        if (metadata.settings?.exposureTime) {
+            const exposureTime = metadata.settings.exposureTime;
+            if (exposureTime < 1) {
+                parts.push(`1/${Math.round(1 / exposureTime)}s`);
+            } else {
+                parts.push(`${exposureTime}s`);
+            }
+        }
+        if (metadata.settings?.iso) {
+            parts.push(`ISO ${metadata.settings.iso}`);
+        }
+        if (metadata.settings?.focalLength) {
+            parts.push(`${metadata.settings.focalLength}mm`);
+        }
+        return parts.join(' • ');
     };
 
     const isPhotoLocked = () => {
@@ -212,13 +288,6 @@ const PhotoDetailsView: React.FC = () => {
                     </button>
                 </div>
                 <div className="photo-detail-sidebar">
-                    {photo.can_delete && !isPhotoLocked() && (
-                        <div className="photo-actions-header">
-                            <div className="action-buttons">
-                                {/* Delete button could be implemented here if needed */}
-                            </div>
-                        </div>
-                    )}
                     <div className="tabs-container">
                         <div className="tabs-header">
                             <button
@@ -245,32 +314,204 @@ const PhotoDetailsView: React.FC = () => {
                             {activeTab === 'info' && (
                                 <div className="info-tab">
                                     <div className="photo-detail-info">
-                                        <div className="info-row">
-                                            <span className="info-label">Added:</span>
-                                            <span className="info-value">{formatDate(photo.created_at)}</span>
-                                        </div>
-                                        <div className="info-row">
-                                            <span className="info-label">Type:</span>
-                                            <span className="info-value">{photo.media_type}</span>
-                                        </div>
-                                        {comments.length > 0 && (
+                                        {/* Loading state for photo details */}
+                                        {isLoadingPhotoDetails && (
+                                            <div className="info-section">
+                                                <div className="loading-metadata">
+                                                    <div className="loading-spinner-small"></div>
+                                                    <span>Loading photo details...</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Photo Details Section */}
+                                        <div className="info-section">
+                                            <h4 className="info-section-title">Photo Details</h4>
+
+                                            {/* Date Taken (from EXIF) */}
+                                            {metadata?.dateTimeOriginal && (
+                                                <div className="info-row">
+                                                    <span className="info-label">📅 Date Taken:</span>
+                                                    <span className="info-value">{formatDate(metadata.dateTimeOriginal)}</span>
+                                                </div>
+                                            )}
+
                                             <div className="info-row">
-                                                <span className="info-label">Comments:</span>
-                                                <span className="info-value">{comments.length}</span>
+                                                <span className="info-label">📤 Added:</span>
+                                                <span className="info-value">{formatDate(photo.created_at)}</span>
                                             </div>
-                                        )}
-                                        {photo.locks_at && (
+
+                                            {/* Photo Author */}
+                                            {photoDetails?.photo_author && (
+                                                <div className="info-row">
+                                                    <span className="info-label">👤 Author:</span>
+                                                    <span className="info-value">
+                                                        {photoDetails.photo_author.first_name} {photoDetails.photo_author.last_name}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <div className="info-row">
-                                                <span className="info-label">Locks at:</span>
-                                                <span className="info-value">{formatDate(photo.locks_at)}</span>
+                                                <span className="info-label">📁 Type:</span>
+                                                <span className="info-value">{photo.media_type}</span>
+                                            </div>
+
+                                            {/* File Size */}
+                                            {metadata?.fileSize && (
+                                                <div className="info-row">
+                                                    <span className="info-label">💾 File Size:</span>
+                                                    <span className="info-value">{formatFileSize(metadata.fileSize)}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Dimensions */}
+                                            {metadata?.dimensions && (
+                                                <div className="info-row">
+                                                    <span className="info-label">📐 Dimensions:</span>
+                                                    <span className="info-value">
+                                                        {metadata.dimensions.width} × {metadata.dimensions.height}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* MIME Type */}
+                                            {metadata?.mimeType && (
+                                                <div className="info-row">
+                                                    <span className="info-label">🏷️ Format:</span>
+                                                    <span className="info-value">{metadata.mimeType}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Camera Information Section */}
+                                        {metadata?.camera && (
+                                            <div className="info-section">
+                                                <h4 className="info-section-title">Camera Information</h4>
+
+                                                {metadata.camera.make && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">📷 Camera:</span>
+                                                        <span className="info-value">
+                                                            {metadata.camera.make} {metadata.camera.model}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {metadata.camera.lens && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">🔍 Lens:</span>
+                                                        <span className="info-value">{metadata.camera.lens}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Camera Settings */}
+                                                {metadata.settings && formatCameraSettings(metadata) && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">⚙️ Settings:</span>
+                                                        <span className="info-value">{formatCameraSettings(metadata)}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Flash */}
+                                                {metadata.settings?.flash !== undefined && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">⚡ Flash:</span>
+                                                        <span className="info-value">{metadata.settings.flash ? 'Used' : 'Not used'}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* White Balance */}
+                                                {metadata.rawExif?.whiteBalance && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">🌡️ White Balance:</span>
+                                                        <span className="info-value">{metadata.rawExif.whiteBalance}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Orientation */}
+                                                {metadata.rawExif?.orientation && (
+                                                    <div className="info-row">
+                                                        <span className="info-label">🔄 Orientation:</span>
+                                                        <span className="info-value">{metadata.rawExif.orientation}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
-                                        {isPhotoLocked() && (
-                                            <div className="info-row locked-notice">
-                                                <span className="info-label">Status:</span>
-                                                <span className="info-value locked">🔒 Locked</span>
+
+                                        {/* Location Section */}
+                                        {metadata?.location && (
+                                            <div className="info-section">
+                                                <h4 className="info-section-title">Location</h4>
+                                                <div className="info-row">
+                                                    <span className="info-label">📍 GPS:</span>
+                                                    <span className="info-value">
+                                                        {metadata.location.latitude.toFixed(6)}, {metadata.location.longitude.toFixed(6)}
+                                                        {metadata.location.altitude && ` (${Math.round(metadata.location.altitude)}m)`}
+                                                    </span>
+                                                </div>
                                             </div>
                                         )}
+
+                                        {/* Show basic info when photo details not loaded yet */}
+                                        {!photoDetails && !isLoadingPhotoDetails && (
+                                            <div className="info-section">
+                                                <h4 className="info-section-title">File Information</h4>
+                                                <div className="info-row">
+                                                    <span className="info-label">ℹ️ Status:</span>
+                                                    <span className="info-value">Photo details not loaded</span>
+                                                </div>
+                                                <div className="info-row">
+                                                    <span className="info-label">📁 Type:</span>
+                                                    <span className="info-value">{photo.media_type}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Fallback basic info if no metadata available */}
+                                        {!photoDetails?.photo_metadata?.Valid && !isLoadingPhotoDetails && photoDetails && (
+                                            <div className="info-section">
+                                                <h4 className="info-section-title">File Information</h4>
+                                                <div className="info-row">
+                                                    <span className="info-label">ℹ️ Status:</span>
+                                                    <span className="info-value">
+                                                        {photoDetails.photo_metadata === null ? 'No metadata stored' : 'Metadata not available'}
+                                                    </span>
+                                                </div>
+                                                <div className="info-row">
+                                                    <span className="info-label">📁 Type:</span>
+                                                    <span className="info-value">{photo.media_type}</span>
+                                                </div>
+                                                <div className="info-note">
+                                                    This photo was uploaded without EXIF metadata, or the metadata could not be extracted during upload.
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* System Information Section */}
+                                        <div className="info-section">
+                                            <h4 className="info-section-title">System Information</h4>
+
+                                            {comments.length > 0 && (
+                                                <div className="info-row">
+                                                    <span className="info-label">💬 Comments:</span>
+                                                    <span className="info-value">{comments.length}</span>
+                                                </div>
+                                            )}
+
+                                            {photo.locks_at && (
+                                                <div className="info-row">
+                                                    <span className="info-label">🔒 Locks at:</span>
+                                                    <span className="info-value">{formatDate(photo.locks_at)}</span>
+                                                </div>
+                                            )}
+
+                                            {isPhotoLocked() && (
+                                                <div className="info-row locked-notice">
+                                                    <span className="info-label">Status:</span>
+                                                    <span className="info-value locked">🔒 Locked</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}

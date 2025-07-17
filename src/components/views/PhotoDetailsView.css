@@ -271,6 +271,23 @@
     margin-bottom: 1rem;
 }
 
+.info-section {
+    margin-bottom: 1.5rem;
+}
+
+.info-section:last-child {
+    margin-bottom: 0;
+}
+
+.info-section-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
 .info-header {
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
@@ -317,6 +334,74 @@
 .info-value.locked {
     color: #856404;
     font-weight: 600;
+}
+
+/* Loading metadata styles */
+.loading-metadata {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.loading-spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e9ecef;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced info value styling for technical data */
+.info-value {
+    color: #333;
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Special styling for camera settings */
+.info-row:has(.info-label:contains("Settings")) .info-value,
+.info-row:has(.info-label:contains("GPS")) .info-value {
+    font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    font-size: 0.85rem;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+/* Metadata not available styling */
+.info-row:has(.info-label:contains("Status")) {
+    background: #fff3cd;
+    border-radius: 4px;
+    margin: 0.25rem 0;
+    padding: 0.5rem;
+    border: 1px solid #ffeaa7;
+}
+
+.info-row:has(.info-label:contains("Status")) .info-value {
+    color: #856404;
+    font-style: italic;
+}
+
+/* Info note styling */
+.info-note {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-left: 3px solid #6c757d;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
 }
 
 /* Responsive design */

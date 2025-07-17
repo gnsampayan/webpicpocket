@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api';
 import { type Event } from '../../types';
+import { extractFileMetadata } from '../../utils/metadata';
 import './AddMediaModal.css';
 
 interface AddPocketPhotosModalProps {
@@ -16,6 +17,7 @@ interface SelectedFile {
     file: File;
     preview: string;
     objectKey?: string;
+    metadata?: any;
     uploading: boolean;
     uploadProgress: number;
     uploadError?: string;
@@ -180,24 +182,48 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
         try {
             console.log('🔄 [AddPocketPhotosModal] Adding media to event');
 
-            // Prepare the add_media array - only include files that have been uploaded and are still selected
-            const addMedia = selectedFiles
-                .filter(file => file.objectKey) // Only include files that have been uploaded
-                .map(file => ({
-                    media_type: 'photo' as const, // For now, only photos are supported
-                    object_key: file.objectKey!
-                }));
+            // Extract metadata for all files before submission
+            const uploadedFiles = selectedFiles.filter(file => file.objectKey);
+            console.log('🔄 [AddPocketPhotosModal] Extracting metadata for', uploadedFiles.length, 'files');
+
+            const filesWithMetadata = [];
+            for (const selectedFile of uploadedFiles) {
+                try {
+                    // Extract metadata for this file
+                    console.log(`📸 [AddPocketPhotosModal] Extracting metadata for: ${selectedFile.file.name}`);
+                    const metadata = await extractFileMetadata(selectedFile.file);
+                    console.log(`📸 [AddPocketPhotosModal] Extracted metadata:`, {
+                        dateTimeOriginal: metadata.dateTimeOriginal,
+                        camera: metadata.camera,
+                        fileSize: metadata.fileSize,
+                        dimensions: metadata.dimensions
+                    });
+
+                    filesWithMetadata.push({
+                        object_key: selectedFile.objectKey!,
+                        metadata: metadata
+                    });
+                } catch (error) {
+                    console.warn(`⚠️ [AddPocketPhotosModal] Failed to extract metadata for ${selectedFile.file.name}:`, error);
+                    // Include file without metadata as fallback
+                    filesWithMetadata.push({
+                        object_key: selectedFile.objectKey!,
+                        metadata: {
+                            fileSize: selectedFile.file.size,
+                            mimeType: selectedFile.file.type,
+                            dateTimeOriginal: new Date().toISOString(), // Fallback to current time
+                        }
+                    });
+                }
+            }
 
             console.log('🔄 [AddPocketPhotosModal] Selected files:', selectedFiles.length);
-            console.log('🔄 [AddPocketPhotosModal] Files with object keys:', selectedFiles.filter(f => f.objectKey).length);
-            console.log('🔄 [AddPocketPhotosModal] Add media array:', addMedia);
+            console.log('🔄 [AddPocketPhotosModal] Files with object keys:', uploadedFiles.length);
+            console.log('🔄 [AddPocketPhotosModal] Files with metadata:', filesWithMetadata.length);
 
             // Make the API call to add media to event using the existing uploadPhotosToEvent method
             const addPhotoRequest = {
-                add_photos: addMedia.map(media => ({
-                    object_key: media.object_key,
-                    metadata: null
-                }))
+                add_photos: filesWithMetadata
             };
 
             await api.uploadPhotosToEvent(selectedEventId, addPhotoRequest);
