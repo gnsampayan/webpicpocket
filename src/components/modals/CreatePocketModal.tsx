@@ -9,7 +9,7 @@ import env from '../../config/env';
 interface CreatePocketModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPocketCreated: (pocket: Pocket) => void;
+    onPocketCreated?: (pocket: Pocket) => void;
 }
 
 
@@ -84,7 +84,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
             setCoverPhotoObjectKey(null);
 
             // Call callback and close modal
-            onPocketCreated(newPocket);
+            onPocketCreated?.(newPocket);
             onClose();
         } catch (err) {
             console.error('❌ Failed to create pocket:', err);

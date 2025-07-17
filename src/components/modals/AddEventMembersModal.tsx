@@ -6,7 +6,7 @@ import './AddEventMembersModal.css';
 interface AddEventMembersModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onMembersAdded: () => void;
+    onMembersAdded?: () => void;
     eventId: string;
     eventTitle: string;
     existingMembers: string[]; // Array of existing member IDs
@@ -59,7 +59,7 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
             });
 
             console.log('✅ Members added successfully to event');
-            onMembersAdded();
+            onMembersAdded?.();
             handleClose();
         } catch (err) {
             console.error('Error adding members to event:', err);

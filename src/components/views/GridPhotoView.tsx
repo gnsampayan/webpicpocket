@@ -159,7 +159,7 @@ const GridPhotoView: React.FC = () => {
     // Handle media added to event
     const handleMediaAdded = async () => {
         console.log('✅ [GridPhotoView] Media added, refetching event data');
-        // React Query will automatically refetch the data
+        // React Query mutation will automatically invalidate cache
     };
 
     // Get photos to show based on loading progress and sorting

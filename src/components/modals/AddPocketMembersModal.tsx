@@ -6,7 +6,7 @@ import './AddPocketMembersModal.css';
 interface AddPocketMembersModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onMembersAdded: () => void;
+    onMembersAdded?: () => void;
     pocketId: string;
     pocketTitle: string;
     existingMembers: string[];
@@ -60,7 +60,7 @@ const AddPocketMembersModal: React.FC<AddPocketMembersModalProps> = ({
             });
 
             console.log('✅ Members added successfully to pocket');
-            onMembersAdded();
+            onMembersAdded?.();
             handleClose();
         } catch (err) {
             console.error('Error adding members to pocket:', err);

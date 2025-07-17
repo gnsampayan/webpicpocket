@@ -232,7 +232,7 @@ const Pockets: React.FC = () => {
     // Handle media added to pocket
     const handleMediaAdded = () => {
         console.log('✅ Pockets data refreshed after adding media');
-        // React Query will automatically update the cache
+        // React Query mutation will automatically invalidate cache
     };
 
     // Handle members added to pocket

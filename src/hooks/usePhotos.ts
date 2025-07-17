@@ -18,6 +18,162 @@ export const photoKeys = {
 	events: (pocketId: string) => [...photoKeys.all, "events", pocketId] as const,
 };
 
+// =============================================
+// S3 UPLOAD UTILITIES
+// =============================================
+
+// Interface for file upload tracking
+export interface UploadFile {
+	id: string;
+	file: File;
+	preview: string;
+	objectKey?: string;
+	uploading: boolean;
+	uploadProgress: number;
+	uploadError?: string;
+}
+
+// Hook for uploading individual files to S3
+export const useS3Upload = () => {
+	return useMutation({
+		mutationFn: async (file: File): Promise<{ objectKey: string; file: File }> => {
+			// Step 1: Get upload URL
+			const uploadResponse = await api.uploadMedia({
+				files: [file.name],
+			});
+
+			if (!uploadResponse.uploads || uploadResponse.uploads.length === 0) {
+				throw new Error("No upload URLs received");
+			}
+
+			const upload = uploadResponse.uploads[0];
+
+			// Step 2: Upload to S3
+			await api.uploadFileToS3(upload.upload_url, file);
+
+			return {
+				objectKey: upload.object_key,
+				file: file
+			};
+		},
+		onError: (error) => {
+			console.error("Failed to upload file to S3:", error);
+		},
+	});
+};
+
+// Hook for managing multiple file uploads
+export const useMultipleFileUpload = () => {
+	const s3Upload = useS3Upload();
+
+	const uploadFile = async (
+		uploadFile: UploadFile,
+		onProgress: (id: string, progress: Partial<UploadFile>) => void
+	): Promise<string> => {
+		try {
+			// Update file to uploading state
+			onProgress(uploadFile.id, { uploading: true, uploadProgress: 0 });
+
+			// Upload to S3
+			const result = await s3Upload.mutateAsync(uploadFile.file);
+
+			// Update file with object key and mark as complete
+			onProgress(uploadFile.id, {
+				objectKey: result.objectKey,
+				uploading: false,
+				uploadProgress: 100
+			});
+
+			return result.objectKey;
+		} catch (err) {
+			console.error('❌ [MultipleFileUpload] Failed to upload file:', err);
+
+			// Update file with error
+			onProgress(uploadFile.id, {
+				uploading: false,
+				uploadError: err instanceof Error ? err.message : 'Upload failed'
+			});
+
+			throw err;
+		}
+	};
+
+	return {
+		uploadFile,
+		isUploading: s3Upload.isPending
+	};
+};
+
+// Hook for claiming already-uploaded photos to an event
+export const useClaimPhotosToEventMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			eventId,
+			photoData,
+		}: {
+			eventId: string;
+			photoData: Array<{ objectKey: string; file: File }>;
+		}) => {
+			console.log(`🔄 [ClaimPhotos] Processing ${photoData.length} photos for event ${eventId}`);
+
+			// Extract metadata for all files
+			const filesWithMetadata = [];
+			for (const { objectKey, file } of photoData) {
+				try {
+					console.log(`📸 [ClaimPhotos] Extracting metadata for: ${file.name}`);
+					const metadata = await extractFileMetadata(file);
+					console.log(`📸 [ClaimPhotos] Extracted metadata:`, {
+						dateTimeOriginal: metadata.dateTimeOriginal,
+						camera: metadata.camera,
+						fileSize: metadata.fileSize,
+						dimensions: metadata.dimensions,
+					});
+
+					filesWithMetadata.push({
+						object_key: objectKey,
+						metadata: metadata,
+					});
+				} catch (error) {
+					console.warn(`⚠️ [ClaimPhotos] Failed to extract metadata for ${file.name}:`, error);
+					// Include file without metadata as fallback
+					filesWithMetadata.push({
+						object_key: objectKey,
+						metadata: {
+							fileSize: file.size,
+							mimeType: file.type,
+							dateTimeOriginal: new Date().toISOString(),
+						},
+					});
+				}
+			}
+
+			// Associate uploaded files with event
+			const addPhotoRequest = {
+				add_photos: filesWithMetadata,
+			};
+
+			return await api.uploadPhotosToEvent(eventId, addPhotoRequest);
+		},
+		onSuccess: (_, { eventId }) => {
+			// Invalidate event photos query to refetch with new photos
+			queryClient.invalidateQueries({
+				queryKey: photoKeys.eventPhotos(eventId),
+			});
+			// Invalidate all events queries to update preview photos in EventView
+			queryClient.invalidateQueries({
+				queryKey: [...photoKeys.all, "events"],
+			});
+			// Also invalidate pockets query to update photo counts
+			queryClient.invalidateQueries({ queryKey: photoKeys.pockets() });
+		},
+		onError: (error) => {
+			console.error("Failed to claim photos to event:", error);
+		},
+	});
+};
+
 // Hook to fetch all pockets
 export const usePockets = () => {
 	return useQuery({
@@ -250,6 +406,13 @@ export const useDeletePhotoMutation = () => {
 					return oldData;
 				}
 			);
+			
+			// Invalidate all events queries to update preview photos in EventView
+			queryClient.invalidateQueries({
+				queryKey: [...photoKeys.all, "events"],
+			});
+			// Also invalidate pockets query to update photo counts
+			queryClient.invalidateQueries({ queryKey: photoKeys.pockets() });
 		},
 		onError: (error) => {
 			console.error("Failed to delete photo:", error);
@@ -257,7 +420,8 @@ export const useDeletePhotoMutation = () => {
 	});
 };
 
-// Hook for adding media to event
+// Hook for adding media to event (simplified version that does full upload + claim)
+// This is kept for simpler use cases where you just want to upload files directly
 export const useAddMediaMutation = () => {
 	const queryClient = useQueryClient();
 
@@ -315,6 +479,10 @@ export const useAddMediaMutation = () => {
 			// Invalidate event photos query to refetch with new photos
 			queryClient.invalidateQueries({
 				queryKey: photoKeys.eventPhotos(eventId),
+			});
+			// Invalidate all events queries to update preview photos in EventView
+			queryClient.invalidateQueries({
+				queryKey: [...photoKeys.all, "events"],
 			});
 			// Also invalidate pockets query to update photo counts
 			queryClient.invalidateQueries({ queryKey: photoKeys.pockets() });

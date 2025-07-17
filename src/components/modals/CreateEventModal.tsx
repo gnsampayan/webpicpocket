@@ -7,7 +7,7 @@ import { type ContactUser, type Event, type Pocket } from '../../types';
 interface CreateEventModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onEventCreated: (newEvent: Event) => void;
+    onEventCreated?: (newEvent: Event) => void;
     pocketId: string;
     pocket?: Pocket | null;
 }
@@ -209,7 +209,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             const newEvent = await createEventMutation.mutateAsync(eventData);
 
-            onEventCreated(newEvent);
+            onEventCreated?.(newEvent);
             onClose();
         } catch (err) {
             console.error('Error creating event:', err);

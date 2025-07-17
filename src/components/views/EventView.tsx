@@ -284,29 +284,7 @@ const EventView: React.FC = () => {
         };
     }, []);
 
-    // Handle event creation
-    const handleEventCreated = (newEvent: Event) => {
-        console.log('✅ New event added to list:', newEvent);
-        // React Query will automatically update the cache
-    };
 
-    // Handle media added to event
-    const handleMediaAdded = () => {
-        console.log('✅ Events data refreshed after adding media');
-        // React Query will automatically update the cache
-    };
-
-    // Handle members added to event
-    const handleMembersAdded = () => {
-        console.log('✅ Events data refreshed after adding members');
-        // React Query will automatically update the cache
-    };
-
-    // Handle event updated
-    const handleEventUpdated = () => {
-        console.log('✅ Events data refreshed after updating event');
-        // React Query will automatically update the cache
-    };
 
 
 
@@ -715,7 +693,6 @@ const EventView: React.FC = () => {
             <CreateEventModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
-                onEventCreated={handleEventCreated}
                 pocketId={pocket?.pocket_id || ''}
                 pocket={pocket}
             />
@@ -728,7 +705,6 @@ const EventView: React.FC = () => {
                         setShowAddMediaModal(false);
                         setSelectedEventForPhotos(null);
                     }}
-                    onMediaAdded={handleMediaAdded}
                     eventId={selectedEventForPhotos.id}
                     eventTitle={selectedEventForPhotos.title}
                 />
@@ -742,7 +718,6 @@ const EventView: React.FC = () => {
                         setShowAddMembersModal(false);
                         setSelectedEventForMembers(null);
                     }}
-                    onMembersAdded={handleMembersAdded}
                     eventId={selectedEventForMembers.id}
                     eventTitle={selectedEventForMembers.title}
                     existingMembers={[
@@ -760,7 +735,6 @@ const EventView: React.FC = () => {
                         setShowEditModal(false);
                         setSelectedEventForEdit(null);
                     }}
-                    onEventUpdated={handleEventUpdated}
                     event={selectedEventForEdit}
                     pocket={pocket}
                 />

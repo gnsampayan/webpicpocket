@@ -7,7 +7,7 @@ import './EditPocketModal.css';
 interface EditPocketModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPocketUpdated: () => void;
+    onPocketUpdated?: () => void;
     pocket: Pocket;
 }
 
@@ -301,7 +301,7 @@ const EditPocketModal: React.FC<EditPocketModalProps> = ({
                 // Show success message for 1 second, then close modal and refetch
                 setTimeout(() => {
                     handleClose();
-                    onPocketUpdated();
+                    onPocketUpdated?.();
                 }, 1000);
             } else {
                 setSuccess('No changes to save');

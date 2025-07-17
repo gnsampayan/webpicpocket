@@ -679,7 +679,7 @@
 }
 
 .small-photo {
-  flex: 1;
+  flex: 0 0 calc(50% - 0.5rem);
   border-radius: 16px;
   overflow: hidden;
   position: relative;

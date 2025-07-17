@@ -7,7 +7,7 @@ import './EditEventModal.css';
 interface EditEventModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onEventUpdated: () => void;
+    onEventUpdated?: () => void;
     event: Event;
     pocket: Pocket;
 }
@@ -211,7 +211,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                 // Show success message for 1 second, then close modal and refetch
                 setTimeout(() => {
                     handleClose();
-                    onEventUpdated();
+                    onEventUpdated?.();
                 }, 1000);
             } else {
                 setSuccess('No changes to save');

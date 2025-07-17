@@ -1,26 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api';
 import { type Event } from '../../types';
-import { extractFileMetadata } from '../../utils/metadata';
+import { useClaimPhotosToEventMutation, useMultipleFileUpload, type UploadFile } from '../../hooks/usePhotos';
 import './AddMediaModal.css';
 
 interface AddPocketPhotosModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onMediaAdded: () => void;
+    onMediaAdded?: () => void;
     pocketId: string;
     pocketTitle: string;
-}
-
-interface SelectedFile {
-    id: string;
-    file: File;
-    preview: string;
-    objectKey?: string;
-    metadata?: any;
-    uploading: boolean;
-    uploadProgress: number;
-    uploadError?: string;
 }
 
 const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
@@ -30,14 +19,17 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
     pocketId,
     pocketTitle
 }) => {
-    const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-    const [uploading, setUploading] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<UploadFile[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
     const [selectedEventId, setSelectedEventId] = useState<string>('');
     const [loadingEvents, setLoadingEvents] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Use shared upload hooks
+    const { uploadFile } = useMultipleFileUpload();
+    const claimPhotosMutation = useClaimPhotosToEventMutation();
 
     // Fetch events for this pocket
     useEffect(() => {
@@ -64,12 +56,19 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
         fetchEvents();
     }, [isOpen, pocketId, selectedEventId]);
 
+    // Update file progress
+    const updateFileProgress = (fileId: string, progress: Partial<UploadFile>) => {
+        setSelectedFiles(prev => prev.map(f =>
+            f.id === fileId ? { ...f, ...progress } : f
+        ));
+    };
+
     // Handle file selection
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        const newFiles: SelectedFile[] = files.map(file => ({
+        const newFiles: UploadFile[] = files.map(file => ({
             id: Math.random().toString(36).substr(2, 9),
             file,
             preview: URL.createObjectURL(file),
@@ -87,7 +86,7 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
 
         // Immediately upload each new file to S3
         for (const file of newFiles) {
-            uploadFileToS3(file);
+            uploadFile(file, updateFileProgress);
         }
     };
 
@@ -100,61 +99,6 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
             }
             return prev.filter(f => f.id !== fileId);
         });
-    };
-
-    // Upload a single file to S3
-    const uploadFileToS3 = async (selectedFile: SelectedFile): Promise<string> => {
-        try {
-            // Update file to uploading state
-            setSelectedFiles(prev => prev.map(f =>
-                f.id === selectedFile.id
-                    ? { ...f, uploading: true, uploadProgress: 0 }
-                    : f
-            ));
-
-            // Step 1: Get upload URL
-            const uploadResponse = await api.uploadMedia({
-                files: [selectedFile.file.name],
-            });
-
-            if (!uploadResponse.uploads || uploadResponse.uploads.length === 0) {
-                throw new Error('No upload URLs received');
-            }
-
-            const upload = uploadResponse.uploads[0];
-
-            // Step 2: Upload to S3
-            await api.uploadFileToS3(upload.upload_url, selectedFile.file);
-
-            // Update file with object key and mark as complete
-            setSelectedFiles(prev => prev.map(f =>
-                f.id === selectedFile.id
-                    ? {
-                        ...f,
-                        objectKey: upload.object_key,
-                        uploading: false,
-                        uploadProgress: 100
-                    }
-                    : f
-            ));
-
-            return upload.object_key;
-        } catch (err) {
-            console.error('❌ [AddPocketPhotosModal] Failed to upload file:', err);
-
-            // Update file with error
-            setSelectedFiles(prev => prev.map(f =>
-                f.id === selectedFile.id
-                    ? {
-                        ...f,
-                        uploading: false,
-                        uploadError: err instanceof Error ? err.message : 'Upload failed'
-                    }
-                    : f
-            ));
-
-            throw err;
-        }
     };
 
     // Submit media to event
@@ -180,67 +124,35 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
         setError(null);
 
         try {
-            console.log('🔄 [AddPocketPhotosModal] Adding media to event');
+            console.log('🔄 [AddPocketPhotosModal] Claiming photos to event');
 
-            // Extract metadata for all files before submission
-            const uploadedFiles = selectedFiles.filter(file => file.objectKey);
-            console.log('🔄 [AddPocketPhotosModal] Extracting metadata for', uploadedFiles.length, 'files');
-
-            const filesWithMetadata = [];
-            for (const selectedFile of uploadedFiles) {
-                try {
-                    // Extract metadata for this file
-                    console.log(`📸 [AddPocketPhotosModal] Extracting metadata for: ${selectedFile.file.name}`);
-                    const metadata = await extractFileMetadata(selectedFile.file);
-                    console.log(`📸 [AddPocketPhotosModal] Extracted metadata:`, {
-                        dateTimeOriginal: metadata.dateTimeOriginal,
-                        camera: metadata.camera,
-                        fileSize: metadata.fileSize,
-                        dimensions: metadata.dimensions
-                    });
-
-                    filesWithMetadata.push({
-                        object_key: selectedFile.objectKey!,
-                        metadata: metadata
-                    });
-                } catch (error) {
-                    console.warn(`⚠️ [AddPocketPhotosModal] Failed to extract metadata for ${selectedFile.file.name}:`, error);
-                    // Include file without metadata as fallback
-                    filesWithMetadata.push({
-                        object_key: selectedFile.objectKey!,
-                        metadata: {
-                            fileSize: selectedFile.file.size,
-                            mimeType: selectedFile.file.type,
-                            dateTimeOriginal: new Date().toISOString(), // Fallback to current time
-                        }
-                    });
-                }
-            }
+            // Prepare photo data for claiming
+            const photoData = selectedFiles
+                .filter(file => file.objectKey) // Only include files that have been uploaded
+                .map(file => ({
+                    objectKey: file.objectKey!,
+                    file: file.file
+                }));
 
             console.log('🔄 [AddPocketPhotosModal] Selected files:', selectedFiles.length);
-            console.log('🔄 [AddPocketPhotosModal] Files with object keys:', uploadedFiles.length);
-            console.log('🔄 [AddPocketPhotosModal] Files with metadata:', filesWithMetadata.length);
+            console.log('🔄 [AddPocketPhotosModal] Files with object keys:', photoData.length);
 
-            // Make the API call to add media to event using the existing uploadPhotosToEvent method
-            const addPhotoRequest = {
-                add_photos: filesWithMetadata
-            };
+            // Use the claim photos mutation
+            await claimPhotosMutation.mutateAsync({
+                eventId: selectedEventId,
+                photoData
+            });
 
-            await api.uploadPhotosToEvent(selectedEventId, addPhotoRequest);
-            console.log('✅ [AddPocketPhotosModal] Media added successfully to backend');
+            console.log('✅ [AddPocketPhotosModal] Photos claimed successfully to event');
 
             // Call the callback to trigger a refetch of event data
-            onMediaAdded();
+            onMediaAdded?.();
 
             // Close modal and reset state
             handleClose();
         } catch (err) {
-            console.error('❌ [AddPocketPhotosModal] Failed to add media:', err);
-            console.error('❌ [AddPocketPhotosModal] Error details:', {
-                message: err instanceof Error ? err.message : 'Unknown error',
-                stack: err instanceof Error ? err.stack : undefined
-            });
-            setError(err instanceof Error ? err.message : 'Failed to add media to event');
+            console.error('❌ [AddPocketPhotosModal] Failed to claim photos:', err);
+            setError(err instanceof Error ? err.message : 'Failed to add photos to event');
         } finally {
             setSubmitting(false);
         }
@@ -256,8 +168,6 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
         });
 
         setSelectedFiles([]);
-        setUploading(false);
-        setSubmitting(false);
         setError(null);
         setSelectedEventId('');
         onClose();
@@ -269,12 +179,6 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
             handleClose();
         }
     };
-
-    // Get files that are ready to submit (have object keys)
-    const readyFiles = selectedFiles.filter(f => f.objectKey);
-    const uploadingFiles = selectedFiles.filter(f => f.uploading);
-    const errorFiles = selectedFiles.filter(f => f.uploadError);
-    const hasUploadingFiles = uploadingFiles.length > 0;
 
     if (!isOpen) return null;
 
@@ -336,7 +240,7 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
                             <button
                                 className="select-files-button"
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={uploading || submitting || !selectedEventId}
+                                disabled={submitting || !selectedEventId}
                             >
                                 <span>📷</span>
                                 Select Photos
@@ -356,7 +260,7 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
                                             <button
                                                 className="remove-file-button"
                                                 onClick={() => handleRemoveFile(file.id)}
-                                                disabled={file.uploading || submitting}
+                                                disabled={submitting}
                                             >
                                                 ✕
                                             </button>
@@ -392,28 +296,49 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
                     )}
 
                     {/* Upload Progress Summary */}
-                    {hasUploadingFiles && (
-                        <div className="upload-summary">
-                            <div className="upload-progress-bar">
-                                <div
-                                    className="progress-fill"
-                                    style={{
-                                        width: `${(readyFiles.length / selectedFiles.length) * 100}%`
-                                    }}
-                                ></div>
-                            </div>
-                            <span>
-                                {readyFiles.length} of {selectedFiles.length} files uploaded
-                                {uploadingFiles.length > 0 && ` (${uploadingFiles.length} uploading...)`}
-                            </span>
-                        </div>
-                    )}
+                    {selectedFiles.length > 0 && (
+                        (() => {
+                            const readyFiles = selectedFiles.filter(f => f.objectKey);
+                            const uploadingFiles = selectedFiles.filter(f => f.uploading);
+                            const errorFiles = selectedFiles.filter(f => f.uploadError);
+                            const hasUploadingFiles = uploadingFiles.length > 0;
 
-                    {/* Error Summary */}
-                    {errorFiles.length > 0 && (
-                        <div className="error-summary">
-                            <span>❌ {errorFiles.length} file(s) failed to upload</span>
-                        </div>
+                            return (
+                                <>
+                                    {hasUploadingFiles && (
+                                        <div className="upload-summary">
+                                            <div className="upload-progress-bar">
+                                                <div
+                                                    className="progress-fill"
+                                                    style={{
+                                                        width: `${(readyFiles.length / selectedFiles.length) * 100}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span>
+                                                {readyFiles.length} of {selectedFiles.length} files uploaded
+                                                {uploadingFiles.length > 0 && ` (${uploadingFiles.length} uploading...)`}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Error Summary */}
+                                    {errorFiles.length > 0 && (
+                                        <div className="error-summary">
+                                            <span>❌ {errorFiles.length} file(s) failed to upload</span>
+                                        </div>
+                                    )}
+
+                                    {/* Submission Progress */}
+                                    {submitting && (
+                                        <div className="upload-summary">
+                                            <div className="upload-spinner"></div>
+                                            <span>Adding {selectedFiles.length} photo(s) to event...</span>
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()
                     )}
                 </div>
 
@@ -432,11 +357,17 @@ const AddPocketPhotosModal: React.FC<AddPocketPhotosModalProps> = ({
                         onClick={handleSubmit}
                         className="submit-button"
                         disabled={
-                            submitting ||
-                            hasUploadingFiles ||
-                            selectedFiles.length === 0 ||
-                            readyFiles.length !== selectedFiles.length ||
-                            !selectedEventId
+                            (() => {
+                                const readyFiles = selectedFiles.filter(f => f.objectKey);
+                                const uploadingFiles = selectedFiles.filter(f => f.uploading);
+                                const hasUploadingFiles = uploadingFiles.length > 0;
+
+                                return submitting ||
+                                    hasUploadingFiles ||
+                                    selectedFiles.length === 0 ||
+                                    readyFiles.length !== selectedFiles.length ||
+                                    !selectedEventId;
+                            })()
                         }
                     >
                         {submitting ? 'Adding to Event...' : 'Add to Event'}
