@@ -304,9 +304,11 @@
 .info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 0.5rem 0;
     border-bottom: 1px solid #e9ecef;
+    min-height: 1.5rem;
+    gap: 0.75rem;
 }
 
 .info-row:last-child {
@@ -317,6 +319,8 @@
     font-weight: 500;
     color: #666;
     font-size: 0.9rem;
+    flex-shrink: 0;
+    min-width: 120px;
 }
 
 .info-value {
@@ -365,6 +369,30 @@
     color: #333;
     font-size: 0.9rem;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    max-width: 200px;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.info-value::-webkit-scrollbar {
+    height: 4px;
+}
+
+.info-value::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.info-value::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 2px;
+}
+
+.info-value::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
 }
 
 /* Special styling for camera settings */
@@ -376,6 +404,8 @@
     padding: 2px 6px;
     border-radius: 4px;
     border: 1px solid #e9ecef;
+    /* Inherit scrolling behavior but with slightly larger max-width for technical data */
+    max-width: 250px;
 }
 
 /* Metadata not available styling */
@@ -456,6 +486,32 @@
     .tab-button {
         padding: 0.75rem 1rem;
         font-size: 0.9rem;
+    }
+    
+    /* Responsive info values */
+    .info-value {
+        max-width: 150px;
+    }
+    
+    .info-label {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .info-label {
+        min-width: auto;
+    }
+    
+    .info-value {
+        max-width: 100%;
+        width: 100%;
     }
 }
 

@@ -4,6 +4,7 @@ import type { Photo } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
 import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails } from '../../hooks/usePhotos';
 import { getCurrentSortFilter, sortPhotos } from '../../utils/sorting';
+import { getFlashDescription } from '../../utils/metadata';
 import './PhotoDetailsView.css';
 
 const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
@@ -413,10 +414,15 @@ const PhotoDetailsView: React.FC = () => {
                                                 )}
 
                                                 {/* Flash */}
-                                                {metadata.settings?.flash !== undefined && (
+                                                {(metadata.rawExif?.flashRaw !== undefined || metadata.settings?.flash !== undefined) && (
                                                     <div className="info-row">
                                                         <span className="info-label">⚡ Flash:</span>
-                                                        <span className="info-value">{metadata.settings.flash ? 'Used' : 'Not used'}</span>
+                                                        <span className="info-value">
+                                                            {metadata.rawExif?.flashRaw !== undefined
+                                                                ? getFlashDescription(metadata.rawExif.flashRaw)
+                                                                : metadata.settings?.flash ? 'Flash fired' : 'Flash did not fire'
+                                                            }
+                                                        </span>
                                                     </div>
                                                 )}
 
