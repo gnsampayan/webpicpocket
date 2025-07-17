@@ -16,11 +16,17 @@ const EventView: React.FC = () => {
     const navigate = useNavigate();
 
     // Load initial state from localStorage
+    const getInitialViewMode = (): 'grid' | 'list' => {
+        const saved = localStorage.getItem('events-view-mode');
+        return (saved === 'list' || saved === 'grid') ? saved : 'grid';
+    };
+
     const getInitialFilter = (): string => {
         const saved = localStorage.getItem('events-sort-filter');
         return saved || 'newest-updated';
     };
 
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState(getInitialFilter);
     const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
@@ -33,11 +39,20 @@ const EventView: React.FC = () => {
     const [selectedEventForEdit, setSelectedEventForEdit] = useState<Event | null>(null);
 
     // Functions to save state to localStorage
+    const saveViewMode = (mode: 'grid' | 'list') => {
+        localStorage.setItem('events-view-mode', mode);
+    };
+
     const saveFilter = (filterValue: string) => {
         localStorage.setItem('events-sort-filter', filterValue);
     };
 
-    // Wrapper function to update state and save to localStorage
+    // Wrapper functions to update state and save to localStorage
+    const handleViewModeChange = (mode: 'grid' | 'list') => {
+        setViewMode(mode);
+        saveViewMode(mode);
+    };
+
     const handleFilterChange = (filterValue: string) => {
         setFilter(filterValue);
         saveFilter(filterValue);
@@ -296,7 +311,7 @@ const EventView: React.FC = () => {
 
 
     // Render event card with photo previews
-    const renderEventCard = (event: Event) => {
+    const renderEventCard = (event: Event, index?: number) => {
         // Get up to 5 photos for preview (1 large + 4 small)
         const previewPhotos = event.preview_photos?.slice(0, 5) || [];
         const totalPhotoCount = event.photo_count || 0;
@@ -306,9 +321,13 @@ const EventView: React.FC = () => {
         console.log(`Event "${event.title}" full data:`, event);
 
         return (
-            <div key={event.id} className="event-card"
+            <div key={event.id} className={`event-card ${viewMode === 'list' ? 'event-list-item' : ''}`}
                 onClick={() => {
                     handleOpenGridPhotoView(event);
+                }}
+                style={{
+                    cursor: 'pointer',
+                    zIndex: viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1
                 }}>
                 {/* Event Header */}
                 <div className="event-header">
@@ -334,80 +353,104 @@ const EventView: React.FC = () => {
                 {/* Event Photo Preview */}
                 <div className="event-photos-preview">
                     {previewPhotos.length > 0 ? (
-                        <div className="photo-grid">
-                            {/* Large photo on the left */}
-                            {previewPhotos[0] && (
-                                <div className="large-photo">
-                                    <img
-                                        src={getPhotoUrl(previewPhotos[0])}
-                                        alt="Event photo"
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                        }}
-                                    />
-                                </div>
-                            )}
+                        viewMode === 'list' ? (
+                            // List view: single row of photos
+                            <div className="photo-row">
+                                {previewPhotos.slice(0, 5).map((photo, index) => (
+                                    <div key={index} className="row-photo">
+                                        <img
+                                            src={getPhotoUrl(photo)}
+                                            alt="Event photo"
+                                            onError={(e) => {
+                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                            }}
+                                        />
+                                        {/* Show "more" overlay on last photo if there are additional photos */}
+                                        {index === 4 && totalPhotoCount > 5 && (
+                                            <div className="more-photos-overlay">
+                                                <span>+{totalPhotoCount - 5}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            // Grid view: existing layout
+                            <div className="photo-grid">
+                                {/* Large photo on the left */}
+                                {previewPhotos[0] && (
+                                    <div className="large-photo">
+                                        <img
+                                            src={getPhotoUrl(previewPhotos[0])}
+                                            alt="Event photo"
+                                            onError={(e) => {
+                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                            }}
+                                        />
+                                    </div>
+                                )}
 
-                            {/* 2x2 grid on the right */}
-                            <div className="small-photos-grid">
-                                <div className="top-row">
-                                    {previewPhotos[1] && (
-                                        <div className="small-photo">
-                                            <img
-                                                src={getPhotoUrl(previewPhotos[1])}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                    {previewPhotos[2] && (
-                                        <div className="small-photo">
-                                            <img
-                                                src={getPhotoUrl(previewPhotos[2])}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="bottom-row">
-                                    {previewPhotos[3] && (
-                                        <div className="small-photo">
-                                            <img
-                                                src={getPhotoUrl(previewPhotos[3])}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                    {previewPhotos[4] && (
-                                        <div className="small-photo">
-                                            <img
-                                                src={getPhotoUrl(previewPhotos[4])}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
-                                            {/* Show "more" overlay if there are additional photos */}
-                                            {totalPhotoCount > 5 && (
-                                                <div
-                                                    className="more-photos-overlay"
-                                                >
-                                                    <span>+{totalPhotoCount - 5}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                {/* 2x2 grid on the right */}
+                                <div className="small-photos-grid">
+                                    <div className="top-row">
+                                        {previewPhotos[1] && (
+                                            <div className="small-photo">
+                                                <img
+                                                    src={getPhotoUrl(previewPhotos[1])}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                        {previewPhotos[2] && (
+                                            <div className="small-photo">
+                                                <img
+                                                    src={getPhotoUrl(previewPhotos[2])}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="bottom-row">
+                                        {previewPhotos[3] && (
+                                            <div className="small-photo">
+                                                <img
+                                                    src={getPhotoUrl(previewPhotos[3])}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                        {previewPhotos[4] && (
+                                            <div className="small-photo">
+                                                <img
+                                                    src={getPhotoUrl(previewPhotos[4])}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                                {/* Show "more" overlay if there are additional photos */}
+                                                {totalPhotoCount > 5 && (
+                                                    <div
+                                                        className="more-photos-overlay"
+                                                    >
+                                                        <span>+{totalPhotoCount - 5}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )
                     ) : (
                         <div className="empty-event-photos">
                             <div className="empty-photos-placeholder">
@@ -597,6 +640,20 @@ const EventView: React.FC = () => {
                         </div>
                     </div>
                     <div className="controls-right">
+                        <div className="view-toggle">
+                            <button
+                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => handleViewModeChange('grid')}
+                            >
+                                <span>⊞</span>
+                            </button>
+                            <button
+                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => handleViewModeChange('list')}
+                            >
+                                <span>☰</span>
+                            </button>
+                        </div>
                         <div className="filter-dropdown">
                             <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
                                 <option value="newest-updated">Most Recently Updated</option>
@@ -645,8 +702,8 @@ const EventView: React.FC = () => {
                             <p>No events match "{searchTerm}"</p>
                         </div>
                     ) : (
-                        <div className="events-list">
-                            {filteredAndSortedEvents.map(renderEventCard)}
+                        <div className={`events-list ${viewMode === 'list' ? 'events-list-view' : 'events-grid-view'}`}>
+                            {filteredAndSortedEvents.map((event, index) => renderEventCard(event, index))}
                         </div>
                     )}
                 </section>

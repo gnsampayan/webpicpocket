@@ -313,6 +313,32 @@
   flex-shrink: 0;
 }
 
+.view-toggle {
+  display: flex;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-button {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.view-button:hover {
+  background: #f8f9ff;
+}
+
+.view-button.active {
+  background: #667eea;
+  color: white;
+}
+
 .filter-dropdown select {
   padding: 0.5rem 1rem;
   border: 1px solid #e1e5e9;
@@ -396,10 +422,19 @@
 
 /* Events List */
 .events-list {
+  padding: 0;
+}
+
+.events-grid-view {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  padding: 0;
+}
+
+.events-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 
@@ -413,7 +448,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -440,6 +475,25 @@
 
 .event-card:hover::before {
   opacity: 1;
+}
+
+/* List View Event Card */
+.event-list-item {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.event-list-item .event-header {
+  margin-bottom: 1rem;
+}
+
+.event-list-item .event-photos-preview {
+  margin-bottom: 1rem;
+}
+
+.event-list-item .event-footer {
+  margin-top: auto;
 }
 
 
@@ -690,6 +744,23 @@
   border-radius: 16px;
 }
 
+.event-list-item .empty-event-photos {
+  height: 80px;
+}
+
+.event-list-item .empty-photos-placeholder {
+  padding: 1rem;
+}
+
+.event-list-item .placeholder-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.event-list-item .empty-photos-placeholder p {
+  font-size: 0.9rem;
+}
+
 .empty-photos-placeholder {
   text-align: center;
   color: #666;
@@ -712,6 +783,72 @@
   font-size: 1.1rem;
   font-weight: 500;
   color: #888;
+}
+
+/* List View Photo Row */
+.photo-row {
+  display: flex;
+  gap: 0.75rem;
+  height: 80px;
+  overflow: hidden;
+}
+
+.row-photo {
+  position: relative;
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.row-photo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.row-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.row-photo img[src*="placeholder"] {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  opacity: 0.9;
+}
+
+.row-photo:hover img {
+  transform: scale(1.05);
+}
+
+.row-photo .more-photos-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 1rem;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.row-photo .more-photos-overlay:hover {
+  font-size: 1.1rem;
 }
 
 /* Event Footer */
@@ -884,6 +1021,15 @@
     flex-shrink: 0;
   }
 
+  .view-toggle {
+    margin-right: 0.5rem;
+  }
+
+  .view-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+  }
+
   .search-box input {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 2.75rem;
@@ -902,9 +1048,27 @@
     font-size: 0.8rem;
   }
 
-  .events-list {
+  .events-grid-view {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .events-list-view {
+    gap: 0.75rem;
+  }
+
+  .event-list-item {
+    padding: 1rem;
+  }
+
+  .photo-row {
+    height: 60px;
+    gap: 0.5rem;
+  }
+
+  .row-photo {
+    width: 60px;
+    height: 60px;
   }
 
   .photo-grid {
@@ -964,8 +1128,22 @@
     padding: 0.5rem;
   }
 
-  .events-list {
+  .events-grid-view {
     gap: 0.75rem;
+  }
+
+  .events-list-view {
+    gap: 0.5rem;
+  }
+
+  .photo-row {
+    height: 50px;
+    gap: 0.4rem;
+  }
+
+  .row-photo {
+    width: 50px;
+    height: 50px;
   }
 
   .event-card {
