@@ -8,7 +8,7 @@ import AddMediaModal from '../modals/AddMediaModal';
 import AddEventMembersModal from '../modals/AddEventMembersModal';
 import EditEventModal from '../modals/EditEventModal';
 
-import { usePocketFromUrl, useEvents } from '../../hooks/usePhotos';
+import { usePocketFromUrl, useEvents, usePockets } from '../../hooks/usePhotos';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
 
 const EventView: React.FC = () => {
@@ -26,9 +26,15 @@ const EventView: React.FC = () => {
         return saved || 'newest-updated';
     };
 
+    const getInitialHideInherited = (): boolean => {
+        const saved = localStorage.getItem('events-hide-inherited');
+        return saved === 'true';
+    };
+
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState(getInitialFilter);
+    const [hideInherited, setHideInherited] = useState(getInitialHideInherited);
     const [openOptionsMenu, setOpenOptionsMenu] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAddMediaModal, setShowAddMediaModal] = useState(false);
@@ -47,6 +53,10 @@ const EventView: React.FC = () => {
         localStorage.setItem('events-sort-filter', filterValue);
     };
 
+    const saveHideInherited = (hideValue: boolean) => {
+        localStorage.setItem('events-hide-inherited', hideValue.toString());
+    };
+
     // Wrapper functions to update state and save to localStorage
     const handleViewModeChange = (mode: 'grid' | 'list') => {
         setViewMode(mode);
@@ -58,14 +68,25 @@ const EventView: React.FC = () => {
         saveFilter(filterValue);
     };
 
+    const handleHideInheritedChange = (hideValue: boolean) => {
+        setHideInherited(hideValue);
+        saveHideInherited(hideValue);
+    };
+
     // React Query hooks
     const { pocket, isLoading: isLoadingPocket, error: pocketError } = usePocketFromUrl(pocketTitle);
     const { data: eventsData, isLoading: isLoadingEvents, error: eventsError } = useEvents(pocket?.pocket_id);
+    const { data: allPockets } = usePockets(); // For finding source pockets
 
     // Combined loading and error states
     const isLoading = isLoadingPocket || isLoadingEvents;
     const error = pocketError || eventsError;
     const events = eventsData || [];
+
+    // Helper function to find source pocket by ID
+    const getSourcePocket = (sourcePocketId: string): Pocket | undefined => {
+        return allPockets?.find(p => p.pocket_id === sourcePocketId);
+    };
 
     // Default placeholder images as data URI for better reliability
     const DEFAULT_EVENT_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
@@ -113,19 +134,28 @@ const EventView: React.FC = () => {
         }
     }, [events]);
 
-    // Filter events based on search query
+    // Filter events based on search query and inherited status
     const filteredEvents = events.filter(event => {
-        if (!searchTerm.trim()) return true;
+        // Search filter
+        if (searchTerm.trim()) {
+            const query = searchTerm.toLowerCase().trim();
+            const matchesSearch = (
+                event.title.toLowerCase().includes(query) ||
+                event.additional_members?.some(member =>
+                    member.first_name.toLowerCase().includes(query) ||
+                    member.last_name.toLowerCase().includes(query) ||
+                    member.username.toLowerCase().includes(query)
+                )
+            );
+            if (!matchesSearch) return false;
+        }
 
-        const query = searchTerm.toLowerCase().trim();
-        return (
-            event.title.toLowerCase().includes(query) ||
-            event.additional_members?.some(member =>
-                member.first_name.toLowerCase().includes(query) ||
-                member.last_name.toLowerCase().includes(query) ||
-                member.username.toLowerCase().includes(query)
-            )
-        );
+        // Inherited filter
+        if (hideInherited && event.inherited) {
+            return false;
+        }
+
+        return true;
     });
 
     // Get sorted events based on current filter
@@ -473,6 +503,16 @@ const EventView: React.FC = () => {
                             )}
                         </div>
                     </div>
+
+                    {/* Show source pocket if event is inherited */}
+                    {event.inherited && event.source_pocket_id && (
+                        <div className="event-source-pocket">
+                            <span className="source-label">Inherited from:</span>
+                            <span className="source-pocket-name">
+                                {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Options Menu */}
@@ -618,6 +658,17 @@ const EventView: React.FC = () => {
                         </div>
                     </div>
                     <div className="controls-right">
+                        <div className="inherited-toggle">
+                            <label className="toggle-label">
+                                <input
+                                    type="checkbox"
+                                    checked={hideInherited}
+                                    onChange={(e) => handleHideInheritedChange(e.target.checked)}
+                                />
+                                <span className="toggle-slider"></span>
+                                <span className="toggle-text">Hide Inherited</span>
+                            </label>
+                        </div>
                         <div className="view-toggle">
                             <button
                                 className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
@@ -657,10 +708,16 @@ const EventView: React.FC = () => {
                                 Search Results
                                 <span className="search-results-info">
                                     {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''} found for "{searchTerm}"
+                                    {hideInherited ? ' (inherited events hidden)' : ''}
                                 </span>
                             </>
                         ) : (
-                            `Events (${filteredAndSortedEvents.length})`
+                            <>
+                                Events ({filteredAndSortedEvents.length})
+                                {hideInherited && (
+                                    <span className="filter-info"> - inherited events hidden</span>
+                                )}
+                            </>
                         )}
                     </h2>
                     {events.length === 0 ? (

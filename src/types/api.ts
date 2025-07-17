@@ -352,6 +352,8 @@ export interface Event {
 	preview_photos: PreviewPhoto[];
 	created_at: string;
 	updated_at: string;
+	inherited: boolean;
+	source_pocket_id?: string;
 }
 
 export interface CreateEventRequest {
