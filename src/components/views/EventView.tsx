@@ -105,6 +105,44 @@ const EventView: React.FC = () => {
                 return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             case 'oldest-created':
                 return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            case 'event-date-latest':
+                return sorted.sort((a, b) => {
+                    // Handle events without start dates by putting them at the end
+                    if (!a.date_range_start && !b.date_range_start) return 0;
+                    if (!a.date_range_start) return 1;
+                    if (!b.date_range_start) return -1;
+                    return new Date(b.date_range_start).getTime() - new Date(a.date_range_start).getTime();
+                });
+            case 'event-date-earliest':
+                return sorted.sort((a, b) => {
+                    // Handle events without start dates by putting them at the end
+                    if (!a.date_range_start && !b.date_range_start) return 0;
+                    if (!a.date_range_start) return 1;
+                    if (!b.date_range_start) return -1;
+                    return new Date(a.date_range_start).getTime() - new Date(b.date_range_start).getTime();
+                });
+            case 'event-end-latest':
+                return sorted.sort((a, b) => {
+                    // Use end date if available, otherwise fall back to start date
+                    const aDate = a.date_range_end || a.date_range_start;
+                    const bDate = b.date_range_end || b.date_range_start;
+
+                    if (!aDate && !bDate) return 0;
+                    if (!aDate) return 1;
+                    if (!bDate) return -1;
+                    return new Date(bDate).getTime() - new Date(aDate).getTime();
+                });
+            case 'event-end-earliest':
+                return sorted.sort((a, b) => {
+                    // Use end date if available, otherwise fall back to start date
+                    const aDate = a.date_range_end || a.date_range_start;
+                    const bDate = b.date_range_end || b.date_range_start;
+
+                    if (!aDate && !bDate) return 0;
+                    if (!aDate) return 1;
+                    if (!bDate) return -1;
+                    return new Date(aDate).getTime() - new Date(bDate).getTime();
+                });
             case 'a-z':
                 return sorted.sort((a, b) => a.title.localeCompare(b.title));
             case 'z-a':
@@ -718,6 +756,10 @@ const EventView: React.FC = () => {
                                 <option value="oldest-updated">Least Recently Updated</option>
                                 <option value="newest-created">Newest Created</option>
                                 <option value="oldest-created">Oldest Created</option>
+                                <option value="event-date-latest">Event Date (Latest First)</option>
+                                <option value="event-date-earliest">Event Date (Earliest First)</option>
+                                <option value="event-end-latest">Event End Date (Latest First)</option>
+                                <option value="event-end-earliest">Event End Date (Earliest First)</option>
                                 <option value="a-z">A-Z</option>
                                 <option value="z-a">Z-A</option>
                                 <option value="photo-high-low">Photo Count (High to Low)</option>
