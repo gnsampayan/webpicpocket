@@ -143,6 +143,34 @@ const EventView: React.FC = () => {
                     if (!bDate) return -1;
                     return new Date(aDate).getTime() - new Date(bDate).getTime();
                 });
+            case 'date-range-longest':
+                return sorted.sort((a, b) => {
+                    // Calculate duration in milliseconds
+                    const getDuration = (event: Event): number => {
+                        if (!event.date_range_start) return 0;
+                        if (!event.date_range_end) return 0; // Single day events have 0 duration
+                        return new Date(event.date_range_end).getTime() - new Date(event.date_range_start).getTime();
+                    };
+
+                    const aDuration = getDuration(a);
+                    const bDuration = getDuration(b);
+
+                    return bDuration - aDuration; // Longest first
+                });
+            case 'date-range-shortest':
+                return sorted.sort((a, b) => {
+                    // Calculate duration in milliseconds
+                    const getDuration = (event: Event): number => {
+                        if (!event.date_range_start) return Number.MAX_SAFE_INTEGER; // Put events without dates at the end
+                        if (!event.date_range_end) return 0; // Single day events have 0 duration
+                        return new Date(event.date_range_end).getTime() - new Date(event.date_range_start).getTime();
+                    };
+
+                    const aDuration = getDuration(a);
+                    const bDuration = getDuration(b);
+
+                    return aDuration - bDuration; // Shortest first
+                });
             case 'a-z':
                 return sorted.sort((a, b) => a.title.localeCompare(b.title));
             case 'z-a':
@@ -760,6 +788,8 @@ const EventView: React.FC = () => {
                                 <option value="event-date-earliest">Event Date (Earliest First)</option>
                                 <option value="event-end-latest">Event End Date (Latest First)</option>
                                 <option value="event-end-earliest">Event End Date (Earliest First)</option>
+                                <option value="date-range-longest">Date Range (Longest First)</option>
+                                <option value="date-range-shortest">Date Range (Shortest First)</option>
                                 <option value="a-z">A-Z</option>
                                 <option value="z-a">Z-A</option>
                                 <option value="photo-high-low">Photo Count (High to Low)</option>
