@@ -69,7 +69,10 @@ const Contacts: React.FC = () => {
     };
 
     const handleDeleteContact = (userId: string) => {
-        deleteContactMutation.mutate(userId);
+        const confirmed = window.confirm('Are you sure you want to remove this contact? This action cannot be undone.');
+        if (confirmed) {
+            deleteContactMutation.mutate(userId);
+        }
     };
 
     const handleContactAdded = () => {
@@ -365,11 +368,11 @@ const Contacts: React.FC = () => {
                                     <p className="contact-username">@{contact.username}</p>
                                 </div>
                                 <div className="contact-actions">
-                                    <button className="action-button share">
+                                    <button className="action-button">
                                         <span>📤</span>
                                         Share
                                     </button>
-                                    <button className="action-button message">
+                                    <button className="action-button">
                                         <span>💬</span>
                                         Message
                                     </button>

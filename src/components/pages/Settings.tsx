@@ -19,6 +19,7 @@ const Settings: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
     const [profileForm, setProfileForm] = useState({
         first_name: '',
@@ -222,6 +223,27 @@ const Settings: React.FC = () => {
         }
     };
 
+    // Handle profile picture modal
+    const handleAvatarClick = () => {
+        setShowProfileModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowProfileModal(false);
+    };
+
+    // Get profile picture URL from user info
+    const getProfilePictureUrl = () => {
+        if (!userInfo?.profile_picture || userInfo.profile_picture_default) {
+            return null;
+        }
+
+        // Use the best available URL from user data
+        return userInfo.profile_picture.url_large ||
+            userInfo.profile_picture.url_medium ||
+            userInfo.profile_picture.url_small;
+    };
+
     if (loading) {
         return (
             <div className="settings-page">
@@ -309,7 +331,17 @@ const Settings: React.FC = () => {
                                 <h2>Profile Settings</h2>
                                 <div className="profile-form">
                                     <div className="avatar-section">
-                                        <UserAvatar size="large" userInfo={userInfo} />
+                                        <div
+                                            className="clickable-avatar-wrapper"
+                                            onClick={handleAvatarClick}
+                                            style={{ cursor: 'pointer' }}
+                                            title="Click to view enlarged profile picture"
+                                        >
+                                            <UserAvatar
+                                                size="large"
+                                                userInfo={userInfo}
+                                            />
+                                        </div>
                                         <div className="avatar-actions">
                                             <label className="change-avatar-btn">
                                                 {uploading ? 'Uploading...' : 'Change Photo'}
@@ -587,6 +619,48 @@ const Settings: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Profile Picture Modal */}
+            {showProfileModal && userInfo && (
+                <div className="profile-modal-overlay" onClick={handleCloseModal}>
+                    <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="profile-modal-close" onClick={handleCloseModal}>
+                            ×
+                        </button>
+                        {userInfo.profile_picture_default || !getProfilePictureUrl() ? (
+                            <div className="profile-modal-empty-state">
+                                <div className="empty-state-icon">👤</div>
+                                <h3>No Profile Picture</h3>
+                                <p>You are using the default profile picture.</p>
+                            </div>
+                        ) : (
+                            <img
+                                src={`https://${getProfilePictureUrl()}`}
+                                alt={`${userInfo.first_name} ${userInfo.last_name}`}
+                                className="profile-modal-image"
+                                onError={(e) => {
+                                    // If the image fails to load in modal, show empty state
+                                    const modal = e.currentTarget.parentElement;
+                                    if (modal) {
+                                        modal.innerHTML = `
+                                            <button class="profile-modal-close">×</button>
+                                            <div class="profile-modal-empty-state">
+                                                <div class="empty-state-icon">👤</div>
+                                                <h3>Image Not Available</h3>
+                                                <p>Failed to load profile picture.</p>
+                                            </div>
+                                        `;
+                                        const closeBtn = modal.querySelector('.profile-modal-close');
+                                        if (closeBtn) {
+                                            closeBtn.addEventListener('click', handleCloseModal);
+                                        }
+                                    }
+                                }}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
