@@ -425,6 +425,16 @@
   transform: scale(1.05);
 }
 
+/* Clickable member avatar styles */
+.member-avatar--clickable {
+  cursor: pointer;
+}
+
+.member-avatar--clickable:hover {
+  transform: scale(1.15);
+  z-index: 2;
+}
+
 .more-members {
   color: #667eea;
   font-size: 0.85rem;

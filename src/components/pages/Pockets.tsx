@@ -223,30 +223,6 @@ const Pockets: React.FC = () => {
         };
     }, []);
 
-    // Handle pocket creation
-    const handlePocketCreated = (newPocket: Pocket) => {
-        console.log('✅ New pocket created:', newPocket);
-        // React Query will automatically update the cache
-    };
-
-    // Handle media added to pocket
-    const handleMediaAdded = () => {
-        console.log('✅ Pockets data refreshed after adding media');
-        // React Query mutation will automatically invalidate cache
-    };
-
-    // Handle members added to pocket
-    const handleMembersAdded = () => {
-        console.log('✅ Pockets data refreshed after adding members');
-        // React Query will automatically update the cache
-    };
-
-    // Handle pocket updated
-    const handlePocketUpdated = () => {
-        console.log('✅ Pockets data refreshed after updating pocket');
-        // React Query will automatically update the cache
-    };
-
     // Filter pockets based on search query
     const filteredPockets = pockets.filter(pocket => {
         if (!searchQuery.trim()) return true;
@@ -331,7 +307,7 @@ const Pockets: React.FC = () => {
                             Create Pocket
                         </button>
                         <div className="user-menu">
-                            <UserAvatar size="medium" />
+                            <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>
@@ -485,7 +461,14 @@ const Pockets: React.FC = () => {
                                         <div className="member-avatars">
                                             {/* Show up to 3 member avatars */}
                                             {pocket.pocket_members.slice(0, 3).map((member) => (
-                                                <div key={member.id} className="member-avatar">
+                                                <div
+                                                    key={member.id}
+                                                    className="member-avatar member-avatar--clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent pocket card click
+                                                        navigate(`/profile/${member.id}`);
+                                                    }}
+                                                >
                                                     <img
                                                         src={getProfilePictureUrl(member)}
                                                         alt={member.first_name}
@@ -561,7 +544,6 @@ const Pockets: React.FC = () => {
             <CreatePocketModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
-                onPocketCreated={handlePocketCreated}
             />
 
             {/* Add Pocket Photos Modal */}
@@ -572,7 +554,6 @@ const Pockets: React.FC = () => {
                         setShowAddPhotosModal(false);
                         setSelectedPocketForPhotos(null);
                     }}
-                    onMediaAdded={handleMediaAdded}
                     pocketId={selectedPocketForPhotos.pocket_id}
                     pocketTitle={selectedPocketForPhotos.pocket_title}
                 />
@@ -586,7 +567,6 @@ const Pockets: React.FC = () => {
                         setShowAddMembersModal(false);
                         setSelectedPocketForMembers(null);
                     }}
-                    onMembersAdded={handleMembersAdded}
                     pocketId={selectedPocketForMembers.pocket_id}
                     pocketTitle={selectedPocketForMembers.pocket_title}
                     existingMembers={selectedPocketForMembers.pocket_members.map(member => member.id)}
@@ -601,7 +581,6 @@ const Pockets: React.FC = () => {
                         setShowEditModal(false);
                         setSelectedPocketForEdit(null);
                     }}
-                    onPocketUpdated={handlePocketUpdated}
                     pocket={selectedPocketForEdit}
                 />
             )}

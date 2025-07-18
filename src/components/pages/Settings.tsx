@@ -249,7 +249,7 @@ const Settings: React.FC = () => {
                         <p>Manage your account preferences and security</p>
                     </div>
                     <div className="user-menu">
-                        <UserAvatar size="medium" userInfo={userInfo} />
+                        <UserAvatar size="medium" userInfo={userInfo} clickable={true} />
                     </div>
                 </header>
 

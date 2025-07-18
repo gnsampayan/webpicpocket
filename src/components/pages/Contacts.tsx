@@ -78,8 +78,8 @@ const Contacts: React.FC = () => {
     };
 
     const handleContactClick = (contact: ApiTypes.ContactUser) => {
-        // Navigate to the profile route with the username
-        navigate(`/contacts/${contact.username}`);
+        // Navigate to the profile route with the user ID
+        navigate(`/profile/${contact.id}`);
     };
 
     // Filter contacts based on search term and filter
@@ -147,7 +147,7 @@ const Contacts: React.FC = () => {
                             Add Contact
                         </button>
                         <div className="user-menu">
-                            <UserAvatar size="medium" />
+                            <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>

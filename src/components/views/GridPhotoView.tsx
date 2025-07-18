@@ -181,6 +181,13 @@ const GridPhotoView: React.FC = () => {
         // React Query mutation will automatically invalidate cache
     };
 
+    // Handle member avatar click
+    const handleMemberClick = (member: PocketMember | any) => {
+        if (member.id) {
+            navigate(`/profile/${member.id}`);
+        }
+    };
+
     // Get photos to show based on loading progress and sorting
     const getPhotosToShow = () => {
         if (!eventData) return [];
@@ -294,7 +301,12 @@ const GridPhotoView: React.FC = () => {
                                 <div className="member-avatars">
                                     {/* Show pocket members first */}
                                     {pocket.pocket_members?.slice(0, 3).map((member) => (
-                                        <div key={member.id} className="member-avatar">
+                                        <div
+                                            key={member.id}
+                                            className="member-avatar member-avatar--clickable"
+                                            onClick={() => handleMemberClick(member)}
+                                            title={`View ${member.first_name}'s profile`}
+                                        >
                                             <img
                                                 src={getProfilePictureUrl(member)}
                                                 alt={member.first_name}
@@ -306,7 +318,12 @@ const GridPhotoView: React.FC = () => {
                                     ))}
                                     {/* Show additional members if any */}
                                     {eventData.additional_members?.slice(0, Math.max(0, 3 - (pocket.pocket_members?.length || 0))).map((member: any) => (
-                                        <div key={member.id} className="member-avatar">
+                                        <div
+                                            key={member.id}
+                                            className="member-avatar member-avatar--clickable"
+                                            onClick={() => handleMemberClick(member)}
+                                            title={`View ${member.first_name}'s profile`}
+                                        >
                                             <img
                                                 src={getProfilePictureUrl(member)}
                                                 alt={member.first_name}

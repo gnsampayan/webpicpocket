@@ -45,7 +45,7 @@ const Dashboard: React.FC = () => {
                             Upload Photos
                         </button>
                         <div className="user-menu">
-                            <UserAvatar size="medium" />
+                            <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>

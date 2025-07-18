@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUserData } from '../../utils/storage';
 import type { UserInfo } from '../../types/api';
 import './UserAvatar.css';
@@ -8,14 +9,19 @@ interface UserAvatarProps {
     className?: string;
     showName?: boolean;
     userInfo?: UserInfo | null; // Allow passing user info directly
+    clickable?: boolean; // Whether the avatar should be clickable
+    userId?: string; // User ID to navigate to (if different from current user)
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({
     size = 'medium',
     className = '',
     showName = false,
-    userInfo: propUserInfo
+    userInfo: propUserInfo,
+    clickable = false,
+    userId: propUserId
 }) => {
+    const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -120,6 +126,17 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         }
     };
 
+    const handleClick = () => {
+        if (!clickable) return;
+
+        // Use provided userId, or fall back to current user's ID
+        const targetUserId = propUserId || userInfo?.id;
+
+        if (targetUserId) {
+            navigate(`/profile/${targetUserId}`);
+        }
+    };
+
     if (loading) {
         return (
             <div className={`user-avatar user-avatar--${size} user-avatar--loading ${className}`}>
@@ -141,7 +158,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     }
 
     return (
-        <div className={`user-avatar user-avatar--${size} ${className}`}>
+        <div
+            className={`user-avatar user-avatar--${size} ${clickable ? 'user-avatar--clickable' : ''} ${className}`}
+            onClick={handleClick}
+        >
             <div className="user-avatar__image-wrapper">
                 <img
                     src={getProfilePictureUrl()}

@@ -571,7 +571,14 @@ const EventView: React.FC = () => {
                         <div className="member-avatars">
                             {/* Show pocket members first */}
                             {pocket?.pocket_members?.slice(0, 3).map((member) => (
-                                <div key={member.id} className="member-avatar">
+                                <div
+                                    key={member.id}
+                                    className="member-avatar member-avatar--clickable"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent event card click
+                                        navigate(`/profile/${member.id}`);
+                                    }}
+                                >
                                     <img
                                         src={getProfilePictureUrl(member)}
                                         alt={member.first_name}
@@ -583,7 +590,14 @@ const EventView: React.FC = () => {
                             ))}
                             {/* Show additional members if any */}
                             {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
-                                <div key={member.id} className="member-avatar">
+                                <div
+                                    key={member.id}
+                                    className="member-avatar member-avatar--clickable"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent event card click
+                                        navigate(`/profile/${member.id}`);
+                                    }}
+                                >
                                     <img
                                         src={getProfilePictureUrl(member)}
                                         alt={member.first_name}
@@ -724,7 +738,7 @@ const EventView: React.FC = () => {
                             Create Event
                         </button>
                         <div className="user-menu">
-                            <UserAvatar size="medium" />
+                            <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>

@@ -113,6 +113,22 @@
     opacity: 0.6;
 }
 
+/* Clickable avatar styles */
+.user-avatar--clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.user-avatar--clickable:hover .user-avatar__image-wrapper {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.user-avatar--clickable:hover .user-avatar__image {
+    transform: scale(1.02);
+    border-color: #667eea;
+}
+
 
 
 /* Responsive adjustments */

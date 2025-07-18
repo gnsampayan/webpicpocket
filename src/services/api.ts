@@ -687,6 +687,55 @@ export const api = {
 		}
 	},
 
+	/**
+	 * Get public user information by user ID
+	 */
+	async getPublicUserInfo(userId: string): Promise<ApiTypes.PublicUserInfo> {
+		const url = `${API_URL}${
+			API_CONFIG.endpoints.public_user_info
+		}/${encodeURIComponent(userId)}`;
+		try {
+			console.log("🔍 [API] Fetching public user info for userId:", userId);
+			console.log("🔍 [API] Request URL:", url);
+			
+			const response = await this.authenticatedRequest(url, {
+				method: "GET",
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Get public user info failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to get public user info");
+			}
+			const responseData = await response.json();
+			
+			console.log("✅ [API] Public user info fetched successfully");
+			console.log("🔍 [API] Backend response for public user info:", JSON.stringify(responseData, null, 2));
+			console.log("🔍 [API] Response keys:", Object.keys(responseData));
+			console.log("🔍 [API] Response data structure:", {
+				id: responseData.id,
+				username: responseData.username,
+				first_name: responseData.first_name,
+				last_name: responseData.last_name,
+				profile_picture_default: responseData.profile_picture_default,
+				profile_picture: responseData.profile_picture,
+				verified: responseData.verified,
+				email: responseData.email,
+				created_at: responseData.created_at,
+				other_fields: Object.keys(responseData).filter(key => 
+					!['id', 'username', 'first_name', 'last_name', 'profile_picture_default', 'profile_picture', 'verified', 'email', 'created_at'].includes(key)
+				)
+			});
+			
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error getting public user info:", error);
+			throw error;
+		}
+	},
+
 	async updateProfile(
 		data: ApiTypes.UpdateProfileRequest
 	): Promise<ApiTypes.UserInfo> {

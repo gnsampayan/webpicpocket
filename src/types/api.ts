@@ -33,6 +33,20 @@ export interface UserInfo {
 	verified?: boolean;
 }
 
+export interface PublicUserInfo {
+	id: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	profile_picture_default: boolean;
+	profile_picture: {
+		url_small?: string;
+		url_medium?: string;
+		url_large?: string;
+		[key: string]: any;
+	};
+}
+
 export interface RegisterResponse {
 	id: string;
 	username: string;

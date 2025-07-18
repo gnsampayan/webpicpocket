@@ -38,6 +38,7 @@ export const API_CONFIG = {
 		upload: "/v1/upload", // uploading different types of media
 		profile: "/v1/profile", // logged in user's info
 		global_user_search: "/v1/profile", // Append with: /{search-query}
+		public_user_info: "/v1/user", // Append with: /{user-id}
 		contact: {
 			list: "/v1/contacts",
 			send: "/v1/contacts", // Append with: /{contact-user-id}
