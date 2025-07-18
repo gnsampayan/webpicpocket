@@ -127,11 +127,6 @@ const EventView: React.FC = () => {
     // Debug: Log events data when component mounts or events change
     useEffect(() => {
         console.log('EventView received events:', events);
-        console.log('Events length:', events?.length);
-        if (events && events.length > 0) {
-            console.log('First event:', events[0]);
-            console.log('First event preview_photos:', events[0].preview_photos);
-        }
     }, [events]);
 
     // Filter events based on search query and inherited status
@@ -181,7 +176,6 @@ const EventView: React.FC = () => {
         }
 
         if (!rawUrl) {
-            console.log('No photo URL found for photo:', photo);
             return DEFAULT_EVENT_PLACEHOLDER;
         }
 
@@ -195,12 +189,47 @@ const EventView: React.FC = () => {
         return `https://${rawUrl}`;
     };
 
-    // Helper function to format date
+    // Helper function to format date (handles UTC/Zulu time conversion)
     const formatDate = (dateString: string): string => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        const utcDate = new Date(dateString);
+        const formatted = utcDate.toLocaleDateString('en-US', {
             month: 'short',
             year: 'numeric'
         });
+        return formatted;
+    };
+
+    // Helper function to format date range (handles UTC/Zulu time conversion)
+    const formatDateRange = (startDate?: string, endDate?: string): string | null => {
+        if (!startDate && !endDate) return null;
+
+        const formatDateOnly = (dateString: string): string => {
+            // Parse the UTC/Zulu time string and convert to local timezone
+            const utcDate = new Date(dateString);
+
+            return utcDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        };
+
+        if (startDate && endDate) {
+            const start = formatDateOnly(startDate);
+            const end = formatDateOnly(endDate);
+            if (start === end) {
+                return start;
+            }
+            return `${start} - ${end}`;
+        } else if (startDate) {
+            const formatted = formatDateOnly(startDate);
+            return formatted;
+        } else if (endDate) {
+            const formatted = formatDateOnly(endDate);
+            return `Until ${formatted}`;
+        }
+
+        return null;
     };
 
     // Helper function to get profile picture URL - similar to React Native implementation
@@ -325,9 +354,6 @@ const EventView: React.FC = () => {
         const totalPhotoCount = event.photo_count || 0;
         const totalMemberCount = (pocket?.pocket_members?.length || 0) + (event.additional_member_count || 0);
 
-        // Debug: Log the entire event object to see its structure
-        console.log(`Event "${event.title}" full data:`, event);
-
         return (
             <div key={event.id} className={`event-card ${viewMode === 'list' ? 'event-list-item' : ''}`}
                 onClick={() => {
@@ -348,6 +374,9 @@ const EventView: React.FC = () => {
                     </div>
                     <div className="event-meta">
                         <span className="event-date">{totalPhotoCount} photos</span>
+                        {formatDateRange(event.date_range_start, event.date_range_end) && (
+                            <span className="event-date-range">{formatDateRange(event.date_range_start, event.date_range_end)}</span>
+                        )}
                         <span className="event-updated">Updated {formatDate(event.updated_at)}</span>
                         <button
                             className="event-options-button"

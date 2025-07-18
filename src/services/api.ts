@@ -1406,6 +1406,8 @@ export const api = {
 			}
 			const responseData = await response.json();
 			console.log("✅ [API] Event details fetched successfully");
+			console.log("✅ [API] Event details date_range_start (UTC):", responseData.date_range_start);
+			console.log("✅ [API] Event details date_range_end (UTC):", responseData.date_range_end);
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Error getting event details:", error);

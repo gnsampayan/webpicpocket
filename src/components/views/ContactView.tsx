@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './ProfileView.css';
+import './ContactView.css';
 import NavBar from '../ui/NavBar';
 import { useContacts, getContactAvatar } from '../../hooks/useContacts';
 import * as ApiTypes from '../../types/api';
@@ -9,7 +9,7 @@ interface ProfileUser extends ApiTypes.UserProfile {
     profile_picture_url: string;
 }
 
-const ProfileView: React.FC = () => {
+const ContactView: React.FC = () => {
     const { username } = useParams<{ username: string }>();
     const navigate = useNavigate();
 
@@ -240,4 +240,4 @@ const ProfileView: React.FC = () => {
     );
 };
 
-export default ProfileView;
+export default ContactView;

@@ -354,6 +354,8 @@ export interface Event {
 	updated_at: string;
 	inherited: boolean;
 	source_pocket_id?: string;
+	date_range_start?: string;
+	date_range_end?: string;
 }
 
 export interface CreateEventRequest {

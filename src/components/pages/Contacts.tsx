@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import './Contacts.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
+import AddContactsModal from '../modals/AddContactsModal';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import {
     useContacts,
-    useSearchUsers,
     useAcceptContactMutation,
     useRejectContactMutation,
     useCancelContactMutation,
     useDeleteContactMutation,
-    useSendContactRequestMutation,
     getContactAvatar,
     getContactName,
 } from '../../hooks/useContacts';
@@ -30,7 +29,6 @@ const Contacts: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [showAddContact, setShowAddContact] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Functions to save state to localStorage
@@ -45,15 +43,13 @@ const Contacts: React.FC = () => {
     };
 
     // React Query hooks
-    const { data: contactsData, isLoading, error } = useContacts();
-    const { data: searchResults, isLoading: searching } = useSearchUsers(searchQuery);
+    const { data: contactsData, isLoading, error, refetch } = useContacts();
 
     // Mutations
     const acceptContactMutation = useAcceptContactMutation();
     const rejectContactMutation = useRejectContactMutation();
     const cancelContactMutation = useCancelContactMutation();
     const deleteContactMutation = useDeleteContactMutation();
-    const sendContactRequestMutation = useSendContactRequestMutation();
 
     // Extract data from contacts response
     const contacts = contactsData?.contacts || [];
@@ -76,13 +72,9 @@ const Contacts: React.FC = () => {
         deleteContactMutation.mutate(userId);
     };
 
-    const handleSendContactRequest = (userId: string) => {
-        sendContactRequestMutation.mutate(userId, {
-            onSuccess: () => {
-                setSearchQuery('');
-                setShowAddContact(false);
-            },
-        });
+    const handleContactAdded = () => {
+        setShowAddContact(false);
+        refetch(); // Refresh the contacts list
     };
 
     const handleContactClick = (contact: ApiTypes.ContactUser) => {
@@ -182,55 +174,12 @@ const Contacts: React.FC = () => {
                     </div>
                 )}
 
-                {/* Add Contact Modal */}
-                {showAddContact && (
-                    <div className="add-contact-modal">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h3>Add New Contact</h3>
-                                <button onClick={() => setShowAddContact(false)}>✕</button>
-                            </div>
-                            <div className="search-section">
-                                <input
-                                    type="text"
-                                    placeholder="Search by username, first name, or last name..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                                {searching && <div className="searching-indicator">Searching...</div>}
-                            </div>
-                            <div className="search-results">
-                                {searchResults?.map((user) => (
-                                    <div key={user.id} className="search-result-item">
-                                        <div className="user-info">
-                                            <img
-                                                src={getContactAvatar(user)}
-                                                alt={getContactName(user)}
-                                                onError={(e) => {
-                                                    // Fallback if the profile picture fails to load
-                                                    e.currentTarget.src = getContactAvatar(user);
-                                                }}
-                                            />
-                                            <div>
-                                                <h4>{getContactName(user)}</h4>
-                                                <p>@{user.username}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            className="send-request-button"
-                                            onClick={() => handleSendContactRequest(user.id)}
-                                        >
-                                            Send Request
-                                        </button>
-                                    </div>
-                                ))}
-                                {searchQuery && !searching && (!searchResults || searchResults.length === 0) && (
-                                    <p className="no-results">No users found</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* Add Contacts Modal */}
+                <AddContactsModal
+                    isOpen={showAddContact}
+                    onClose={() => setShowAddContact(false)}
+                    onContactAdded={handleContactAdded}
+                />
 
                 {/* Controls */}
                 <section className="controls-section">
