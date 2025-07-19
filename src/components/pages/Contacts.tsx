@@ -120,7 +120,7 @@ const Contacts: React.FC = () => {
             <div className="contacts-page">
                 <NavBar />
                 <main className="main-content">
-                    <div className="loading-container">
+                    <div className="loading-state">
                         <div className="loading-spinner"></div>
                         <p>Loading contacts...</p>
                     </div>

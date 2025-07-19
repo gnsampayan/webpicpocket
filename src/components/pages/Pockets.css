@@ -2,7 +2,24 @@
 .media-page {
   display: flex;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure all text elements use theme colors */
+.media-page h1,
+.media-page h2,
+.media-page h3,
+.media-page h4,
+.media-page h5,
+.media-page h6 {
+  color: var(--text-primary);
+}
+
+.media-page p,
+.media-page span {
+  color: var(--text-secondary);
 }
 
 /* Main Content */
@@ -24,11 +41,11 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .header-left p {
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
   font-size: 1.1rem;
 }
@@ -44,8 +61,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--button-primary-bg);
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   font-weight: 600;
@@ -54,8 +71,9 @@
 }
 
 .upload-button:hover {
+  background: var(--button-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .user-avatar {
@@ -78,9 +96,9 @@
   align-items: center;
   margin-bottom: 2rem;
   padding: 1rem;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .controls-left {
@@ -91,37 +109,39 @@
 
 .view-toggle {
   display: flex;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .view-button {
   padding: 0.5rem 1rem;
-  background: white;
+  background: var(--bg-primary);
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .view-button:hover {
-  background: #f8f9ff;
+  background: var(--primary-light);
 }
 
 .view-button.active {
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
 }
 
 .filter-dropdown select {
   padding: 0.5rem 1rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
-  background: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 0.9rem;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .search-box {
@@ -132,32 +152,32 @@
 
 .search-box input {
   padding: 0.75rem 1rem 0.75rem 2.75rem;
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--input-border);
   border-radius: 12px;
   width: 280px;
   font-size: 0.95rem;
-  background: white;
-  color: #1a1a1a;
+  background: var(--input-bg);
+  color: var(--input-text);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-box input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  border-color: var(--input-border-focus);
+  box-shadow: 0 4px 15px var(--focus-ring);
   transform: translateY(-1px);
 }
 
 .search-box input::placeholder {
-  color: #999;
+  color: var(--text-placeholder);
   font-weight: 400;
 }
 
 .search-box .search-icon {
   position: absolute;
   left: 1rem;
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 1.1rem;
   z-index: 1;
   transition: all 0.3s ease;
@@ -165,7 +185,7 @@
 }
 
 .search-box input:focus + .search-icon {
-  color: #764ba2;
+  color: var(--secondary-color);
   transform: scale(1.1);
 }
 
@@ -174,7 +194,7 @@
   right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  background: #f0f4ff;
+  background: var(--primary-light);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -183,7 +203,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #667eea;
+  color: var(--primary-color);
   font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -191,8 +211,8 @@
 }
 
 .clear-search-button:hover {
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -205,7 +225,7 @@
   display: block;
   font-size: 0.9rem;
   font-weight: 400;
-  color: #667eea;
+  color: var(--primary-color);
   margin-top: 0.25rem;
   font-style: italic;
 }
@@ -219,7 +239,7 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .albums-grid {
@@ -238,10 +258,10 @@
 .pocket-list-item {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -251,7 +271,7 @@
 
 .pocket-list-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
 }
 
 .pocket-list-cover {
@@ -273,7 +293,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   height: 1.4rem;
   line-height: 1.4rem;
   overflow: hidden;
@@ -284,7 +304,7 @@
 .pocket-list-info .member-count {
   margin: 0;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -296,15 +316,15 @@
 
 .pocket-list-dates span {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--text-tertiary);
   font-style: italic;
 }
 
 .album-card {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -331,7 +351,7 @@
   margin: 0 0 0.25rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   height: 1.2rem;
   line-height: 1.2rem;
   overflow: hidden;
@@ -342,14 +362,14 @@
 .album-info p {
   margin: 0;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .album-card {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -365,7 +385,7 @@
 .member-count {
   margin: 0;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* Pocket Members Section */
@@ -386,7 +406,7 @@
 }
 
 .album-card .member-count {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   margin: 0;
@@ -403,8 +423,8 @@
   height: 28px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--bg-primary);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease;
   position: relative;
 }
@@ -436,7 +456,7 @@
 }
 
 .more-members {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 0.25rem;
@@ -444,17 +464,17 @@
 
 .more-members--clickable {
   cursor: pointer;
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: 600;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: all 0.2s ease;
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--primary-light);
 }
 
 .more-members--clickable:hover {
-  background: rgba(102, 126, 234, 0.2);
-  color: #5a6fd8;
+  background: var(--focus-ring);
+  color: var(--primary-hover);
   transform: scale(1.05);
 }
 
@@ -486,7 +506,7 @@
   right: 0.5rem;
   width: 32px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -494,15 +514,17 @@
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
   transition: all 0.3s ease;
   z-index: 10;
+  opacity: 0.9;
 }
 
 .pocket-options-button:hover {
-  background: rgba(255, 255, 255, 1);
-  color: #333;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   transform: scale(1.1);
+  opacity: 1;
 }
 
 /* Pocket Options Menu */
@@ -510,9 +532,9 @@
   position: absolute;
   top: 2.5rem;
   right: 0.5rem;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
   padding: 0.5rem 0;
   min-width: 160px;
   z-index: 9999;
@@ -538,11 +560,11 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .options-menu-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--bg-secondary);
 }
 
 .option-icon {
@@ -561,21 +583,21 @@
 .pocket-created {
   margin: 0.125rem 0;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 .pocket-updated {
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
 .pocket-activity {
-  color: #28a745;
+  color: var(--success-text);
   font-weight: 500;
 }
 
 .pocket-created {
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 /* Media Section */
@@ -583,7 +605,7 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .media-grid {
@@ -600,10 +622,10 @@
 }
 
 .media-item {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease;
 }
 
@@ -657,7 +679,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -672,17 +694,20 @@
 
 .media-action {
   padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
+  color: var(--text-primary);
+  opacity: 0.9;
 }
 
 .media-action:hover {
-  background: white;
+  background: var(--bg-primary);
   transform: scale(1.1);
+  opacity: 1;
 }
 
 .media-info {
@@ -693,21 +718,21 @@
   margin: 0 0 0.25rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .media-grid.list .media-info h4 {
   margin: 0 1rem 0 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   min-width: 120px;
 }
 
 .media-info p {
   margin: 0;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .media-grid.list .media-info p {
@@ -716,17 +741,17 @@
 }
 
 .media-size {
-  color: #999 !important;
+  color: var(--text-tertiary) !important;
 }
 
 .media-album {
   display: inline-block;
   padding: 0.25rem 0.5rem;
-  background: #f0f0f0;
+  background: var(--bg-secondary);
   border-radius: 12px;
   font-size: 0.7rem;
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 0.5rem;
 }
 
@@ -743,8 +768,8 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
+  border: 3px solid var(--border-light);
+  border-top: 3px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -756,7 +781,7 @@
 }
 
 .loading-state p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin: 0;
 }
@@ -773,13 +798,13 @@
 }
 
 .error-state h2 {
-  color: #e74c3c;
+  color: var(--error-text);
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
 .error-state p {
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   font-size: 1rem;
   max-width: 500px;
@@ -787,8 +812,8 @@
 
 .retry-button {
   padding: 0.75rem 1.5rem;
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -797,13 +822,13 @@
 }
 
 .retry-button:hover {
-  background: #5a67d8;
+  background: var(--primary-hover);
   transform: translateY(-2px);
 }
 
 .verify-email-button {
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -814,7 +839,7 @@
 }
 
 .verify-email-button:hover {
-  background: #5a6fd8;
+  background: var(--primary-hover);
   transform: translateY(-2px);
 }
 
@@ -827,13 +852,13 @@
   min-height: 200px;
   text-align: center;
   padding: 3rem;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .empty-state p {
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
 }
@@ -843,8 +868,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--bg-gradient);
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   font-weight: 600;
@@ -855,7 +880,7 @@
 
 .create-pocket-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Responsive Design */

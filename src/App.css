@@ -12,8 +12,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
   min-height: 100vh;
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 #root {
@@ -52,31 +54,34 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--button-primary-bg);
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover {
+  background: var(--button-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-secondary {
-  background: #f8f9fa;
-  color: #666;
-  border: 1px solid #e1e5e9;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--border-light);
 }
 
 .btn-secondary:hover {
-  background: #e9ecef;
-  border-color: #667eea;
-  color: #667eea;
+  background: var(--button-secondary-hover);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* Form Styles */
 input, select, textarea {
   font-family: inherit;
-  color: #333;
+  color: var(--input-text);
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
 }
 
 /* Focus Styles */
@@ -88,7 +93,7 @@ button:focus,
 input:focus,
 select:focus,
 textarea:focus {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Scrollbar Styles */
@@ -97,16 +102,16 @@ textarea:focus {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Responsive Images */

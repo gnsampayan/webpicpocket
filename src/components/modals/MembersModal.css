@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,16 +14,18 @@
 }
 
 .members-modal-content {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-2xl);
   display: flex;
   flex-direction: column;
   animation: modalSlideIn 0.3s ease-out;
+  border: 1px solid var(--border-light);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes modalSlideIn {
@@ -43,15 +45,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e1e5e9;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  transition: all 0.3s ease;
 }
 
 .members-modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .members-modal-close {
@@ -59,7 +62,7 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #666;
+  color: var(--text-secondary);
   padding: 0.25rem;
   border-radius: 50%;
   width: 32px;
@@ -71,8 +74,8 @@
 }
 
 .members-modal-close:hover {
-  background: #e9ecef;
-  color: #333;
+  background: var(--button-secondary-hover);
+  color: var(--text-primary);
 }
 
 /* Body */
@@ -93,9 +96,9 @@
   display: flex;
   align-items: center;
   padding: 1rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-light);
   border-radius: 12px;
-  background: white;
+  background: var(--bg-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   gap: 1rem;
@@ -103,8 +106,8 @@
 
 .member-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: #667eea;
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
 }
 
 /* Member Avatar */
@@ -120,31 +123,31 @@
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--border-light);
   transition: border-color 0.2s ease;
 }
 
 .member-card:hover .member-avatar-image {
-  border-color: #667eea;
+  border-color: var(--primary-color);
 }
 
 .member-avatar-fallback {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--bg-gradient);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 1.1rem;
-  border: 2px solid #e1e5e9;
+  border: 2px solid var(--border-light);
   transition: all 0.2s ease;
 }
 
 .member-card:hover .member-avatar-fallback {
-  border-color: #667eea;
+  border-color: var(--primary-color);
   transform: scale(1.05);
 }
 

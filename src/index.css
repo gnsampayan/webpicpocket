@@ -3,31 +3,244 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Light Theme Variables */
+.light-theme {
+  color-scheme: light;
+  
+  /* Primary Colors */
+  --primary-color: #667eea;
+  --primary-hover: #5a6fd8;
+  --primary-light: #f0f4ff;
+  --secondary-color: #764ba2;
+  
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-gradient-subtle: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  
+  /* Text Colors */
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-inverse: #ffffff;
+  --text-muted: #888888;
+  --text-placeholder: #999999;
+  
+  /* Border Colors */
+  --border-light: #e1e5e9;
+  --border-medium: #d1d5db;
+  --border-dark: #9ca3af;
+  --border-focus: #667eea;
+  
+  /* State Colors */
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+  --warning-bg: #fff3cd;
+  --warning-text: #856404;
+  --warning-border: #ffeaa7;
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+  --info-bg: #cce7ff;
+  --info-text: #004085;
+  --info-border: #b3d7ff;
+  
+  /* Interactive Elements */
+  --button-primary-bg: linear-gradient(45deg, #667eea, #764ba2);
+  --button-primary-hover: linear-gradient(45deg, #5a6fd8, #6a4190);
+  --button-secondary-bg: #f8f9fa;
+  --button-secondary-text: #666666;
+  --button-secondary-hover: #e9ecef;
+  
+  /* Form Elements */
+  --input-bg: #ffffff;
+  --input-border: #e1e5e9;
+  --input-border-focus: #667eea;
+  --input-text: #333333;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  
+  /* Focus Ring */
+  --focus-ring: rgba(102, 126, 234, 0.3);
+  
+  /* Scrollbar */
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
 }
 
+/* Dark Theme Variables */
+.dark-theme {
+  color-scheme: dark;
+  
+  /* Primary Colors */
+  --primary-color: #7c93f0;
+  --primary-hover: #8ba4f2;
+  --primary-light: #1a1d2e;
+  --secondary-color: #8b6bb1;
+  
+  /* Background Colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --bg-elevated: #2d2d2d;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-gradient: linear-gradient(135deg, #7c93f0 0%, #8b6bb1 100%);
+  --bg-gradient-subtle: linear-gradient(135deg, #2d2d2d 0%, #404040 100%);
+  
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-tertiary: #888888;
+  --text-inverse: #1a1a1a;
+  --text-muted: #666666;
+  --text-placeholder: #666666;
+  
+  /* Border Colors */
+  --border-light: #404040;
+  --border-medium: #555555;
+  --border-dark: #666666;
+  --border-focus: #7c93f0;
+  
+  /* State Colors */
+  --success-bg: #1a2f1a;
+  --success-text: #4ade80;
+  --success-border: #2d5016;
+  --warning-bg: #2d2a1a;
+  --warning-text: #fbbf24;
+  --warning-border: #50461a;
+  --error-bg: #2d1a1a;
+  --error-text: #f87171;
+  --error-border: #501a1a;
+  --info-bg: #1a252d;
+  --info-text: #60a5fa;
+  --info-border: #1a3a50;
+  
+  /* Interactive Elements */
+  --button-primary-bg: linear-gradient(45deg, #7c93f0, #8b6bb1);
+  --button-primary-hover: linear-gradient(45deg, #8ba4f2, #9a7bc0);
+  --button-secondary-bg: #404040;
+  --button-secondary-text: #b3b3b3;
+  --button-secondary-hover: #555555;
+  
+  /* Form Elements */
+  --input-bg: #2d2d2d;
+  --input-border: #404040;
+  --input-border-focus: #7c93f0;
+  --input-text: #ffffff;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.7);
+  
+  /* Focus Ring */
+  --focus-ring: rgba(124, 147, 240, 0.4);
+  
+  /* Scrollbar */
+  --scrollbar-track: #2d2d2d;
+  --scrollbar-thumb: #555555;
+  --scrollbar-thumb-hover: #666666;
+}
+
+/* Apply theme colors to body and basic elements */
 body {
   margin: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Default theme (light) */
+html:not(.dark-theme):not(.light-theme) {
+  --primary-color: #667eea;
+  --primary-hover: #5a6fd8;
+  --primary-light: #f0f4ff;
+  --secondary-color: #764ba2;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-gradient-subtle: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-inverse: #ffffff;
+  --text-muted: #888888;
+  --text-placeholder: #999999;
+  --border-light: #e1e5e9;
+  --border-medium: #d1d5db;
+  --border-dark: #9ca3af;
+  --border-focus: #667eea;
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+  --warning-bg: #fff3cd;
+  --warning-text: #856404;
+  --warning-border: #ffeaa7;
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+  --info-bg: #cce7ff;
+  --info-text: #004085;
+  --info-border: #b3d7ff;
+  --button-primary-bg: linear-gradient(45deg, #667eea, #764ba2);
+  --button-primary-hover: linear-gradient(45deg, #5a6fd8, #6a4190);
+  --button-secondary-bg: #f8f9fa;
+  --button-secondary-text: #666666;
+  --button-secondary-hover: #e9ecef;
+  --input-bg: #ffffff;
+  --input-border: #e1e5e9;
+  --input-border-focus: #667eea;
+  --input-text: #333333;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  --focus-ring: rgba(102, 126, 234, 0.3);
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: inherit;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
 }
 
 h1 {
@@ -42,23 +255,68 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
+  transition: all 0.3s ease;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  background-color: var(--button-secondary-hover);
+  border-color: var(--primary-color);
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Input and form element styling */
+input, select, textarea {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border-color: var(--input-border);
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Smooth transitions for theme changes */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }

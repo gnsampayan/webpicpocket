@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
+import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
 import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../../utils/storage';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
@@ -9,6 +10,7 @@ import './Settings.css';
 
 const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('profile');
+    const { theme, setTheme } = useTheme();
     const [notifications, setNotifications] = useState({
         email: true,
         push: true,
@@ -316,6 +318,13 @@ const Settings: React.FC = () => {
                             Privacy
                         </button>
                         <button
+                            className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('appearance')}
+                        >
+                            <span className="nav-icon">🎨</span>
+                            Appearance
+                        </button>
+                        <button
                             className={`settings-nav-item ${activeTab === 'billing' ? 'active' : ''}`}
                             onClick={() => setActiveTab('billing')}
                         >
@@ -586,6 +595,56 @@ const Settings: React.FC = () => {
                                             <input type="checkbox" />
                                             <span className="toggle-slider"></span>
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'appearance' && (
+                            <div className="settings-section">
+                                <h2>Appearance & Theme</h2>
+                                <div className="appearance-options">
+                                    <div className="appearance-item">
+                                        <div className="appearance-info">
+                                            <h3>Theme</h3>
+                                            <p>Choose between light and dark mode, or let the system decide</p>
+                                        </div>
+                                        <div className="theme-controls">
+                                            <div className="theme-selector">
+                                                <div className="theme-options">
+                                                    <label className="theme-option">
+                                                        <input
+                                                            type="radio"
+                                                            name="theme"
+                                                            value="light"
+                                                            checked={theme === 'light'}
+                                                            onChange={() => setTheme('light')}
+                                                        />
+                                                        <span className="theme-option-content">
+                                                            <span className="theme-preview light-preview">☀️</span>
+                                                            <span className="theme-label">Light</span>
+                                                        </span>
+                                                    </label>
+                                                    <label className="theme-option">
+                                                        <input
+                                                            type="radio"
+                                                            name="theme"
+                                                            value="dark"
+                                                            checked={theme === 'dark'}
+                                                            onChange={() => setTheme('dark')}
+                                                        />
+                                                        <span className="theme-option-content">
+                                                            <span className="theme-preview dark-preview">🌙</span>
+                                                            <span className="theme-label">Dark</span>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="appearance-note">
+                                        <p><strong>Note:</strong> Your theme preference is automatically saved and will be remembered across sessions. The dark mode toggle is also available in the sidebar for quick access.</p>
                                     </div>
                                 </div>
                             </div>

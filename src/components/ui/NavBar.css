@@ -1,25 +1,27 @@
 /* Inherit sidebar styles */
 .sidebar {
     width: 280px;
-    background: white;
-    border-right: 1px solid #e1e5e9;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
     position: fixed;
     height: 100vh;
     z-index: 100;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   
   .sidebar-header {
     padding: 2rem 1.5rem 1rem;
-    border-bottom: 1px solid #e1e5e9;
+    border-bottom: 1px solid var(--border-light);
+    transition: border-color 0.3s ease;
   }
   
   .sidebar-header h2 {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: var(--bg-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -42,20 +44,20 @@
     gap: 0.75rem;
     padding: 0.875rem 1rem;
     text-decoration: none;
-    color: #666;
+    color: var(--text-secondary);
     border-radius: 12px;
     transition: all 0.3s ease;
     font-weight: 500;
   }
   
   .nav-link:hover {
-    background: #f8f9ff;
-    color: #667eea;
+    background: var(--primary-light);
+    color: var(--primary-color);
   }
   
   .nav-item.active .nav-link {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
+    background: var(--bg-gradient);
+    color: var(--text-inverse);
   }
   
   .nav-icon {
@@ -64,7 +66,16 @@
   
   .sidebar-footer {
     padding: 1rem 1.5rem 2rem;
-    border-top: 1px solid #e1e5e9;
+    border-top: 1px solid var(--border-light);
+    transition: border-color 0.3s ease;
+  }
+
+  .theme-toggle-container {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1rem;
   }
   
   .logout-button {
@@ -74,8 +85,8 @@
     gap: 0.75rem;
     padding: 0.875rem 1rem;
     background: none;
-    border: 2px solid #e74c3c;
-    color: #e74c3c;
+    border: 2px solid var(--error-text);
+    color: var(--error-text);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -83,6 +94,6 @@
   }
   
   .logout-button:hover {
-    background: #e74c3c;
-    color: white;
+    background: var(--error-text);
+    color: var(--text-inverse);
   }

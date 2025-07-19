@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../utils/auth';
+import DarkModeToggle from './DarkModeToggle';
 import './NavBar.css';
 
 const NavBar: React.FC = () => {
@@ -69,6 +70,9 @@ const NavBar: React.FC = () => {
                 </li>
             </ul>
             <div className="sidebar-footer">
+                <div className="theme-toggle-container">
+                    <DarkModeToggle size="small" showLabel={true} />
+                </div>
                 <button className="logout-button" onClick={handleLogout}>
                     <span className="nav-icon">🚪</span>
                     Sign Out

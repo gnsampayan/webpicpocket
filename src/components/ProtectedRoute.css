@@ -6,14 +6,16 @@
   justify-content: center;
   min-height: 100vh;
   text-align: center;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
+  border: 3px solid var(--border-light);
+  border-top: 3px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -25,7 +27,7 @@
 }
 
 .loading-state p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin: 0;
 } 

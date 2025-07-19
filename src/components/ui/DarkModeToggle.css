@@ -1,0 +1,232 @@
+/* Dark Mode Toggle Styles */
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toggle-button {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.toggle-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.toggle-button:hover {
+  transform: scale(1.05);
+}
+
+.toggle-button:active {
+  transform: scale(0.95);
+}
+
+.toggle-track {
+  position: relative;
+  border-radius: 50px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 2px solid var(--border-light);
+}
+
+.toggle-button.light .toggle-track {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  box-shadow: 
+    0 4px 12px rgba(255, 215, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-button.dark .toggle-track {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  box-shadow: 
+    0 4px 12px rgba(26, 26, 46, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-thumb {
+  position: relative;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-button.light .toggle-thumb {
+  transform: translateX(0);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.toggle-button.dark .toggle-thumb {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+}
+
+.toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.toggle-button.light .toggle-icon {
+  animation: sunRotate 2s ease-in-out infinite;
+}
+
+.toggle-button.dark .toggle-icon {
+  animation: moonPulse 3s ease-in-out infinite;
+}
+
+/* Size Variants */
+
+/* Small Size */
+.dark-mode-toggle.small .toggle-track {
+  width: 44px;
+  height: 24px;
+}
+
+.dark-mode-toggle.small .toggle-thumb {
+  width: 20px;
+  height: 20px;
+  margin: 2px;
+}
+
+.dark-mode-toggle.small .toggle-button.dark .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.dark-mode-toggle.small .toggle-icon {
+  font-size: 0.8rem;
+}
+
+.dark-mode-toggle.small .toggle-label {
+  font-size: 0.8rem;
+}
+
+/* Medium Size (Default) */
+.dark-mode-toggle.medium .toggle-track {
+  width: 54px;
+  height: 28px;
+}
+
+.dark-mode-toggle.medium .toggle-thumb {
+  width: 24px;
+  height: 24px;
+  margin: 2px;
+}
+
+.dark-mode-toggle.medium .toggle-button.dark .toggle-thumb {
+  transform: translateX(26px);
+}
+
+.dark-mode-toggle.medium .toggle-icon {
+  font-size: 1rem;
+}
+
+/* Large Size */
+.dark-mode-toggle.large .toggle-track {
+  width: 64px;
+  height: 32px;
+}
+
+.dark-mode-toggle.large .toggle-thumb {
+  width: 28px;
+  height: 28px;
+  margin: 2px;
+}
+
+.dark-mode-toggle.large .toggle-button.dark .toggle-thumb {
+  transform: translateX(32px);
+}
+
+.dark-mode-toggle.large .toggle-icon {
+  font-size: 1.2rem;
+}
+
+.dark-mode-toggle.large .toggle-label {
+  font-size: 1rem;
+}
+
+/* Animations */
+@keyframes sunRotate {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes moonPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* Hover Effects */
+.toggle-button:hover .toggle-track {
+  border-color: var(--primary-color);
+}
+
+.toggle-button.light:hover .toggle-track {
+  box-shadow: 
+    0 6px 16px rgba(255, 215, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-button.dark:hover .toggle-track {
+  box-shadow: 
+    0 6px 16px rgba(26, 26, 46, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-button:hover .toggle-thumb {
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .toggle-button,
+  .toggle-track,
+  .toggle-thumb,
+  .toggle-icon {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.toggle-button:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+} 

@@ -3,19 +3,37 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   overflow: hidden;
   position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure all text elements use theme colors */
+.grid-photo-view-page h1,
+.grid-photo-view-page h2,
+.grid-photo-view-page h3,
+.grid-photo-view-page h4,
+.grid-photo-view-page h5,
+.grid-photo-view-page h6 {
+  color: var(--text-primary);
+}
+
+.grid-photo-view-page p,
+.grid-photo-view-page span {
+  color: var(--text-secondary);
 }
 
 /* Header */
 .grid-photo-header {
-  background: white;
-  border-bottom: 1px solid #e1e5e9;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
   padding: 1rem 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: all 0.3s ease;
 }
 
 .header-top {
@@ -37,20 +55,20 @@
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
-  transition: background-color 0.2s ease;
-  color: #666;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
 }
 
 .back-button:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: var(--button-secondary-hover);
+  color: var(--text-primary);
 }
 
 .event-title {
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -67,7 +85,7 @@
 
 .photo-count {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -78,7 +96,7 @@
 }
 
 .member-count {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -94,8 +112,8 @@
   height: 28px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--bg-primary);
+  box-shadow: var(--shadow-md);
   transition: transform 0.3s ease;
   position: relative;
 }
@@ -117,7 +135,7 @@
 }
 
 .more-members {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 0.25rem;
@@ -125,23 +143,23 @@
 
 .more-members--clickable {
   cursor: pointer;
-  color: #667eea;
+  color: var(--primary-color);
   font-weight: 600;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: all 0.2s ease;
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--primary-light);
 }
 
 .more-members--clickable:hover {
-  background: rgba(102, 126, 234, 0.2);
-  color: #5a6fd8;
+  background: var(--focus-ring);
+  color: var(--primary-hover);
   transform: scale(1.05);
 }
 
 .add-photos-button {
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -155,20 +173,20 @@
 }
 
 .add-photos-button:hover:not(:disabled) {
-  background: #5a6fd8;
+  background: var(--primary-hover);
   transform: scale(1.05);
 }
 
 .add-photos-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #f0f0f0;
-  color: #999;
+  background: var(--button-secondary-bg);
+  color: var(--text-tertiary);
 }
 
 .add-photos-button:disabled:hover {
-  background: #f0f0f0;
-  color: #999;
+  background: var(--button-secondary-bg);
+  color: var(--text-tertiary);
   transform: none;
 }
 
@@ -180,8 +198,9 @@
   justify-content: flex-end;
   align-items: center;
   padding: 1rem 2rem;
-  background: white;
-  border-bottom: 1px solid #e1e5e9;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.3s ease;
 }
 
 .controls-right {
@@ -192,9 +211,10 @@
 
 .filter-dropdown select {
   padding: 0.5rem 1rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
-  background: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -202,8 +222,8 @@
 
 .filter-dropdown select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  border-color: var(--input-border-focus);
+  box-shadow: 0 2px 8px var(--focus-ring);
 }
 
 /* Main Content */
@@ -224,7 +244,7 @@
   justify-content: center;
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: var(--text-secondary);
   flex: 1;
   min-height: 400px;
 }
@@ -239,18 +259,18 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .empty-photos p {
   font-size: 1rem;
   margin: 0 0 2rem 0;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .add-photos-button-large {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--bg-gradient);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   padding: 1rem 2rem;
@@ -265,7 +285,7 @@
 
 .add-photos-button-large:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .add-photos-button-large:disabled {
@@ -290,8 +310,8 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   transition: all 0.3s ease;
   aspect-ratio: 1;
@@ -307,7 +327,7 @@
 
 .photo-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .photo-item img {
@@ -325,10 +345,10 @@
   bottom: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.3) 0%,
+    var(--bg-overlay) 0%,
     transparent 30%,
     transparent 70%,
-    rgba(0, 0, 0, 0.3) 100%
+    var(--bg-overlay) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -350,7 +370,7 @@
 
 .favorite-button,
 .delete-button {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated);
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -361,26 +381,30 @@
   align-items: center;
   justify-content: center;
   font-size: 1rem;
+  color: var(--text-primary);
+  opacity: 0.9;
 }
 
 .favorite-button:hover,
 .delete-button:hover {
-  background: white;
+  background: var(--bg-primary);
   transform: scale(1.1);
+  opacity: 1;
 }
 
 .favorite-button.favorited {
-  background: rgba(255, 192, 203, 0.9);
+  background: var(--warning-bg);
 }
 
 .comment-count {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 500;
   align-self: flex-end;
+  opacity: 0.9;
 }
 
 /* Loading and Error States */
@@ -392,14 +416,14 @@
   justify-content: center;
   min-height: 50vh;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border: 4px solid var(--border-light);
+  border-top: 4px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -411,13 +435,13 @@
 }
 
 .error-container h2 {
-  color: #e53e3e;
+  color: var(--error-text);
   margin-bottom: 0.5rem;
 }
 
 .retry-button {
-  background: #667eea;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -428,7 +452,7 @@
 }
 
 .retry-button:hover {
-  background: #5a6fd8;
+  background: var(--primary-hover);
 }
 
 /* Photo Skeleton Loading */
@@ -441,14 +465,14 @@
 
 .photo-skeleton:hover {
   transform: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .photo-skeleton-content {
   width: 100%;
   height: 100%;
   min-height: 300px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-light) 50%, var(--bg-secondary) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 12px;
@@ -469,20 +493,20 @@
 .add-photos-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #f0f0f0;
-  color: #999;
+  background: var(--button-secondary-bg);
+  color: var(--text-tertiary);
 }
 
 .add-photos-button:disabled:hover {
-  background: #f0f0f0;
-  color: #999;
+  background: var(--button-secondary-bg);
+  color: var(--text-tertiary);
   transform: none;
 }
 
 /* Header Favorite Button */
 .header-favorite-button {
-  background: white;
-  border: 2px solid #e9ecef;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -492,29 +516,29 @@
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  color: #6c757d;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-favorite-button:hover {
-  background: white;
-  border-color: #667eea;
+  background: var(--bg-primary);
+  border-color: var(--primary-color);
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px var(--focus-ring);
 }
 
 .header-favorite-button.favorited {
-  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-  border-color: #ff6b6b;
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  background: var(--warning-bg);
+  border-color: var(--warning-text);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-md);
 }
 
 .header-favorite-button.favorited:hover {
-  background: linear-gradient(135deg, #ff5252, #ff7676);
-  border-color: #ff5252;
+  background: var(--warning-text);
+  border-color: var(--warning-text);
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Photo Detail Modal - Removed to avoid conflicts with new PhotoDetailsModal component */
@@ -640,5 +664,5 @@
 .member-avatar--clickable:hover {
   transform: scale(1.15);
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-lg);
 } 
