@@ -52,18 +52,25 @@ const EventView: React.FC = () => {
 
     // Function to calculate how many photos can fit in the container
     const calculateMaxPhotos = () => {
-        if (!photoRowRef.current) return 5; // Default fallback
+        if (!photoRowRef.current) {
+            return 5; // Default fallback
+        }
 
         const containerWidth = photoRowRef.current.offsetWidth;
         const photoWidth = 80; // From CSS: .row-photo width
         const gapWidth = 12; // From CSS: .photo-row gap (0.75rem = 12px)
 
+        if (containerWidth === 0) {
+            return 5; // Container not rendered yet
+        }
+
         // Formula: for n photos, total width = n * photoWidth + (n-1) * gapWidth
         // So: containerWidth >= n * photoWidth + (n-1) * gapWidth
         // Rearranging: n <= (containerWidth + gapWidth) / (photoWidth + gapWidth)
         const maxPhotos = Math.floor((containerWidth + gapWidth) / (photoWidth + gapWidth));
+        const result = Math.max(1, Math.min(maxPhotos, 10)); // Always show at least 1, max 10
 
-        return Math.max(1, maxPhotos); // Always show at least 1 photo
+        return result;
     };
 
     // Update max photos when container resizes
@@ -93,6 +100,19 @@ const EventView: React.FC = () => {
             window.removeEventListener('resize', updateMaxPhotos);
         };
     }, []);
+
+    // Recalculate max photos when view mode changes
+    useEffect(() => {
+        if (viewMode === 'list') {
+            // Small delay to ensure DOM has updated after view mode change
+            const timer = setTimeout(() => {
+                const newMax = calculateMaxPhotos();
+                setMaxPhotosInRow(newMax);
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [viewMode]);
 
     // Functions to save state to localStorage
     const saveViewMode = (mode: 'grid' | 'list') => {
@@ -990,4 +1010,4 @@ const EventView: React.FC = () => {
     );
 };
 
-export default EventView; 
+export default EventView;
