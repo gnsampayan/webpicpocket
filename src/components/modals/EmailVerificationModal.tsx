@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../../services';
 import { clearAllStorage, clearCurrentUserId, setStorageItem, getCurrentUserStorageKeys } from '../../utils/storage';
 import './EmailVerificationModal.css';
@@ -17,12 +17,45 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     const [isResending, setIsResending] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
+    const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
+
+    // Fetch masked email when modal becomes visible
+    useEffect(() => {
+        const fetchMaskedEmail = async () => {
+            if (isVisible && !maskedEmail) {
+                try {
+                    const profileData = await api.getProfilePicture();
+                    setMaskedEmail(profileData.email);
+                } catch (error) {
+                    console.error('❌ [EmailVerification] Error fetching masked email:', error);
+                    // Don't show error to user, it's not critical
+                }
+            }
+        };
+
+        fetchMaskedEmail();
+    }, [isVisible, maskedEmail]);
 
     const handleResendVerification = async () => {
         try {
             setIsResending(true);
             await api.verifyEmail();
-            alert('Verification email sent! Please check your email inbox and spam folder for the verification link.');
+
+            let currentEmailDisplay = maskedEmail;
+
+            // Update masked email if we don't have it yet
+            if (!maskedEmail) {
+                try {
+                    const profileData = await api.getProfilePicture();
+                    currentEmailDisplay = profileData.email;
+                    setMaskedEmail(profileData.email);
+                } catch (profileError) {
+                    console.error('❌ [EmailVerification] Error fetching profile for masked email:', profileError);
+                }
+            }
+
+            const emailDisplay = currentEmailDisplay || 'your email';
+            alert(`Verification email sent to ${emailDisplay}! Please check your email inbox and spam folder for the verification code.`);
         } catch (error) {
             console.error('❌ [EmailVerification] Error resending verification:', error);
             alert('Unable to resend verification email. Please try again later.');
@@ -72,28 +105,12 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         }
     };
 
-    // DEV BUTTON - Remove before production
-    const handleDevSkipVerification = () => {
-        if (confirm('DEV: Skip Email Verification\nThis will mark email as verified (DEV ONLY)')) {
-            console.log('🔧 [DEV] Skipping email verification');
-            onEmailVerified();
-        }
-    };
-
     if (!isVisible) return null;
 
     return (
         <div className="email-verification-modal">
             <div className="modal-backdrop" onClick={onClose}></div>
             <div className="modal-container">
-                {/* DEV BUTTON - TEMPORARY */}
-                <button
-                    className="dev-button"
-                    onClick={handleDevSkipVerification}
-                    title="DEV: Skip Email Verification"
-                >
-                    🐛 DEV
-                </button>
 
                 <div className="verification-card">
                     <div className="icon-container">
@@ -105,6 +122,13 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     <h2 className="title">Verify Your Email</h2>
                     <p className="message">
                         To protect your account and enable all features, please verify your email address.
+                        {maskedEmail && (
+                            <>
+                                <br /><br />
+                                <strong>Check your email: {maskedEmail}</strong>
+                                <br />
+                            </>
+                        )}
                         Enter the 4-digit code from your email below.
                     </p>
 
@@ -166,7 +190,11 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     </div>
 
                     <p className="footnote">
-                        Didn't receive the code? Check your spam folder or try resending the email.
+                        {maskedEmail ? (
+                            <>Didn't receive the code at {maskedEmail}? Check your spam folder or try resending the email.</>
+                        ) : (
+                            <>Didn't receive the code? Check your spam folder or try resending the email.</>
+                        )}
                     </p>
                 </div>
             </div>

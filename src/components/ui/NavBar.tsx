@@ -9,6 +9,12 @@ const NavBar: React.FC = () => {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
+        // Show confirmation dialog
+        const confirmed = window.confirm('Are you sure you want to sign out?');
+        if (!confirmed) {
+            return;
+        }
+
         try {
             await logout('/');
         } catch (error) {

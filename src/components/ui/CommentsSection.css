@@ -1,27 +1,35 @@
 .comments-section {
-    padding: 1rem 1rem 0.5rem 1rem;
-    border-top: 1px solid #e1e5e9;
-    background: #f8f9fa;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-secondary);
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Ensure all elements use theme colors */
+.comments-section * {
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .comments-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 1rem;
+    transition: color 0.3s ease;
 }
 
 .error-message {
-    background: #fee;
-    color: #c53030;
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
     padding: 0.75rem;
     border-radius: 8px;
     margin-bottom: 1rem;
     font-size: 0.9rem;
+    transition: all 0.3s ease;
 }
 
 .comments-list {
@@ -29,6 +37,7 @@
     overflow-y: auto;
     margin-bottom: 0.5rem;
     min-height: 0;
+    padding: 1rem 1rem 0.5rem 1rem;
 }
 
 .loading-comments {
@@ -56,21 +65,30 @@
 
 .no-comments {
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     padding: 2rem 0;
     font-style: italic;
+    transition: color 0.3s ease;
 }
 
 .comment-item {
     display: flex;
     gap: 0.75rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 0.75rem;
+    margin: 0 -0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 
 .comment-item:last-child {
     border-bottom: none;
+}
+
+.comment-item:hover {
+    background: var(--bg-tertiary);
+    transform: translateX(2px);
 }
 
 .comment-avatar {
@@ -98,27 +116,32 @@
 
 .comment-author {
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
     font-size: 0.9rem;
+    transition: color 0.3s ease;
 }
 
 .comment-date {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
 }
 
 .comment-text {
-    color: #333;
+    color: var(--text-primary);
     font-size: 0.9rem;
     line-height: 1.4;
     margin: 0;
     word-wrap: break-word;
+    transition: color 0.3s ease;
 }
 
 .add-comment-form {
     margin-top: auto;
     flex-shrink: 0;
     padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 .comment-input-container {
@@ -130,47 +153,51 @@
 .comment-input {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border);
     border-radius: 8px;
     font-size: 0.9rem;
-    background: white;
-    transition: border-color 0.2s ease;
+    background: var(--input-bg);
+    color: var(--input-text);
+    transition: all 0.3s ease;
 }
 
 .comment-input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .comment-input:disabled {
-    background: #f5f5f5;
-    color: #999;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .submit-comment-button {
     padding: 0.75rem 1rem;
-    background: #667eea;
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-inverse);
     border: none;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     white-space: nowrap;
 }
 
 .submit-comment-button:hover:not(:disabled) {
-    background: #5a67d8;
+    background: var(--button-primary-hover);
     transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 .submit-comment-button:disabled {
-    background: #ccc;
+    background: var(--border-medium);
     cursor: not-allowed;
     transform: none;
+    opacity: 0.6;
 }
 
 /* Comment Edit Styles */
@@ -181,18 +208,19 @@
 .edit-comment-input {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border);
     border-radius: 6px;
     font-size: 0.9rem;
-    background: white;
-    transition: border-color 0.2s ease;
+    background: var(--input-bg);
+    color: var(--input-text);
+    transition: all 0.3s ease;
     margin-bottom: 0.5rem;
 }
 
 .edit-comment-input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .edit-actions {
@@ -208,31 +236,36 @@
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .save-edit-button {
-    background: #667eea;
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-inverse);
 }
 
 .save-edit-button:hover:not(:disabled) {
-    background: #5a67d8;
+    background: var(--button-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .save-edit-button:disabled {
-    background: #ccc;
+    background: var(--border-medium);
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .cancel-edit-button {
-    background: #f8f9fa;
-    color: #666;
-    border: 1px solid #ddd;
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-light);
 }
 
 .cancel-edit-button:hover:not(:disabled) {
-    background: #e9ecef;
+    background: var(--button-secondary-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }
 
 .cancel-edit-button:disabled {
@@ -245,7 +278,7 @@
     gap: 0.5rem;
     margin-top: 0.5rem;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
 }
 
 .comment-item:hover .comment-actions {
@@ -260,18 +293,21 @@
     cursor: pointer;
     padding: 0.25rem;
     border-radius: 4px;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     opacity: 0.7;
+    color: var(--text-secondary);
 }
 
 .edit-comment-button:hover,
 .delete-comment-button:hover {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .delete-comment-button:hover {
-    color: #e53e3e;
+    color: var(--error-text);
+    background: var(--error-bg);
 }
 
 /* Responsive design */

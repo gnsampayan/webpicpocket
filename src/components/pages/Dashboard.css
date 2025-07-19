@@ -7,6 +7,23 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Ensure all headings use theme colors */
+.dashboard h1,
+.dashboard h2,
+.dashboard h3,
+.dashboard h4,
+.dashboard h5,
+.dashboard h6 {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.dashboard p,
+.dashboard span {
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
@@ -143,29 +160,24 @@
 
 /* Content Section */
 .content-section {
-  background: var(--bg-primary) !important;
+  background: var(--bg-primary);
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Ensure content section respects theme */
-.dashboard .content-section {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .tab-navigation {
   display: flex;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-secondary);
+  transition: all 0.3s ease;
 }
 
 .tab-button {
   flex: 1;
   padding: 1rem 1.5rem;
-  background: none;
+  background: transparent;
   border: none;
   font-size: 1rem;
   font-weight: 500;
@@ -188,6 +200,9 @@
 
 .tab-content {
   padding: 2rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 /* Overview Content */
@@ -201,6 +216,7 @@
   background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
 .overview-card h3 {
@@ -234,6 +250,8 @@
 
 .quick-action:hover {
   border-color: var(--primary-color);
+  background: var(--primary-light);
+  color: var(--primary-color);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -287,6 +305,8 @@
 
 .activity-item:hover {
   background: var(--bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 .activity-icon {
@@ -297,8 +317,10 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-primary);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   flex-shrink: 0;
+  transition: all 0.3s ease;
 }
 
 .activity-content {
@@ -328,10 +350,12 @@
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .photo-card:hover {
   transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 .photo-thumbnail {
@@ -434,7 +458,7 @@
   }
   
   .tab-button.active {
-    border-right-color: #667eea;
+    border-right-color: var(--primary-color);
     border-bottom-color: transparent;
   }
 } 

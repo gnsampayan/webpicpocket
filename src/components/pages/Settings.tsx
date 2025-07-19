@@ -38,6 +38,9 @@ const Settings: React.FC = () => {
         confirm_new_email: ''
     });
 
+    // Masked email state
+    const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
+
     // Collapsible state
     const [isPasswordExpanded, setIsPasswordExpanded] = useState(false);
     const [isEmailExpanded, setIsEmailExpanded] = useState(false);
@@ -59,6 +62,15 @@ const Settings: React.FC = () => {
                     first_name: userData.first_name || '',
                     last_name: userData.last_name || ''
                 });
+
+                // Fetch masked email from API
+                try {
+                    const profileData = await api.getProfilePicture();
+                    setMaskedEmail(profileData.email);
+                } catch (profileError) {
+                    console.error('❌ [Settings] Error fetching masked email:', profileError);
+                    // Don't show error to user, it's not critical
+                }
             } catch (err) {
                 console.error('❌ [Settings] Failed to load user data:', err);
                 // Don't set error here since ProtectedRoute will handle the redirect
@@ -217,6 +229,14 @@ const Settings: React.FC = () => {
                 new_email: '',
                 confirm_new_email: ''
             });
+
+            // Refresh masked email after successful update
+            try {
+                const profileData = await api.getProfilePicture();
+                setMaskedEmail(profileData.email);
+            } catch (profileError) {
+                console.error('❌ [Settings] Error refreshing masked email after update:', profileError);
+            }
 
             console.log('✅ Email updated successfully');
         } catch (err) {
@@ -443,6 +463,14 @@ const Settings: React.FC = () => {
                                     </div>
                                     {isEmailExpanded && (
                                         <form onSubmit={handleEmailSubmit} className="security-form">
+                                            {maskedEmail && (
+                                                <div className="current-email-display">
+                                                    <label>Current Email</label>
+                                                    <div className="current-email-value">
+                                                        {maskedEmail}
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="form-group">
                                                 <label>New Email</label>
                                                 <input

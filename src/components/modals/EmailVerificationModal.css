@@ -1,4 +1,5 @@
-/* Email Verification Modal Styles */
+/* Email Verification Modal Styles 
+   Note: This modal intentionally uses constant colors and does NOT follow the theme */
 .email-verification-modal {
     position: fixed;
     top: 0;
@@ -29,29 +30,7 @@
     z-index: 1001;
 }
 
-/* DEV BUTTON - TEMPORARY */
-.dev-button {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #ffff00;
-    border: 2px solid #ff0000;
-    border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    font-family: monospace;
-    color: #ff0000;
-    cursor: pointer;
-    z-index: 1002;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
 
-.dev-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
 
 .verification-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

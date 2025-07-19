@@ -217,11 +217,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: var(--bg-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-inverse);
   font-weight: 600;
   font-size: 0.8rem;
   flex-shrink: 0;
@@ -245,8 +245,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: var(--bg-gradient);
+  color: var(--text-inverse);
   font-weight: 600;
   font-size: 0.8rem;
 }
@@ -258,7 +258,7 @@
 .search-result-loading {
   padding: 2rem 1rem;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -267,7 +267,7 @@
 
 .search-result-loading span {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
@@ -287,7 +287,7 @@
 .search-result-empty {
   padding: 1rem;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .search-result-empty span {
@@ -298,7 +298,7 @@
 
 .search-result-empty small {
   font-size: 0.8rem;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .selected-members {
@@ -309,7 +309,7 @@
   display: block;
   margin-bottom: 0.75rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   font-size: 0.85rem;
 }
 

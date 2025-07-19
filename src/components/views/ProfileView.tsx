@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './ProfileView.module.css';
-import NavBar from '../ui/NavBar';
 import { usePublicUserInfo } from '../../hooks/useUsers';
 
 interface ProfileViewProps {
@@ -23,7 +22,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
     if (!userId) {
         return (
             <div className={styles.profileViewPage}>
-                <NavBar />
                 <main className={styles.mainContent}>
                     <div className={styles.errorState}>
                         <h2>No User ID Provided</h2>
@@ -37,7 +35,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
     if (isLoading) {
         return (
             <div className={styles.profileViewPage}>
-                <NavBar />
                 <main className={styles.mainContent}>
                     <div className={styles.loadingState}>
                         <div className={styles.loadingSpinner}></div>
@@ -51,7 +48,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
     if (error) {
         return (
             <div className={styles.profileViewPage}>
-                <NavBar />
                 <main className={styles.mainContent}>
                     <div className={styles.errorState}>
                         <h2>Error Loading Profile</h2>
@@ -89,7 +85,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
 
     return (
         <div className={styles.profileViewPage}>
-            <NavBar />
             <main className={styles.mainContent}>
                 {/* Header with back button */}
                 <header className={styles.profileHeader}>
