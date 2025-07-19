@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './EventView.css';
 import NavBar from '../ui/NavBar';
@@ -7,6 +7,7 @@ import CreateEventModal from '../modals/CreateEventModal';
 import AddMediaModal from '../modals/AddMediaModal';
 import AddEventMembersModal from '../modals/AddEventMembersModal';
 import EditEventModal from '../modals/EditEventModal';
+import MembersModal from '../modals/MembersModal';
 
 import { usePocketFromUrl, useEvents, usePockets } from '../../hooks/usePhotos';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
@@ -43,6 +44,55 @@ const EventView: React.FC = () => {
     const [selectedEventForMembers, setSelectedEventForMembers] = useState<Event | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedEventForEdit, setSelectedEventForEdit] = useState<Event | null>(null);
+    const [showMembersModal, setShowMembersModal] = useState(false);
+
+    // State for dynamic photo count calculation in list view
+    const [maxPhotosInRow, setMaxPhotosInRow] = useState(5); // Default fallback
+    const photoRowRef = useRef<HTMLDivElement>(null);
+
+    // Function to calculate how many photos can fit in the container
+    const calculateMaxPhotos = () => {
+        if (!photoRowRef.current) return 5; // Default fallback
+
+        const containerWidth = photoRowRef.current.offsetWidth;
+        const photoWidth = 80; // From CSS: .row-photo width
+        const gapWidth = 12; // From CSS: .photo-row gap (0.75rem = 12px)
+
+        // Formula: for n photos, total width = n * photoWidth + (n-1) * gapWidth
+        // So: containerWidth >= n * photoWidth + (n-1) * gapWidth
+        // Rearranging: n <= (containerWidth + gapWidth) / (photoWidth + gapWidth)
+        const maxPhotos = Math.floor((containerWidth + gapWidth) / (photoWidth + gapWidth));
+
+        return Math.max(1, maxPhotos); // Always show at least 1 photo
+    };
+
+    // Update max photos when container resizes
+    useEffect(() => {
+        const updateMaxPhotos = () => {
+            const newMax = calculateMaxPhotos();
+            setMaxPhotosInRow(newMax);
+        };
+
+        // Initial calculation
+        updateMaxPhotos();
+
+        // Set up resize observer to recalculate when container size changes
+        const resizeObserver = new ResizeObserver(() => {
+            updateMaxPhotos();
+        });
+
+        if (photoRowRef.current) {
+            resizeObserver.observe(photoRowRef.current);
+        }
+
+        // Also listen to window resize as fallback
+        window.addEventListener('resize', updateMaxPhotos);
+
+        return () => {
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', updateMaxPhotos);
+        };
+    }, []);
 
     // Functions to save state to localStorage
     const saveViewMode = (mode: 'grid' | 'list') => {
@@ -409,14 +459,15 @@ const EventView: React.FC = () => {
         };
     }, []);
 
-
-
-
+    const handleViewAllMembers = (event: Event) => {
+        setSelectedEventForMembers(event);
+        setShowMembersModal(true);
+    };
 
     // Render event card with photo previews
     const renderEventCard = (event: Event, index?: number) => {
-        // Get up to 5 photos for preview (1 large + 4 small)
-        const previewPhotos = event.preview_photos?.slice(0, 5) || [];
+        // Get up to 10 photos for preview (1 large + 4 small in grid, more in list)
+        const previewPhotos = event.preview_photos?.slice(0, 10) || [];
         const totalPhotoCount = event.photo_count || 0;
         const totalMemberCount = (pocket?.pocket_members?.length || 0) + (event.additional_member_count || 0);
 
@@ -458,8 +509,8 @@ const EventView: React.FC = () => {
                     {previewPhotos.length > 0 ? (
                         viewMode === 'list' ? (
                             // List view: single row of photos
-                            <div className="photo-row">
-                                {previewPhotos.slice(0, 5).map((photo, index) => (
+                            <div className="photo-row" ref={photoRowRef}>
+                                {previewPhotos.slice(0, maxPhotosInRow).map((photo, index) => (
                                     <div key={index} className="row-photo">
                                         <img
                                             src={getPhotoUrl(photo)}
@@ -468,12 +519,13 @@ const EventView: React.FC = () => {
                                                 e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
                                             }}
                                         />
-                                        {/* Show "more" overlay on last photo if there are additional photos */}
-                                        {index === 4 && totalPhotoCount > 5 && (
-                                            <div className="more-photos-overlay">
-                                                <span>+{totalPhotoCount - 5}</span>
-                                            </div>
-                                        )}
+                                        {/* Show "more" overlay logic */}
+                                        {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
+                                            (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
+                                                <div className="more-photos-overlay">
+                                                    <span>+{totalPhotoCount - Math.min(maxPhotosInRow, 10)}</span>
+                                                </div>
+                                            )}
                                     </div>
                                 ))}
                             </div>
@@ -540,7 +592,7 @@ const EventView: React.FC = () => {
                                                         e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
                                                     }}
                                                 />
-                                                {/* Show "more" overlay if there are additional photos */}
+                                                {/* Show "more" overlay if there are more than 5 photos (since grid shows 5) */}
                                                 {totalPhotoCount > 5 && (
                                                     <div
                                                         className="more-photos-overlay"
@@ -608,7 +660,16 @@ const EventView: React.FC = () => {
                                 </div>
                             ))}
                             {totalMemberCount > 3 && (
-                                <span className="more-members">+{totalMemberCount - 3}</span>
+                                <span
+                                    className="more-members more-members--clickable"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent event card click
+                                        handleViewAllMembers(event);
+                                    }}
+                                    title={`View all ${totalMemberCount} members`}
+                                >
+                                    +{totalMemberCount - 3}
+                                </span>
                             )}
                         </div>
                     </div>
@@ -909,6 +970,19 @@ const EventView: React.FC = () => {
                     }}
                     event={selectedEventForEdit}
                     pocket={pocket}
+                />
+            )}
+
+            {/* Members Modal */}
+            {showMembersModal && selectedEventForMembers && (
+                <MembersModal
+                    isOpen={showMembersModal}
+                    onClose={() => setShowMembersModal(false)}
+                    title={`${selectedEventForMembers.title} Members`}
+                    members={[
+                        ...(pocket?.pocket_members || []),
+                        ...(selectedEventForMembers.additional_members || [])
+                    ]}
                 />
             )}
 

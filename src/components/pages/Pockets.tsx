@@ -7,6 +7,7 @@ import CreatePocketModal from '../modals/CreatePocketModal';
 import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
 import AddPocketMembersModal from '../modals/AddPocketMembersModal';
 import EditPocketModal from '../modals/EditPocketModal';
+import MembersModal from '../modals/MembersModal';
 import { usePockets } from '../../hooks/usePhotos';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import { type Pocket, type PocketMember } from '../../types';
@@ -36,6 +37,8 @@ const Pockets: React.FC = () => {
     const [selectedPocketForPhotos, setSelectedPocketForPhotos] = useState<Pocket | null>(null);
     const [selectedPocketForMembers, setSelectedPocketForMembers] = useState<Pocket | null>(null);
     const [selectedPocketForEdit, setSelectedPocketForEdit] = useState<Pocket | null>(null);
+    const [showMembersModal, setShowMembersModal] = useState(false);
+    const [selectedPocketForMembersView, setSelectedPocketForMembersView] = useState<Pocket | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // React Query hooks
@@ -173,6 +176,12 @@ const Pockets: React.FC = () => {
         const pocketIdSuffix = pocket.pocket_id.slice(-6); // Last 6 characters of pocket ID
         const truncatedTitle = pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket.pocket_title;
         navigate(`/pockets/${encodeURIComponent(truncatedTitle)}-${pocketIdSuffix}`);
+    };
+
+    // Handle viewing all members
+    const handleViewAllMembers = (pocket: Pocket) => {
+        setSelectedPocketForMembersView(pocket);
+        setShowMembersModal(true);
     };
 
     // Handle options menu toggle
@@ -480,7 +489,16 @@ const Pockets: React.FC = () => {
                                             ))}
                                             {/* Show "+X" if more than 3 members */}
                                             {pocket.pocket_members.length > 3 && (
-                                                <span className="more-members">+{pocket.pocket_members.length - 3}</span>
+                                                <span
+                                                    className="more-members more-members--clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent pocket card click
+                                                        handleViewAllMembers(pocket);
+                                                    }}
+                                                    title={`View all ${pocket.pocket_members.length} members`}
+                                                >
+                                                    +{pocket.pocket_members.length - 3}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -582,6 +600,19 @@ const Pockets: React.FC = () => {
                         setSelectedPocketForEdit(null);
                     }}
                     pocket={selectedPocketForEdit}
+                />
+            )}
+
+            {/* Members Modal */}
+            {selectedPocketForMembersView && (
+                <MembersModal
+                    isOpen={showMembersModal}
+                    onClose={() => {
+                        setShowMembersModal(false);
+                        setSelectedPocketForMembersView(null);
+                    }}
+                    title={`${selectedPocketForMembersView.pocket_title} Members`}
+                    members={selectedPocketForMembersView.pocket_members}
                 />
             )}
         </div>

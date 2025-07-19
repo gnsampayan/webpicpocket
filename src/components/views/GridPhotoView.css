@@ -117,13 +117,26 @@
 }
 
 .more-members {
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.more-members--clickable {
+  cursor: pointer;
   color: #667eea;
-  font-size: 0.85rem;
   font-weight: 600;
-  background: #f0f4ff;
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-left: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.more-members--clickable:hover {
+  background: rgba(102, 126, 234, 0.2);
+  color: #5a6fd8;
+  transform: scale(1.05);
 }
 
 .add-photos-button {

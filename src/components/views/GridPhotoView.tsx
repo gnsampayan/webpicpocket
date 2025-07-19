@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import type { Photo, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
+import MembersModal from '../modals/MembersModal';
 import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation } from '../../hooks/usePhotos';
 import { getInitialSortFilter, saveSortFilter, sortPhotos } from '../../utils/sorting';
 import './GridPhotoView.css';
@@ -13,6 +14,8 @@ const GridPhotoView: React.FC = () => {
     const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
     const [photosPerRow] = useState(3);
     const [filter, setFilter] = useState(getInitialSortFilter);
+    const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
+    const [showMembersModal, setShowMembersModal] = useState(false);
 
     // React Query hooks - using shared cached data
     const { pocket, event, isLoading: isLoadingPocketEvent, error: pocketEventError } = usePocketAndEventFromUrl(pocketTitle, eventTitle);
@@ -29,9 +32,6 @@ const GridPhotoView: React.FC = () => {
         setFilter(filterValue);
         saveSortFilter(filterValue);
     };
-
-    // Modal state
-    const [showAddMediaModal, setShowAddMediaModal] = useState(false);
 
     // Default placeholder images as data URI for better reliability
     const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiBmaWxsPSIjNjY3ZWVhIi8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI3MCIgcng9IjgiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIi8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjY1IiByPSIxNSIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjYiLz4KPHBhdGggZD0iTTkwIDc1TDk1IDgwTDEwNSA3MEwxMTUgODBMMTIwIDc1IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9IjAuNiIvPgo8dGV4dCB4PSIxMDAiIHk9IjEzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG9zPC90ZXh0Pgo8L3N2Zz4K';
@@ -175,17 +175,16 @@ const GridPhotoView: React.FC = () => {
         setLoadedPhotos(prev => new Set([...prev, photoId]));
     };
 
-    // Handle media added to event
-    const handleMediaAdded = async () => {
-        console.log('✅ [GridPhotoView] Media added, refetching event data');
-        // React Query mutation will automatically invalidate cache
-    };
-
     // Handle member avatar click
     const handleMemberClick = (member: PocketMember | any) => {
         if (member.id) {
             navigate(`/profile/${member.id}`);
         }
+    };
+
+    // Handle viewing all members
+    const handleViewAllMembers = () => {
+        setShowMembersModal(true);
     };
 
     // Get photos to show based on loading progress and sorting
@@ -334,7 +333,13 @@ const GridPhotoView: React.FC = () => {
                                         </div>
                                     ))}
                                     {totalMemberCount > 3 && (
-                                        <span className="more-members">+{totalMemberCount - 3}</span>
+                                        <span
+                                            className="more-members more-members--clickable"
+                                            onClick={handleViewAllMembers}
+                                            title={`View all ${totalMemberCount} members`}
+                                        >
+                                            +{totalMemberCount - 3}
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -342,7 +347,7 @@ const GridPhotoView: React.FC = () => {
                         {eventData.current_user_add_permissions && (
                             <button
                                 className="add-photos-button"
-                                onClick={() => setShowAddMediaModal(true)}
+                                onClick={() => setIsAddMediaModalOpen(true)}
                             >
                                 <span>+</span>
                             </button>
@@ -377,7 +382,7 @@ const GridPhotoView: React.FC = () => {
                         {eventData.current_user_add_permissions && (
                             <button
                                 className="add-photos-button-large"
-                                onClick={() => setShowAddMediaModal(true)}
+                                onClick={() => setIsAddMediaModalOpen(true)}
                             >
                                 <span>+</span>
                                 Add Your First Photo
@@ -443,13 +448,31 @@ const GridPhotoView: React.FC = () => {
             </main>
 
             {/* Add Media Modal */}
-            <AddMediaModal
-                isOpen={showAddMediaModal}
-                onClose={() => setShowAddMediaModal(false)}
-                onMediaAdded={handleMediaAdded}
-                eventId={eventData?.event_id || ''}
-                eventTitle={eventData.title}
-            />
+            {isAddMediaModalOpen && (
+                <AddMediaModal
+                    isOpen={isAddMediaModalOpen}
+                    onClose={() => setIsAddMediaModalOpen(false)}
+                    onMediaAdded={() => {
+                        // Refresh photos after adding media
+                        window.location.reload();
+                    }}
+                    eventId={event?.id || ''}
+                    eventTitle={eventData?.title || event?.title}
+                />
+            )}
+
+            {/* Members Modal */}
+            {showMembersModal && (pocket || eventData) && (
+                <MembersModal
+                    isOpen={showMembersModal}
+                    onClose={() => setShowMembersModal(false)}
+                    title={eventData ? `${eventData.title} Members` : `${pocket?.pocket_title || 'Pocket'} Members`}
+                    members={[
+                        ...(pocket?.pocket_members || []),
+                        ...(eventData?.additional_members || [])
+                    ]}
+                />
+            )}
         </div>
     );
 };
