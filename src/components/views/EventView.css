@@ -728,6 +728,7 @@
   background: #f8f9fa;
   aspect-ratio: 1 / 1;
   width: 50%;
+  cursor: pointer;
 }
 
 .large-photo:hover {
@@ -786,6 +787,7 @@
   transition: all 0.3s ease;
   background: #f8f9fa;
   aspect-ratio: 1 / 1;
+  cursor: pointer;
 }
 
 .small-photo:hover {
@@ -902,6 +904,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   background: #f8f9fa;
+  cursor: pointer;
 }
 
 .row-photo:hover {

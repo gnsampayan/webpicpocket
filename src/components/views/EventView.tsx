@@ -431,6 +431,17 @@ const EventView: React.FC = () => {
         navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}`);
     };
 
+    // Handle open photo details view for a specific photo
+    const handleOpenPhotoDetails = (e: React.MouseEvent, photo: PreviewPhoto, event: Event) => {
+        e.stopPropagation(); // Prevent event card click
+        const pocketIdSuffix = pocket?.pocket_id.slice(-6) || '';
+        const eventIdSuffix = event.id.slice(-6);
+        const truncatedPocketTitle = pocket?.pocket_title && pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket?.pocket_title || '';
+        const truncatedEventTitle = event.title.length > 50 ? event.title.substring(0, 50) + '...' : event.title;
+        const photoShortId = photo.id.slice(-6); // Use last 6 characters like GridPhotoView does
+        navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}/photo/${photoShortId}`);
+    };
+
     // Handle options menu toggle
     const handleOptionsClick = (e: React.MouseEvent, eventId: string) => {
         e.stopPropagation();
@@ -531,7 +542,11 @@ const EventView: React.FC = () => {
                             // List view: single row of photos
                             <div className="photo-row" ref={photoRowRef}>
                                 {previewPhotos.slice(0, maxPhotosInRow).map((photo, index) => (
-                                    <div key={index} className="row-photo">
+                                    <div
+                                        key={index}
+                                        className="row-photo"
+                                        onClick={(e) => handleOpenPhotoDetails(e, photo, event)}
+                                    >
                                         <img
                                             src={getPhotoUrl(photo)}
                                             alt="Event photo"
@@ -542,7 +557,13 @@ const EventView: React.FC = () => {
                                         {/* Show "more" overlay logic */}
                                         {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
                                             (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
-                                                <div className="more-photos-overlay">
+                                                <div
+                                                    className="more-photos-overlay"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenGridPhotoView(event);
+                                                    }}
+                                                >
                                                     <span>+{totalPhotoCount - Math.min(maxPhotosInRow, 10)}</span>
                                                 </div>
                                             )}
@@ -554,7 +575,10 @@ const EventView: React.FC = () => {
                             <div className="photo-grid">
                                 {/* Large photo on the left */}
                                 {previewPhotos[0] && (
-                                    <div className="large-photo">
+                                    <div
+                                        className="large-photo"
+                                        onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[0], event)}
+                                    >
                                         <img
                                             src={getPhotoUrl(previewPhotos[0])}
                                             alt="Event photo"
@@ -569,7 +593,10 @@ const EventView: React.FC = () => {
                                 <div className="small-photos-grid">
                                     <div className="top-row">
                                         {previewPhotos[1] && (
-                                            <div className="small-photo">
+                                            <div
+                                                className="small-photo"
+                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[1], event)}
+                                            >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[1])}
                                                     alt="Event photo"
@@ -580,7 +607,10 @@ const EventView: React.FC = () => {
                                             </div>
                                         )}
                                         {previewPhotos[2] && (
-                                            <div className="small-photo">
+                                            <div
+                                                className="small-photo"
+                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[2], event)}
+                                            >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[2])}
                                                     alt="Event photo"
@@ -593,7 +623,10 @@ const EventView: React.FC = () => {
                                     </div>
                                     <div className="bottom-row">
                                         {previewPhotos[3] && (
-                                            <div className="small-photo">
+                                            <div
+                                                className="small-photo"
+                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[3], event)}
+                                            >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[3])}
                                                     alt="Event photo"
@@ -604,7 +637,10 @@ const EventView: React.FC = () => {
                                             </div>
                                         )}
                                         {previewPhotos[4] && (
-                                            <div className="small-photo">
+                                            <div
+                                                className="small-photo"
+                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[4], event)}
+                                            >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[4])}
                                                     alt="Event photo"
@@ -616,6 +652,10 @@ const EventView: React.FC = () => {
                                                 {totalPhotoCount > 5 && (
                                                     <div
                                                         className="more-photos-overlay"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenGridPhotoView(event);
+                                                        }}
                                                     >
                                                         <span>+{totalPhotoCount - 5}</span>
                                                     </div>
