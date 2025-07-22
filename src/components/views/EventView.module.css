@@ -224,7 +224,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   padding: 1rem;
   background: var(--bg-primary);
   border-radius: 12px;
@@ -839,28 +839,12 @@
   height: 100%;
 }
 
-.eventCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--bg-gradient);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .eventCard:hover {
   box-shadow: var(--shadow-xl);
   transform: translateY(-6px);
   border-color: var(--primary-color);
   background: var(--bg-secondary);
   z-index: 2;
-}
-
-.eventCard:hover::before {
-  opacity: 1;
 }
 
 /* List View Event Card */

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Contacts.css';
+import styles from './Contacts.module.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import AddContactsModal from '../modals/AddContactsModal';
@@ -117,11 +117,11 @@ const Contacts: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="contacts-page">
+            <div className={styles.contactsPage}>
                 <NavBar />
-                <main className="main-content">
-                    <div className="loading-state">
-                        <div className="loading-spinner"></div>
+                <main className={styles.mainContent}>
+                    <div className={styles.loadingState}>
+                        <div className={styles.loadingSpinner}></div>
                         <p>Loading contacts...</p>
                     </div>
                 </main>
@@ -131,25 +131,25 @@ const Contacts: React.FC = () => {
 
 
     return (
-        <div className="contacts-page">
+        <div className={styles.contactsPage}>
             <NavBar />
             {/* Main Content */}
-            <main className="main-content">
+            <main className={styles.mainContent}>
                 {/* Header */}
-                <header className="contacts-header">
-                    <div className="header-left">
+                <header className={styles.contactsHeader}>
+                    <div className={styles.headerLeft}>
                         <h1>Contacts</h1>
                         <p>Manage your contacts and sharing permissions</p>
                     </div>
-                    <div className="header-right">
+                    <div className={styles.headerRight}>
                         <button
-                            className="add-contact-button"
+                            className={styles.addContactButton}
                             onClick={() => setShowAddContact(!showAddContact)}
                         >
                             <span>➕</span>
                             Add Contact
                         </button>
-                        <div className="user-menu">
+                        <div className={styles.userMenu}>
                             <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
@@ -157,11 +157,11 @@ const Contacts: React.FC = () => {
 
                 {/* Error Display */}
                 {error && (
-                    <div className="error-message">
+                    <div className={styles.errorMessage}>
                         <span>❌ {errorMessage}</span>
                         {typeof errorMessage === 'string' && errorMessage.includes('verify your email') && (
                             <button
-                                className="verify-email-button"
+                                className={styles.verifyEmailButton}
                                 onClick={() => {
                                     setEmailVerifiedCallback(() => () => {
                                         // Refetch contacts after email verification
@@ -185,19 +185,19 @@ const Contacts: React.FC = () => {
                 />
 
                 {/* Controls */}
-                <section className="controls-section">
-                    <div className="controls-left">
-                        <div className="search-box">
+                <section className={styles.controlsSection}>
+                    <div className={styles.controlsLeft}>
+                        <div className={styles.searchBox}>
                             <input
                                 type="text"
                                 placeholder="Search contacts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <span className="search-icon">🔍</span>
+                            <span className={styles.searchIcon}>🔍</span>
                             {searchTerm.trim() && (
                                 <button
-                                    className="clear-search-button"
+                                    className={styles.clearSearchButton}
                                     onClick={() => setSearchTerm('')}
                                     type="button"
                                     aria-label="Clear search"
@@ -206,7 +206,23 @@ const Contacts: React.FC = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="filter-dropdown">
+                    </div>
+                    <div className={styles.controlsRight}>
+                        <div className={styles.viewToggle}>
+                            <button
+                                className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
+                                onClick={() => handleViewModeChange('grid')}
+                            >
+                                <span>⊞</span>
+                            </button>
+                            <button
+                                className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
+                                onClick={() => handleViewModeChange('list')}
+                            >
+                                <span>☰</span>
+                            </button>
+                        </div>
+                        <div className={styles.filterDropdown}>
                             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
                                 <option value="all">All</option>
                                 <option value="contacts">Contacts</option>
@@ -215,58 +231,36 @@ const Contacts: React.FC = () => {
                             </select>
                         </div>
                     </div>
-                    <div className="controls-right">
-                        <div className="view-toggle">
-                            <button
-                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
-                                onClick={() => handleViewModeChange('grid')}
-                            >
-                                <span>⊞</span>
-                            </button>
-                            <button
-                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
-                                onClick={() => handleViewModeChange('list')}
-                            >
-                                <span>☰</span>
-                            </button>
-                        </div>
-                        <button className="import-button">
-                            <span>📥</span>
-                            Import Contacts
-                        </button>
-                    </div>
                 </section>
 
                 {/* Contacts List */}
-                <section className="contacts-section">
-                    <div className="contacts-header-row">
-                        <h2>
-                            {searchTerm.trim() ? (
-                                <>
-                                    Search Results
-                                    <span className="search-results-info">
-                                        {filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length} contact{(filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length) !== 1 ? 's' : ''} found for "{searchTerm}"
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    {filter === 'all' && 'All Contacts'}
-                                    {filter === 'contacts' && 'My Contacts'}
-                                    {filter === 'requests' && 'Contact Requests'}
-                                    {filter === 'sent' && 'Sent Requests'}
-                                    {' '}
-                                    ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length})
-                                </>
-                            )}
-                        </h2>
-                    </div>
+                <section className={styles.contactsSection}>
+                    <h2>
+                        {searchTerm.trim() ? (
+                            <>
+                                Search Results
+                                <span className={styles.searchResultsInfo}>
+                                    {filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length} contact{(filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length) !== 1 ? 's' : ''} found for "{searchTerm}"
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                {filter === 'all' && 'All Contacts'}
+                                {filter === 'contacts' && 'My Contacts'}
+                                {filter === 'requests' && 'Contact Requests'}
+                                {filter === 'sent' && 'Sent Requests'}
+                                {' '}
+                                ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length})
+                            </>
+                        )}
+                    </h2>
 
-                    <div className={`contacts-container ${viewMode === 'list' ? 'contacts-list' : 'contacts-grid'}`}>
+                    <div className={`${styles.contactsContainer} ${viewMode === 'list' ? styles.contactsList : styles.contactsGrid}`}>
                         {/* Contact Requests Received */}
                         {filteredRequestsReceived.map((contact) => (
-                            <div key={`received-${contact.id}`} className={`contact-item contact-request ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
+                            <div key={`received-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
                                 <div
-                                    className="contact-avatar clickable"
+                                    className={`${styles.contactAvatar} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <img
@@ -277,26 +271,26 @@ const Contacts: React.FC = () => {
                                             e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
-                                    <span className="status-indicator pending"></span>
+                                    <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
                                 </div>
                                 <div
-                                    className="contact-info clickable"
+                                    className={`${styles.contactInfo} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <h3>{getContactName(contact)}</h3>
-                                    <p className="contact-username">@{contact.username}</p>
-                                    <p className="contact-status">Wants to connect with you</p>
+                                    <p className={styles.contactUsername}>@{contact.username}</p>
+                                    <p className={styles.contactStatus}>Wants to connect with you</p>
                                 </div>
-                                <div className="contact-actions">
+                                <div className={styles.contactActions}>
                                     <button
-                                        className="action-button accept"
+                                        className={`${styles.actionButton} ${styles.accept}`}
                                         onClick={() => handleAcceptContact(contact.id)}
                                     >
                                         <span>✓</span>
                                         Accept
                                     </button>
                                     <button
-                                        className="action-button reject"
+                                        className={`${styles.actionButton} ${styles.reject}`}
                                         onClick={() => handleRejectContact(contact.id)}
                                     >
                                         <span>✕</span>
@@ -308,9 +302,9 @@ const Contacts: React.FC = () => {
 
                         {/* Sent Contact Requests */}
                         {filteredRequestsSent.map((contact) => (
-                            <div key={`sent-${contact.id}`} className={`contact-item contact-request ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
+                            <div key={`sent-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
                                 <div
-                                    className="contact-avatar clickable"
+                                    className={`${styles.contactAvatar} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <img
@@ -321,19 +315,19 @@ const Contacts: React.FC = () => {
                                             e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
-                                    <span className="status-indicator pending"></span>
+                                    <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
                                 </div>
                                 <div
-                                    className="contact-info clickable"
+                                    className={`${styles.contactInfo} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <h3>{getContactName(contact)}</h3>
-                                    <p className="contact-username">@{contact.username}</p>
-                                    <p className="contact-status">Request sent</p>
+                                    <p className={styles.contactUsername}>@{contact.username}</p>
+                                    <p className={styles.contactStatus}>Request sent</p>
                                 </div>
-                                <div className="contact-actions">
+                                <div className={styles.contactActions}>
                                     <button
-                                        className="action-button cancel"
+                                        className={`${styles.actionButton} ${styles.cancel}`}
                                         onClick={() => handleCancelContact(contact.id)}
                                     >
                                         <span>↶</span>
@@ -345,9 +339,9 @@ const Contacts: React.FC = () => {
 
                         {/* Accepted Contacts */}
                         {filteredContacts.map((contact) => (
-                            <div key={contact.id} className={`contact-item ${viewMode === 'list' ? 'contact-list-item' : 'contact-grid-item'}`}>
+                            <div key={contact.id} className={`${styles.contactItem} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
                                 <div
-                                    className="contact-avatar clickable"
+                                    className={`${styles.contactAvatar} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <img
@@ -358,26 +352,26 @@ const Contacts: React.FC = () => {
                                             e.currentTarget.src = getContactAvatar(contact);
                                         }}
                                     />
-                                    <span className="status-indicator online"></span>
+                                    <span className={`${styles.statusIndicator} ${styles.online}`}></span>
                                 </div>
                                 <div
-                                    className="contact-info clickable"
+                                    className={`${styles.contactInfo} ${styles.clickable}`}
                                     onClick={() => handleContactClick(contact)}
                                 >
                                     <h3>{getContactName(contact)}</h3>
-                                    <p className="contact-username">@{contact.username}</p>
+                                    <p className={styles.contactUsername}>@{contact.username}</p>
                                 </div>
-                                <div className="contact-actions">
-                                    <button className="action-button">
+                                <div className={styles.contactActions}>
+                                    <button className={`${styles.actionButton} ${styles.share}`}>
                                         <span>📤</span>
                                         Share
                                     </button>
-                                    <button className="action-button">
+                                    <button className={`${styles.actionButton} ${styles.more}`}>
                                         <span>💬</span>
                                         Message
                                     </button>
                                     <button
-                                        className="action-button delete"
+                                        className={`${styles.actionButton} ${styles.delete}`}
                                         onClick={() => handleDeleteContact(contact.id)}
                                     >
                                         <span>🗑️</span>
@@ -390,8 +384,8 @@ const Contacts: React.FC = () => {
                         {filteredContacts.length === 0 &&
                             filteredRequestsReceived.length === 0 &&
                             filteredRequestsSent.length === 0 && (
-                                <div className="empty-state">
-                                    <div className="empty-icon">👥</div>
+                                <div className={styles.emptyState}>
+                                    <div className={styles.emptyIcon}>👥</div>
                                     <h3>No contacts found</h3>
                                     <p>
                                         {filter === 'all' && "You don't have any contacts yet. Start by adding some friends!"}
@@ -401,7 +395,7 @@ const Contacts: React.FC = () => {
                                     </p>
                                     {filter === 'all' && (
                                         <button
-                                            className="add-contact-button"
+                                            className={styles.addContactButton}
                                             onClick={() => setShowAddContact(true)}
                                         >
                                             Add Your First Contact

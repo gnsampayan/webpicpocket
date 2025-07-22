@@ -296,6 +296,7 @@ export interface PhotoCommentView {
 	content?: string;
 	created_at: string;
 	updated_at: string;
+	edited?: boolean;
 }
 
 export interface PhotoDetails {

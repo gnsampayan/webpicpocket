@@ -243,10 +243,21 @@
 }
 
 .albumsSection h2 {
-  font-size: 1.5rem;
+  margin: 0 0 0.75rem 0;
+  flex-shrink: 0;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  box-shadow: var(--shadow-sm);
 }
 
 .albumsGrid {
@@ -1204,6 +1215,12 @@
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
+  .albumsSection h2 {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
   /* List view responsive */
   .pocketListItem {
     flex-direction: column;
@@ -1351,6 +1368,12 @@
   
   .albumsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .albumsSection h2 {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.5rem;
+    margin-bottom: 0.4rem;
   }
 
   /* List view responsive for small screens */

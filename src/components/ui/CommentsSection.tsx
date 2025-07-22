@@ -69,11 +69,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
         try {
             setError(null);
-            await editCommentMutation.mutateAsync({
+            const result = await editCommentMutation.mutateAsync({
                 commentId,
                 text: editText.trim(),
                 photoId
             });
+
+            // Log the backend response
+            console.log('✅ [CommentsSection] Edit comment response:', result);
 
             // Clear edit state
             setEditingCommentId(null);
@@ -163,9 +166,16 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                     <span className="comment-author">
                                         {comment.author.first_name} {comment.author.last_name}
                                     </span>
-                                    <span className="comment-date">
-                                        {formatDate(comment.created_at)}
-                                    </span>
+                                    <div className="comment-meta">
+                                        <span className="comment-date">
+                                            {formatDate(comment.created_at)}
+                                        </span>
+                                        {comment.edited && (
+                                            <span className="edited-indicator" title="This comment has been edited">
+                                                (edited)
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 {editingCommentId === comment.id ? (
                                     <div className="comment-edit-form">
