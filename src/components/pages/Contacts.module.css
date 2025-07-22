@@ -495,11 +495,13 @@
 /* Search Results Info */
 .searchResultsInfo {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 400;
-  color: var(--primary-color);
-  margin-top: 0.25rem;
-  font-style: italic;
+  color: var(--text-tertiary);
+  margin-left: 0.5rem;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 /* Contacts Section */
@@ -507,6 +509,9 @@
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Removed contactsHeaderRow wrapper */
@@ -517,7 +522,6 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 0.5rem 0.75rem;
   background: var(--bg-primary);
@@ -558,6 +562,9 @@
 /* Contacts Container */
 .contactsContainer {
   padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Custom scrollbar for webkit browsers - moved to mainContent */
@@ -594,6 +601,8 @@
   gap: 1.25rem;
   padding: 1rem;
 }
+
+
 
 .contactItem {
   display: flex;
@@ -942,32 +951,218 @@
 
 /* Empty State */
 .emptyState {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4rem 2rem !important;
+  text-align: center !important;
+  position: relative !important;
+  min-height: 400px !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: none !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.emptyState::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+  opacity: 0.3;
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.emptyStateIcon {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.emptyStateIcon.createIcon {
+  animation: eventFloat 3s ease-in-out infinite;
+}
+
+.emptyStateIcon.searchIcon {
+  animation: searchFloat 3s ease-in-out infinite;
+}
+
+@keyframes eventFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes searchFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.searchGlass {
+  position: relative;
+  width: 100px;
+  height: 100px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
 }
 
-.emptyIcon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+.magnifyingGlass {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--primary-color);
+  border-radius: 50%;
+  background: transparent;
 }
 
-.emptyState h3 {
-  margin: 0 0 0.5rem 0;
+.glassCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.glassHandle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 20px;
+  background: var(--primary-color);
+  transform: translate(-50%, -50%) rotate(-55deg);
+  transform-origin: top center;
+  margin-left: 35px;
+  margin-top: 35px;
+}
+
+.emptyStateContent {
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+.emptyStateContent h3 {
+  margin: 0 0 1rem 0;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.emptyState p {
-  margin: 0 0 2rem 0;
+.emptyStateContent p {
+  margin: 0;
   color: var(--text-secondary);
   font-size: 1rem;
-  max-width: 400px;
+  line-height: 1.5;
 }
+
+.emptyStateCta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  max-width: 350px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.emptyStateCta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.emptyStateCta:hover::before {
+  opacity: 1;
+}
+
+.emptyStateCta:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
+}
+
+.ctaContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaIcon {
+  font-size: 1.5rem;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(10deg); }
+}
+
+.ctaText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ctaTitle {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.ctaSubtitle {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.ctaArrow {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.emptyStateCta:hover .ctaArrow {
+  transform: translateX(4px);
+  color: var(--text-inverse);
+}
+
+.emptyStateCta:hover .ctaTitle,
+.emptyStateCta:hover .ctaSubtitle {
+  color: var(--text-inverse);
+}
+
+/* Removed old empty state styles - now using EventView-style structure */
 
 /* Responsive Design */
 @media (max-width: 1024px) {

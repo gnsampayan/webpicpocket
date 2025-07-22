@@ -255,155 +255,181 @@ const Contacts: React.FC = () => {
                         )}
                     </h2>
 
-                    <div className={`${styles.contactsContainer} ${viewMode === 'list' ? styles.contactsList : styles.contactsGrid}`}>
-                        {/* Contact Requests Received */}
-                        {filteredRequestsReceived.map((contact) => (
-                            <div key={`received-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
-                                <div
-                                    className={`${styles.contactAvatar} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <img
-                                        src={getContactAvatar(contact)}
-                                        alt={getContactName(contact)}
-                                        onError={(e) => {
-                                            // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = getContactAvatar(contact);
-                                        }}
-                                    />
-                                    <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
-                                </div>
-                                <div
-                                    className={`${styles.contactInfo} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <h3>{getContactName(contact)}</h3>
-                                    <p className={styles.contactUsername}>@{contact.username}</p>
-                                    <p className={styles.contactStatus}>Wants to connect with you</p>
-                                </div>
-                                <div className={styles.contactActions}>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.accept}`}
-                                        onClick={() => handleAcceptContact(contact.id)}
+                    {/* Show contacts container only when there are contacts to display */}
+                    {(filteredContacts.length > 0 || filteredRequestsReceived.length > 0 || filteredRequestsSent.length > 0) ? (
+                        <div className={`${styles.contactsContainer} ${viewMode === 'list' ? styles.contactsList : styles.contactsGrid}`}>
+                            {/* Contact Requests Received */}
+                            {filteredRequestsReceived.map((contact) => (
+                                <div key={`received-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
+                                    <div
+                                        className={`${styles.contactAvatar} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
                                     >
-                                        <span>✓</span>
-                                        Accept
-                                    </button>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.reject}`}
-                                        onClick={() => handleRejectContact(contact.id)}
+                                        <img
+                                            src={getContactAvatar(contact)}
+                                            alt={getContactName(contact)}
+                                            onError={(e) => {
+                                                // Fallback if the profile picture fails to load
+                                                e.currentTarget.src = getContactAvatar(contact);
+                                            }}
+                                        />
+                                        <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
+                                    </div>
+                                    <div
+                                        className={`${styles.contactInfo} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
                                     >
-                                        <span>✕</span>
-                                        Reject
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Sent Contact Requests */}
-                        {filteredRequestsSent.map((contact) => (
-                            <div key={`sent-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
-                                <div
-                                    className={`${styles.contactAvatar} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <img
-                                        src={getContactAvatar(contact)}
-                                        alt={getContactName(contact)}
-                                        onError={(e) => {
-                                            // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = getContactAvatar(contact);
-                                        }}
-                                    />
-                                    <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
-                                </div>
-                                <div
-                                    className={`${styles.contactInfo} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <h3>{getContactName(contact)}</h3>
-                                    <p className={styles.contactUsername}>@{contact.username}</p>
-                                    <p className={styles.contactStatus}>Request sent</p>
-                                </div>
-                                <div className={styles.contactActions}>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.cancel}`}
-                                        onClick={() => handleCancelContact(contact.id)}
-                                    >
-                                        <span>↶</span>
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Accepted Contacts */}
-                        {filteredContacts.map((contact) => (
-                            <div key={contact.id} className={`${styles.contactItem} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
-                                <div
-                                    className={`${styles.contactAvatar} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <img
-                                        src={getContactAvatar(contact)}
-                                        alt={getContactName(contact)}
-                                        onError={(e) => {
-                                            // Fallback if the profile picture fails to load
-                                            e.currentTarget.src = getContactAvatar(contact);
-                                        }}
-                                    />
-                                    <span className={`${styles.statusIndicator} ${styles.online}`}></span>
-                                </div>
-                                <div
-                                    className={`${styles.contactInfo} ${styles.clickable}`}
-                                    onClick={() => handleContactClick(contact)}
-                                >
-                                    <h3>{getContactName(contact)}</h3>
-                                    <p className={styles.contactUsername}>@{contact.username}</p>
-                                </div>
-                                <div className={styles.contactActions}>
-                                    <button className={`${styles.actionButton} ${styles.share}`}>
-                                        <span>📤</span>
-                                        Share
-                                    </button>
-                                    <button className={`${styles.actionButton} ${styles.more}`}>
-                                        <span>💬</span>
-                                        Message
-                                    </button>
-                                    <button
-                                        className={`${styles.actionButton} ${styles.delete}`}
-                                        onClick={() => handleDeleteContact(contact.id)}
-                                    >
-                                        <span>🗑️</span>
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Empty State */}
-                        {filteredContacts.length === 0 &&
-                            filteredRequestsReceived.length === 0 &&
-                            filteredRequestsSent.length === 0 && (
-                                <div className={styles.emptyState}>
-                                    <div className={styles.emptyIcon}>👥</div>
-                                    <h3>No contacts found</h3>
-                                    <p>
-                                        {filter === 'all' && "You don't have any contacts yet. Start by adding some friends!"}
-                                        {filter === 'contacts' && "You don't have any accepted contacts yet."}
-                                        {filter === 'requests' && "No pending contact requests."}
-                                        {filter === 'sent' && "No sent contact requests."}
-                                    </p>
-                                    {filter === 'all' && (
+                                        <h3>{getContactName(contact)}</h3>
+                                        <p className={styles.contactUsername}>@{contact.username}</p>
+                                        <p className={styles.contactStatus}>Wants to connect with you</p>
+                                    </div>
+                                    <div className={styles.contactActions}>
                                         <button
-                                            className={styles.addContactButton}
+                                            className={`${styles.actionButton} ${styles.accept}`}
+                                            onClick={() => handleAcceptContact(contact.id)}
+                                        >
+                                            <span>✓</span>
+                                            Accept
+                                        </button>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.reject}`}
+                                            onClick={() => handleRejectContact(contact.id)}
+                                        >
+                                            <span>✕</span>
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Sent Contact Requests */}
+                            {filteredRequestsSent.map((contact) => (
+                                <div key={`sent-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
+                                    <div
+                                        className={`${styles.contactAvatar} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <img
+                                            src={getContactAvatar(contact)}
+                                            alt={getContactName(contact)}
+                                            onError={(e) => {
+                                                // Fallback if the profile picture fails to load
+                                                e.currentTarget.src = getContactAvatar(contact);
+                                            }}
+                                        />
+                                        <span className={`${styles.statusIndicator} ${styles.pending}`}></span>
+                                    </div>
+                                    <div
+                                        className={`${styles.contactInfo} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <h3>{getContactName(contact)}</h3>
+                                        <p className={styles.contactUsername}>@{contact.username}</p>
+                                        <p className={styles.contactStatus}>Request sent</p>
+                                    </div>
+                                    <div className={styles.contactActions}>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.cancel}`}
+                                            onClick={() => handleCancelContact(contact.id)}
+                                        >
+                                            <span>↶</span>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Accepted Contacts */}
+                            {filteredContacts.map((contact) => (
+                                <div key={contact.id} className={`${styles.contactItem} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
+                                    <div
+                                        className={`${styles.contactAvatar} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <img
+                                            src={getContactAvatar(contact)}
+                                            alt={getContactName(contact)}
+                                            onError={(e) => {
+                                                // Fallback if the profile picture fails to load
+                                                e.currentTarget.src = getContactAvatar(contact);
+                                            }}
+                                        />
+                                        <span className={`${styles.statusIndicator} ${styles.online}`}></span>
+                                    </div>
+                                    <div
+                                        className={`${styles.contactInfo} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <h3>{getContactName(contact)}</h3>
+                                        <p className={styles.contactUsername}>@{contact.username}</p>
+                                    </div>
+                                    <div className={styles.contactActions}>
+                                        <button className={`${styles.actionButton} ${styles.share}`}>
+                                            <span>📤</span>
+                                            Share
+                                        </button>
+                                        <button className={`${styles.actionButton} ${styles.more}`}>
+                                            <span>💬</span>
+                                            Message
+                                        </button>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.delete}`}
+                                            onClick={() => handleDeleteContact(contact.id)}
+                                        >
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        /* Empty State - Outside of any container */
+                        <div className={styles.emptyState}>
+                            {searchTerm.trim() ? (
+                                <>
+                                    <div className={`${styles.emptyStateIcon} ${styles.searchIcon}`}>
+                                        <div className={styles.searchGlass}>
+                                            <div className={styles.magnifyingGlass}>
+                                                <div className={styles.glassCircle}></div>
+                                                <div className={styles.glassHandle}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.emptyStateContent}>
+                                        <h3>No contacts found</h3>
+                                        <p>No contacts match "{searchTerm}". Try a different search term or check your spelling.</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className={styles.emptyStateContent}>
+                                        <h3>No contacts found</h3>
+                                        <p>
+                                            {filter === 'all' && "You don't have any contacts yet. Start by adding some friends!"}
+                                            {filter === 'contacts' && "You don't have any accepted contacts yet."}
+                                            {filter === 'requests' && "No pending contact requests."}
+                                            {filter === 'sent' && "No sent contact requests."}
+                                        </p>
+                                    </div>
+                                    {filter === 'all' && (
+                                        <div
+                                            className={styles.emptyStateCta}
                                             onClick={() => setShowAddContact(true)}
                                         >
-                                            Add Your First Contact
-                                        </button>
+                                            <div className={styles.ctaContent}>
+                                                <div className={styles.ctaIcon}>✨</div>
+                                                <div className={styles.ctaText}>
+                                                    <span className={styles.ctaTitle}>Add Your First Contact</span>
+                                                    <span className={styles.ctaSubtitle}>Click here to get started</span>
+                                                </div>
+                                            </div>
+                                            <div className={styles.ctaArrow}>→</div>
+                                        </div>
                                     )}
-                                </div>
+                                </>
                             )}
-                    </div>
+                        </div>
+                    )}
                 </section>
             </main>
         </div >

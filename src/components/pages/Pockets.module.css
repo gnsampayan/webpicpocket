@@ -230,11 +230,13 @@
 /* Search Results Info */
 .searchResultsInfo {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 400;
-  color: var(--primary-color);
-  margin-top: 0.25rem;
-  font-style: italic;
+  color: var(--text-tertiary);
+  margin-left: 0.5rem;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 /* Albums Section */
@@ -248,7 +250,6 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 0.5rem 0.75rem;
   background: var(--bg-primary);
@@ -899,45 +900,51 @@
 /* Search Icon Illustration */
 .searchGlass {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .magnifyingGlass {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--primary-color);
+  border-radius: 50%;
+  background: transparent;
   animation: searchFloat 3s ease-in-out infinite;
 }
 
 @keyframes searchFloat {
-  0%, 100% { transform: translateY(0px) rotate(-15deg); }
-  50% { transform: translateY(-10px) rotate(-10deg); }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
 }
 
 .glassCircle {
-  width: 70px;
-  height: 70px;
-  border: 6px solid var(--primary-color);
-  border-radius: 50%;
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  box-shadow: inset 0 0 20px rgba(102, 126, 234, 0.2);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  opacity: 0.3;
 }
 
 .glassHandle {
-  width: 40px;
-  height: 6px;
-  background: var(--primary-color);
-  border-radius: 3px;
   position: absolute;
-  bottom: 15px;
-  right: 5px;
-  transform: rotate(45deg);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 20px;
+  background: var(--primary-color);
+  transform: translate(-50%, -50%) rotate(-55deg);
+  transform-origin: top center;
+  margin-left: 35px;
+  margin-top: 35px;
 }
 
 /* Create Icon Illustration */
@@ -1449,13 +1456,21 @@
     height: 80px;
   }
 
-  .glassCircle {
+  .magnifyingGlass {
     width: 50px;
     height: 50px;
   }
 
+  .glassCircle {
+    width: 35px;
+    height: 35px;
+  }
+
   .glassHandle {
-    width: 30px;
+    width: 3px;
+    height: 15px;
+    margin-left: 25px;
+    margin-top: 25px;
   }
 
   .emptyStateCta {
