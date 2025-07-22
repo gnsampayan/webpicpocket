@@ -32,6 +32,15 @@ const EventView: React.FC = () => {
         return saved === 'true';
     };
 
+    // Session storage for last selected event card
+    const getLastSelectedEventCard = (): string | null => {
+        return sessionStorage.getItem('last-selected-event-card');
+    };
+
+    const setLastSelectedEventCard = (eventId: string) => {
+        sessionStorage.setItem('last-selected-event-card', eventId);
+    };
+
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(getInitialViewMode);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState(getInitialFilter);
@@ -45,10 +54,14 @@ const EventView: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedEventForEdit, setSelectedEventForEdit] = useState<Event | null>(null);
     const [showMembersModal, setShowMembersModal] = useState(false);
+    const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
 
     // State for dynamic photo count calculation in list view
     const [maxPhotosInRow, setMaxPhotosInRow] = useState(5); // Default fallback
     const photoRowRef = useRef<HTMLDivElement>(null);
+
+    // Refs for event cards to handle scrolling
+    const eventCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     // Function to calculate how many photos can fit in the container
     const calculateMaxPhotos = () => {
@@ -292,6 +305,110 @@ const EventView: React.FC = () => {
     // Get sorted events based on current filter
     const filteredAndSortedEvents = sortEvents(filteredEvents, filter);
 
+    // Handle scroll positioning to last selected event card
+    useEffect(() => {
+        if (events.length > 0 && lastSelectedEventCard) {
+            console.log('🔄 Scrolling to last selected event:', lastSelectedEventCard);
+
+            // Small delay to ensure DOM has updated and layout is complete
+            const timer = setTimeout(() => {
+                const eventCardElement = eventCardRefs.current[lastSelectedEventCard];
+
+                if (eventCardElement) {
+                    console.log('📍 Found event card element, attempting to scroll to it');
+
+                    // Find the scrollable container - likely the main content area
+                    let scrollContainer = eventCardElement.closest('.main-content');
+                    if (!scrollContainer) {
+                        // Fallback to other possible containers
+                        scrollContainer = eventCardElement.closest('.events-section');
+                        if (!scrollContainer) {
+                            scrollContainer = document.documentElement;
+                        }
+                    }
+
+                    console.log('📍 Scroll container found:', scrollContainer.className || 'documentElement');
+
+                    // Get container's scroll properties
+                    const containerScrollTop = scrollContainer.scrollTop || 0;
+                    const containerHeight = scrollContainer.clientHeight || window.innerHeight;
+                    const containerScrollHeight = scrollContainer.scrollHeight;
+
+                    console.log('📍 Container scroll top:', containerScrollTop);
+                    console.log('📍 Container height:', containerHeight);
+                    console.log('📍 Container scroll height:', containerScrollHeight);
+                    console.log('📍 Max container scroll:', containerScrollHeight - containerHeight);
+
+                    // Get element position relative to the container
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const elementRect = eventCardElement.getBoundingClientRect();
+
+                    // Calculate element position relative to container's scroll area
+                    const elementTopInContainer = containerScrollTop + (elementRect.top - containerRect.top);
+
+                    // Calculate target scroll position to center the element in the container
+                    const targetScrollTop = elementTopInContainer - (containerHeight / 2) + (elementRect.height / 2);
+                    const maxScroll = containerScrollHeight - containerHeight;
+                    const safeScrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
+
+                    console.log('📍 Element top in container:', elementTopInContainer);
+                    console.log('📍 Target scroll top:', targetScrollTop);
+                    console.log('📍 Safe scroll top:', safeScrollTop);
+
+                    // Scroll the container
+                    if (scrollContainer === document.documentElement) {
+                        // Use window scroll methods for document with smooth animation
+                        window.scrollTo({
+                            top: safeScrollTop,
+                            left: 0,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        // Use element scroll methods for containers with smooth animation
+                        scrollContainer.scrollTo({
+                            top: safeScrollTop,
+                            left: 0,
+                            behavior: 'smooth'
+                        });
+                    }
+
+                    // Also try scrollIntoView as a fallback with smooth animation
+                    try {
+                        eventCardElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    } catch (e) {
+                        eventCardElement.scrollIntoView(false);
+                    }
+
+                    // Verify the scroll worked
+                    setTimeout(() => {
+                        const newScrollTop = scrollContainer.scrollTop || window.pageYOffset || document.documentElement.scrollTop;
+                        console.log('📍 New scroll position:', newScrollTop);
+                        if (Math.abs(newScrollTop - safeScrollTop) < 50) {
+                            console.log('✅ Successfully scrolled to event card');
+                        } else {
+                            console.log('❌ Scroll verification failed');
+                            console.log('📍 Expected:', safeScrollTop, 'Got:', newScrollTop);
+                        }
+                    }, 800); // Increased timeout to allow smooth scroll animation to complete
+                } else {
+                    console.log('❌ Event card element not found');
+                }
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [events, lastSelectedEventCard]);
+
+    // Helper function to handle event card selection
+    const handleEventCardSelection = (eventId: string) => {
+        setLastSelectedEventCard(eventId);
+        setLastSelectedEventCardState(eventId);
+    };
+
     // Handle back to pockets view
     const handleBackToPockets = () => {
         navigate('/pockets');
@@ -505,6 +622,7 @@ const EventView: React.FC = () => {
         return (
             <div key={event.id} className={`event-card ${viewMode === 'list' ? 'event-list-item' : ''}`}
                 onClick={() => {
+                    handleEventCardSelection(event.id);
                     handleOpenGridPhotoView(event);
                 }}
                 style={{
@@ -516,6 +634,10 @@ const EventView: React.FC = () => {
                     <div className="event-title-section">
                         <h3
                             className="event-title clickable-title"
+                            onClick={() => {
+                                handleEventCardSelection(event.id);
+                                handleOpenGridPhotoView(event);
+                            }}
                         >
                             {event.title}
                         </h3>
@@ -545,7 +667,10 @@ const EventView: React.FC = () => {
                                     <div
                                         key={index}
                                         className="row-photo"
-                                        onClick={(e) => handleOpenPhotoDetails(e, photo, event)}
+                                        onClick={(e) => {
+                                            handleEventCardSelection(event.id);
+                                            handleOpenPhotoDetails(e, photo, event);
+                                        }}
                                     >
                                         <img
                                             src={getPhotoUrl(photo)}
@@ -561,6 +686,7 @@ const EventView: React.FC = () => {
                                                     className="more-photos-overlay"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        handleEventCardSelection(event.id);
                                                         handleOpenGridPhotoView(event);
                                                     }}
                                                 >
@@ -577,7 +703,10 @@ const EventView: React.FC = () => {
                                 {previewPhotos[0] && (
                                     <div
                                         className="large-photo"
-                                        onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[0], event)}
+                                        onClick={(e) => {
+                                            handleEventCardSelection(event.id);
+                                            handleOpenPhotoDetails(e, previewPhotos[0], event);
+                                        }}
                                     >
                                         <img
                                             src={getPhotoUrl(previewPhotos[0])}
@@ -595,7 +724,10 @@ const EventView: React.FC = () => {
                                         {previewPhotos[1] && (
                                             <div
                                                 className="small-photo"
-                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[1], event)}
+                                                onClick={(e) => {
+                                                    handleEventCardSelection(event.id);
+                                                    handleOpenPhotoDetails(e, previewPhotos[1], event);
+                                                }}
                                             >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[1])}
@@ -609,7 +741,10 @@ const EventView: React.FC = () => {
                                         {previewPhotos[2] && (
                                             <div
                                                 className="small-photo"
-                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[2], event)}
+                                                onClick={(e) => {
+                                                    handleEventCardSelection(event.id);
+                                                    handleOpenPhotoDetails(e, previewPhotos[2], event);
+                                                }}
                                             >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[2])}
@@ -625,7 +760,10 @@ const EventView: React.FC = () => {
                                         {previewPhotos[3] && (
                                             <div
                                                 className="small-photo"
-                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[3], event)}
+                                                onClick={(e) => {
+                                                    handleEventCardSelection(event.id);
+                                                    handleOpenPhotoDetails(e, previewPhotos[3], event);
+                                                }}
                                             >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[3])}
@@ -639,7 +777,10 @@ const EventView: React.FC = () => {
                                         {previewPhotos[4] && (
                                             <div
                                                 className="small-photo"
-                                                onClick={(e) => handleOpenPhotoDetails(e, previewPhotos[4], event)}
+                                                onClick={(e) => {
+                                                    handleEventCardSelection(event.id);
+                                                    handleOpenPhotoDetails(e, previewPhotos[4], event);
+                                                }}
                                             >
                                                 <img
                                                     src={getPhotoUrl(previewPhotos[4])}
@@ -654,6 +795,7 @@ const EventView: React.FC = () => {
                                                         className="more-photos-overlay"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
+                                                            handleEventCardSelection(event.id);
                                                             handleOpenGridPhotoView(event);
                                                         }}
                                                     >
@@ -688,6 +830,7 @@ const EventView: React.FC = () => {
                                     className="member-avatar member-avatar--clickable"
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
+                                        handleEventCardSelection(event.id);
                                         navigate(`/profile/${member.id}`);
                                     }}
                                     title={`${member.first_name} ${member.last_name}`}
@@ -708,6 +851,7 @@ const EventView: React.FC = () => {
                                     className="member-avatar member-avatar--clickable"
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
+                                        handleEventCardSelection(event.id);
                                         navigate(`/profile/${member.id}`);
                                     }}
                                     title={`${member.first_name} ${member.last_name}`}
@@ -726,6 +870,7 @@ const EventView: React.FC = () => {
                                     className="more-members more-members--clickable"
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
+                                        handleEventCardSelection(event.id);
                                         handleViewAllMembers(event);
                                     }}
                                     title={`View all ${totalMemberCount} members`}
@@ -995,7 +1140,17 @@ const EventView: React.FC = () => {
                         </div>
                     ) : (
                         <div className={`events-list ${viewMode === 'list' ? 'events-list-view' : 'events-grid-view'}`}>
-                            {filteredAndSortedEvents.map((event, index) => renderEventCard(event, index))}
+                            {filteredAndSortedEvents.map((event, index) => (
+                                <div
+                                    key={event.id}
+                                    ref={(el) => {
+                                        eventCardRefs.current[event.id] = el;
+                                    }}
+                                    onClick={() => handleEventCardSelection(event.id)}
+                                >
+                                    {renderEventCard(event, index)}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </section>
