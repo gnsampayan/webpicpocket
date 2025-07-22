@@ -4,7 +4,70 @@ import {
 	clearAccessToken,
 	clearRefreshToken,
 	clearUserData,
+	api,
 } from "../services/api";
+
+/**
+ * Attempts to automatically authenticate user using stored tokens
+ * Returns true if authentication successful, false otherwise
+ * @returns Promise<boolean> - true if authenticated successfully
+ */
+export const attemptAutoAuthentication = async (): Promise<boolean> => {
+	try {
+		console.log("🔐 [Auth] Attempting auto-authentication...");
+
+		// First check if we have a current user ID
+		const userId = await getCurrentUserId();
+		if (!userId) {
+			console.log("🔒 [Auth] No user ID found in storage");
+			return false;
+		}
+
+		console.log("🔍 [Auth] User ID found, checking tokens...");
+
+		// Try to make an authenticated request to validate tokens
+		// Using profile endpoint as a lightweight test
+		try {
+			await api.getProfilePicture();
+			console.log(
+				"✅ [Auth] Auto-authentication successful with existing tokens"
+			);
+			return true;
+		} catch (error) {
+			console.log(
+				"⚠️ [Auth] Access token invalid, attempting token refresh..."
+			);
+
+			// Access token failed, try to refresh
+			try {
+				await api.refreshToken();
+				console.log("✅ [Auth] Token refresh successful, re-validating...");
+
+				// Try the authenticated request again with refreshed token
+				await api.getProfilePicture();
+				console.log(
+					"✅ [Auth] Auto-authentication successful after token refresh"
+				);
+				return true;
+			} catch (refreshError) {
+				console.log("❌ [Auth] Token refresh failed:", refreshError);
+
+				// Refresh failed, clear all stored data for security
+				await Promise.all([
+					clearAllStorage(),
+					clearAccessToken(),
+					clearRefreshToken(),
+					clearUserData(),
+				]);
+
+				return false;
+			}
+		}
+	} catch (error) {
+		console.error("❌ [Auth] Error during auto-authentication:", error);
+		return false;
+	}
+};
 
 /**
  * Centralized logout function that clears all user data and redirects to login

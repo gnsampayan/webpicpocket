@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, isAuthError, AUTH_ERRORS } from '../../services';
+import { attemptAutoAuthentication } from '../../utils/auth';
 import type { RegisterData } from '../../services';
 import { validateSignUpForm } from '../../utils/validation';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
-import './SignUp.css';
+import styles from './SignUp.module.css';
 
 const SignUp: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -19,8 +20,33 @@ const SignUp: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState<string>('');
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const navigate = useNavigate();
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
+
+    // Check for existing authentication when component mounts
+    useEffect(() => {
+        const checkExistingAuth = async () => {
+            try {
+                setIsCheckingAuth(true);
+                const isAuthenticated = await attemptAutoAuthentication();
+
+                if (isAuthenticated) {
+                    console.log("🔐 [SignUp] User already authenticated, redirecting to dashboard");
+                    navigate('/dashboard');
+                    return;
+                }
+
+                console.log("🔓 [SignUp] No valid authentication found, staying on sign up page");
+            } catch (error) {
+                console.error("❌ [SignUp] Error checking existing authentication:", error);
+            } finally {
+                setIsCheckingAuth(false);
+            }
+        };
+
+        checkExistingAuth();
+    }, [navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -108,12 +134,6 @@ const SignUp: React.FC = () => {
         }
     };
 
-    const handleSocialSignUp = (provider: string) => {
-        console.log(`Signing up with ${provider}`);
-        // TODO: Implement social sign up
-        setApiError(`${provider} sign up is not yet implemented.`);
-    };
-
     const getPasswordStrength = () => {
         if (!formData.password) return { strength: 0, label: '', color: '' };
 
@@ -134,26 +154,47 @@ const SignUp: React.FC = () => {
 
     const passwordStrength = getPasswordStrength();
 
+    // Show loading spinner while checking authentication
+    if (isCheckingAuth) {
+        return (
+            <div className={styles.signupPage}>
+                <div className="container">
+                    <div className={styles.signupContainer}>
+                        <div className={styles.signupHeader}>
+                            <Link to="/" className={styles.logo}>
+                                <h1>PicPocket</h1>
+                            </Link>
+                            <h2>Checking authentication...</h2>
+                        </div>
+                        <div className={styles.signupForm} style={{ textAlign: 'center', padding: '2rem' }}>
+                            <div className={styles.spinner}></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="signup-page">
+        <div className={styles.signupPage}>
             <div className="container">
-                <div className="signup-container">
-                    <div className="signup-header">
-                        <Link to="/" className="logo">
+                <div className={styles.signupContainer}>
+                    <div className={styles.signupHeader}>
+                        <Link to="/" className={styles.logo}>
                             <h1>PicPocket</h1>
                         </Link>
                         <h2>Create your account</h2>
                         <p>Join millions of users sharing memories with PicPocket</p>
                     </div>
 
-                    <form className="signup-form" onSubmit={handleSubmit}>
+                    <form className={styles.signupForm} onSubmit={handleSubmit}>
                         {apiError && (
-                            <div className="api-error">
-                                <span className="error-message">{apiError}</span>
+                            <div className={styles.apiError}>
+                                <span className={styles.errorMessage}>{apiError}</span>
                             </div>
                         )}
 
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="username">Username</label>
                             <input
                                 type="text"
@@ -166,11 +207,11 @@ const SignUp: React.FC = () => {
                                 disabled={isLoading}
                                 autoComplete="username"
                             />
-                            {errors.username && <span className="error-message">{errors.username}</span>}
+                            {errors.username && <span className={styles.errorMessage}>{errors.username}</span>}
                         </div>
 
-                        <div className="name-group">
-                            <div className="form-group">
+                        <div className={styles.nameGroup}>
+                            <div className={styles.formGroup}>
                                 <label htmlFor="firstName">First name</label>
                                 <input
                                     type="text"
@@ -183,10 +224,10 @@ const SignUp: React.FC = () => {
                                     disabled={isLoading}
                                     autoComplete="given-name"
                                 />
-                                {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                                {errors.firstName && <span className={styles.errorMessage}>{errors.firstName}</span>}
                             </div>
 
-                            <div className="form-group">
+                            <div className={styles.formGroup}>
                                 <label htmlFor="lastName">Last name</label>
                                 <input
                                     type="text"
@@ -199,11 +240,11 @@ const SignUp: React.FC = () => {
                                     disabled={isLoading}
                                     autoComplete="family-name"
                                 />
-                                {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                                {errors.lastName && <span className={styles.errorMessage}>{errors.lastName}</span>}
                             </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="email">Email address</label>
                             <input
                                 type="email"
@@ -216,10 +257,10 @@ const SignUp: React.FC = () => {
                                 disabled={isLoading}
                                 autoComplete="email"
                             />
-                            {errors.email && <span className="error-message">{errors.email}</span>}
+                            {errors.email && <span className={styles.errorMessage}>{errors.email}</span>}
                         </div>
 
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="password">Password</label>
                             <input
                                 type="password"
@@ -233,25 +274,25 @@ const SignUp: React.FC = () => {
                                 autoComplete="new-password"
                             />
                             {formData.password && (
-                                <div className="password-strength">
-                                    <div className="strength-bar">
+                                <div className={styles.passwordStrength}>
+                                    <div className={styles.strengthBar}>
                                         <div
-                                            className="strength-fill"
+                                            className={styles.strengthFill}
                                             style={{
                                                 width: `${(passwordStrength.strength / 4) * 100}%`,
                                                 backgroundColor: passwordStrength.color
                                             }}
                                         ></div>
                                     </div>
-                                    <span className="strength-label" style={{ color: passwordStrength.color }}>
+                                    <span className={styles.strengthLabel} style={{ color: passwordStrength.color }}>
                                         {passwordStrength.label}
                                     </span>
                                 </div>
                             )}
-                            {errors.password && <span className="error-message">{errors.password}</span>}
+                            {errors.password && <span className={styles.errorMessage}>{errors.password}</span>}
                         </div>
 
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="confirmPassword">Confirm password</label>
                             <input
                                 type="password"
@@ -264,11 +305,11 @@ const SignUp: React.FC = () => {
                                 disabled={isLoading}
                                 autoComplete="new-password"
                             />
-                            {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+                            {errors.confirmPassword && <span className={styles.errorMessage}>{errors.confirmPassword}</span>}
                         </div>
 
-                        <div className="form-group checkbox-group">
-                            <label className="checkbox-label">
+                        <div className={`${styles.formGroup} ${styles.checkboxGroup}`}>
+                            <label className={styles.checkboxLabel}>
                                 <input
                                     type="checkbox"
                                     name="agreeToTerms"
@@ -276,23 +317,23 @@ const SignUp: React.FC = () => {
                                     onChange={handleChange}
                                     disabled={isLoading}
                                 />
-                                <span className="checkmark"></span>
+                                <span className={styles.checkmark}></span>
                                 I agree to the&nbsp;
-                                <Link to="/terms" className="terms-link">Terms of Service</Link>
+                                <Link to="/terms" className={styles.termsLink}>Terms of Service</Link>
                                 &nbsp;and&nbsp;
-                                <Link to="/privacy" className="terms-link">Privacy Policy</Link>
+                                <Link to="/privacy" className={styles.termsLink}>Privacy Policy</Link>
                             </label>
-                            {errors.agreeToTerms && <span className="error-message">{errors.agreeToTerms}</span>}
+                            {errors.agreeToTerms && <span className={styles.errorMessage}>{errors.agreeToTerms}</span>}
                         </div>
 
                         <button
                             type="submit"
-                            className={`signup-button ${isLoading ? 'loading' : ''}`}
+                            className={`${styles.signupButton} ${isLoading ? 'loading' : ''}`}
                             disabled={isLoading}
                         >
                             {isLoading ? (
                                 <>
-                                    <div className="spinner"></div>
+                                    <div className={styles.spinner}></div>
                                     Creating account...
                                 </>
                             ) : (
@@ -301,42 +342,10 @@ const SignUp: React.FC = () => {
                         </button>
                     </form>
 
-                    <div className="divider">
-                        <span>or sign up with</span>
-                    </div>
-
-                    <div className="social-signup">
-                        <button
-                            type="button"
-                            className="social-button google"
-                            onClick={() => handleSocialSignUp('Google')}
-                            disabled={isLoading}
-                        >
-                            <svg viewBox="0 0 24 24">
-                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                            Continue with Google
-                        </button>
-                        <button
-                            type="button"
-                            className="social-button apple"
-                            onClick={() => handleSocialSignUp('Apple')}
-                            disabled={isLoading}
-                        >
-                            <svg viewBox="0 0 24 24">
-                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                            </svg>
-                            Continue with Apple
-                        </button>
-                    </div>
-
-                    <div className="signup-footer">
+                    <div className={styles.signupFooter}>
                         <p>
                             Already have an account?{' '}
-                            <Link to="/signin" className="signin-link">
+                            <Link to="/signin" className={styles.signinLink}>
                                 Sign in here
                             </Link>
                         </p>

@@ -1,14 +1,17 @@
-/* Sign Up Page Styles */
-.signup-page {
+/* Sign Up Page Styles - CSS Module */
+/* These styles are automatically scoped and won't affect other components */
+
+.signupPage {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 0;
+  color: #333;
 }
 
-.signup-container {
+.signupContainer {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 20px;
@@ -18,9 +21,10 @@
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
+  color: #333;
 }
 
-.signup-header {
+.signupHeader {
   text-align: center;
   margin-bottom: 2rem;
 }
@@ -40,25 +44,25 @@
   margin-bottom: 1rem;
 }
 
-.signup-header h2 {
+.signupHeader h2 {
   font-size: 1.75rem;
   font-weight: 600;
   color: #333;
   margin-bottom: 0.5rem;
 }
 
-.signup-header p {
+.signupHeader p {
   color: #666;
   font-size: 1rem;
 }
 
 /* Form Styles */
-.signup-form {
+.signupForm {
   margin-bottom: 2rem;
 }
 
 /* API Error Display */
-.api-error {
+.apiError {
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
@@ -66,25 +70,25 @@
   margin-bottom: 1.5rem;
 }
 
-.api-error .error-message {
+.apiError .errorMessage {
   color: #dc2626;
   font-size: 0.9rem;
   margin: 0;
   display: block;
 }
 
-.name-group {
+.nameGroup {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.form-group {
+.formGroup {
   margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.formGroup label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
@@ -92,7 +96,7 @@
   font-size: 0.9rem;
 }
 
-.form-group input {
+.formGroup input {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 2px solid #e1e5e9;
@@ -103,21 +107,21 @@
   color: #333;
 }
 
-.form-group input:focus {
+.formGroup input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.form-group input.error {
+.formGroup input.error {
   border-color: #e74c3c;
 }
 
-.form-group input::placeholder {
+.formGroup input::placeholder {
   color: #999;
 }
 
-.error-message {
+.errorMessage {
   color: #e74c3c;
   font-size: 0.85rem;
   margin-top: 0.25rem;
@@ -125,14 +129,14 @@
 }
 
 /* Password Strength */
-.password-strength {
+.passwordStrength {
   margin-top: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.strength-bar {
+.strengthBar {
   flex: 1;
   height: 4px;
   background: #e1e5e9;
@@ -140,23 +144,23 @@
   overflow: hidden;
 }
 
-.strength-fill {
+.strengthFill {
   height: 100%;
   transition: all 0.3s ease;
 }
 
-.strength-label {
+.strengthLabel {
   font-size: 0.8rem;
   font-weight: 500;
   min-width: 60px;
 }
 
 /* Checkbox Styles */
-.checkbox-group {
+.checkboxGroup {
   margin-bottom: 1.5rem;
 }
 
-.checkbox-group .checkbox-label {
+.checkboxGroup .checkboxLabel {
   display: flex;
   align-items: flex-start;
   cursor: pointer;
@@ -171,7 +175,7 @@
   min-height: 24px;
 }
 
-.checkbox-group .checkbox-label input[type="checkbox"] {
+.checkboxGroup .checkboxLabel input[type="checkbox"] {
   width: 24px;
   height: 24px;
   margin-right: 0.5rem;
@@ -184,7 +188,7 @@
   pointer-events: auto;
 }
 
-.checkbox-group .checkmark {
+.checkboxGroup .checkmark {
   width: 18px;
   height: 18px;
   border: 2px solid #e1e5e9;
@@ -197,14 +201,15 @@
   min-width: 18px;
   pointer-events: none;
   z-index: 1;
+  background: white;
 }
 
-.checkbox-group .checkbox-label input[type="checkbox"]:checked + .checkmark {
+.checkboxGroup .checkboxLabel input[type="checkbox"]:checked + .checkmark {
   background: #667eea;
   border-color: #667eea;
 }
 
-.checkbox-group .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+.checkboxGroup .checkboxLabel input[type="checkbox"]:checked + .checkmark::after {
   content: '✓';
   position: absolute;
   top: 50%;
@@ -215,7 +220,7 @@
   font-weight: bold;
 }
 
-.checkbox-label {
+.checkboxLabel {
   display: flex;
   align-items: flex-start;
   cursor: pointer;
@@ -230,7 +235,7 @@
   min-height: 24px;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkboxLabel input[type="checkbox"] {
   width: 24px;
   height: 24px;
   margin-right: 0.5rem;
@@ -255,14 +260,15 @@
   flex-shrink: 0;
   min-width: 18px;
   pointer-events: none;
+  background: white;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkmark {
+.checkboxLabel input[type="checkbox"]:checked + .checkmark {
   background: #667eea;
   border-color: #667eea;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+.checkboxLabel input[type="checkbox"]:checked + .checkmark::after {
   content: '✓';
   position: absolute;
   top: 50%;
@@ -273,18 +279,18 @@
   font-weight: bold;
 }
 
-.terms-link {
+.termsLink {
   color: #667eea;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
-.terms-link:hover {
+.termsLink:hover {
   color: #5a6fd8;
 }
 
-.signup-button {
+.signupButton {
   width: 100%;
   padding: 0.875rem;
   background: linear-gradient(45deg, #667eea, #764ba2);
@@ -301,12 +307,13 @@
   gap: 0.5rem;
 }
 
-.signup-button:hover:not(:disabled) {
+.signupButton:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(45deg, #5a6fd8, #6a4190);
 }
 
-.signup-button:disabled {
+.signupButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
@@ -353,14 +360,14 @@
 }
 
 /* Social Sign Up */
-.social-signup {
+.socialSignup {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.social-button {
+.socialButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -377,78 +384,79 @@
   text-decoration: none;
 }
 
-.social-button:hover:not(:disabled) {
+.socialButton:hover:not(:disabled) {
   border-color: #667eea;
   background: #f8f9ff;
   transform: translateY(-1px);
+  color: #333;
 }
 
-.social-button:disabled {
+.socialButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.social-button svg {
+.socialButton svg {
   width: 20px;
   height: 20px;
 }
 
-.social-button.google svg {
+.socialButton.google svg {
   fill: #4285f4;
 }
 
-.social-button.apple svg {
+.socialButton.apple svg {
   fill: #000;
 }
 
 /* Footer */
-.signup-footer {
+.signupFooter {
   text-align: center;
 }
 
-.signup-footer p {
+.signupFooter p {
   color: #666;
   font-size: 0.9rem;
 }
 
-.signin-link {
+.signinLink {
   color: #667eea;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
-.signin-link:hover {
+.signinLink:hover {
   color: #5a6fd8;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .signup-page {
+  .signupPage {
     padding: 1rem;
   }
 
-  .signup-container {
+  .signupContainer {
     padding: 2rem;
     margin: 0;
   }
 
-  .name-group {
+  .nameGroup {
     grid-template-columns: 1fr;
     gap: 0;
   }
 
-  .social-signup {
+  .socialSignup {
     gap: 0.75rem;
   }
 }
 
 @media (max-width: 480px) {
-  .signup-container {
+  .signupContainer {
     padding: 1.5rem;
   }
 
-  .signup-header h2 {
+  .signupHeader h2 {
     font-size: 1.5rem;
   }
 
