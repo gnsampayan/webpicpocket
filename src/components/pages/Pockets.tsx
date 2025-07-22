@@ -392,20 +392,41 @@ const Pockets: React.FC = () => {
                     </h2>
                     {sortedPockets.length === 0 ? (
                         <div className="empty-state">
-                            <p>
-                                {searchQuery.trim()
-                                    ? `No pockets found matching "${searchQuery}". Try a different search term.`
-                                    : 'No pockets found. Create your first pocket to get started!'
-                                }
-                            </p>
-                            {!searchQuery.trim() && (
-                                <button
-                                    className="create-pocket-button"
-                                    onClick={() => setShowCreateModal(true)}
-                                >
-                                    <span>➕</span>
-                                    Create Pocket
-                                </button>
+                            {searchQuery.trim() ? (
+                                <>
+                                    <div className="empty-state-icon search-icon">
+                                        <div className="search-glass">
+                                            <div className="magnifying-glass">
+                                                <div className="glass-circle"></div>
+                                                <div className="glass-handle"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="empty-state-content">
+                                        <h3>No pockets found</h3>
+                                        <p>No pockets match "{searchQuery}". Try a different search term or check your spelling.</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="empty-state-content">
+                                        <h3>Start your first pocket</h3>
+                                        <p>Pockets help you organize and share your memories with friends and family. Create your first pocket to get started!</p>
+                                    </div>
+                                    <div
+                                        className="empty-state-cta"
+                                        onClick={() => setShowCreateModal(true)}
+                                    >
+                                        <div className="cta-content">
+                                            <div className="cta-icon">✨</div>
+                                            <div className="cta-text">
+                                                <span className="cta-title">Create Your First Pocket</span>
+                                                <span className="cta-subtitle">Click here to get started</span>
+                                            </div>
+                                        </div>
+                                        <div className="cta-arrow">→</div>
+                                    </div>
+                                </>
                             )}
                         </div>
                     ) : (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import type { Photo } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
 import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails, useDeletePhotoMutation } from '../../hooks/usePhotos';
@@ -12,6 +12,7 @@ const DEFAULT_PHOTO_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjA
 const PhotoDetailsView: React.FC = () => {
     const { pocketTitle, eventTitle, photoShortId } = useParams<{ pocketTitle: string; eventTitle: string; photoShortId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState<'comments' | 'info'>('comments');
 
     // React Query hooks
@@ -129,11 +130,16 @@ const PhotoDetailsView: React.FC = () => {
     };
 
     const handleBack = () => {
-        // Go back to the grid view
-        if (pocketTitle && eventTitle) {
-            navigate(`/pockets/${pocketTitle}/${eventTitle}`);
-        } else {
+        // Go back to the previous page if we know where we came from
+        if (location.state?.from === 'eventView' || location.state?.from === 'gridPhotoView') {
             navigate(-1);
+        } else {
+            // Fallback: go to eventView
+            if (pocketTitle && eventTitle) {
+                navigate(`/pockets/${pocketTitle}/${eventTitle}`);
+            } else {
+                navigate(-1);
+            }
         }
     };
 
@@ -261,9 +267,55 @@ const PhotoDetailsView: React.FC = () => {
     if (error || !photoData?.photo) {
         return (
             <div className="photo-detail-view">
+                <header className="grid-photo-header">
+                    <div className="header-top">
+                        <div className="back-button-section">
+                            <button onClick={handleBack} className="back-button">
+                                <span>←</span>
+                            </button>
+                            <h1 className="event-title">Photo Not Found</h1>
+                        </div>
+                    </div>
+                </header>
                 <div className="photo-detail-content">
-                    <div className="error-message">{typeof error === 'string' ? error : error?.message || 'Photo not found'}</div>
-                    <button onClick={handleBack} className="retry-button">Back</button>
+                    <div className="photo-not-found-container">
+                        <div className="photo-not-found-content">
+                            <div className="photo-not-found-icon">📷</div>
+                            <h3>Photo Not Found</h3>
+                            <p>
+                                {typeof error === 'string'
+                                    ? error
+                                    : error?.message || 'This photo may still be loading from the server, or it may have been moved or deleted.'
+                                }
+                            </p>
+                            <div className="photo-not-found-details">
+                                <div className="detail-item">
+                                    <span className="detail-icon">⏳</span>
+                                    <span className="detail-text">The photo might still be loading from the backend</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-icon">❌</span>
+                                    <span className="detail-text">The photo may have been deleted or moved</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-icon">🔗</span>
+                                    <span className="detail-text">The link might be incorrect or expired</span>
+                                </div>
+                            </div>
+                            <div className="photo-not-found-actions">
+                                <button onClick={handleBack} className="back-to-event-button">
+                                    <div className="button-content">
+                                        <div className="button-icon">🏠</div>
+                                        <div className="button-text">
+                                            <span className="button-title">Back to Event</span>
+                                            <span className="button-subtitle">Return to photo gallery</span>
+                                        </div>
+                                    </div>
+                                    <div className="button-arrow">→</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -385,7 +437,7 @@ const PhotoDetailsView: React.FC = () => {
                                             {/* Date Taken (from EXIF) */}
                                             {metadata?.dateTimeOriginal && (
                                                 <div className="info-row">
-                                                    <span className="info-label">📅 Date Taken:</span>
+                                                    <span className="info-label">�� Date Taken:</span>
                                                     <span className="info-value">{formatDate(metadata.dateTimeOriginal)}</span>
                                                 </div>
                                             )}

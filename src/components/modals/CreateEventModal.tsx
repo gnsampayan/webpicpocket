@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import './CreateEventModal.css';
 import { api } from '../../services/api';
-import { useCreateEventMutation } from '../../hooks/usePhotos';
+import { useCreateEventMutation, photoKeys } from '../../hooks/usePhotos';
 import { type ContactUser, type Event, type Pocket } from '../../types';
 
 interface CreateEventModalProps {
@@ -19,6 +21,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     pocketId,
     pocket
 }) => {
+    const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<ContactUser[]>([]);
     const [memberSearchTerm, setMemberSearchTerm] = useState('');
@@ -36,6 +39,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
     // React Query mutation
     const createEventMutation = useCreateEventMutation();
+    const queryClient = useQueryClient();
 
     // Cleanup on modal close
     useEffect(() => {
@@ -209,8 +213,46 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             const newEvent = await createEventMutation.mutateAsync(eventData);
 
+            console.log('✅ [CreateEventModal] Event created successfully:', newEvent);
+            console.log('✅ [CreateEventModal] Event ID:', newEvent?.id);
+            console.log('✅ [CreateEventModal] Full response structure:', JSON.stringify(newEvent, null, 2));
+
+            // Handle different possible response structures
+            let eventId = newEvent?.id;
+            let eventTitle = newEvent?.title;
+
+            // If the response has a different structure, try to extract the ID
+            if (!eventId && newEvent) {
+                // Check if the response has a different field name for ID
+                const response = newEvent as any;
+                eventId = response.event_id || response.eventId || newEvent.id;
+                eventTitle = response.event_title || response.eventTitle || newEvent.title;
+            }
+
+            if (!eventId) {
+                console.error('❌ [CreateEventModal] No event ID in response:', newEvent);
+                console.error('❌ [CreateEventModal] Available fields:', Object.keys(newEvent || {}));
+                setError('Failed to create event: No event ID received');
+                return;
+            }
+
+            // Invalidate and refetch the events cache to ensure the new event is loaded
+            await queryClient.invalidateQueries({ queryKey: photoKeys.events(pocketId) });
+
+            // Refetch the events data to ensure it's available
+            await queryClient.refetchQueries({ queryKey: photoKeys.events(pocketId) });
+
+            // Now close the modal and navigate
             onEventCreated?.(newEvent);
             onClose();
+
+            const pocketIdSuffix = pocket?.pocket_id.slice(-6) || '';
+            const eventIdSuffix = eventId.slice(-6);
+            const truncatedPocketTitle = pocket?.pocket_title && pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket?.pocket_title || '';
+            const truncatedEventTitle = eventTitle?.length > 50 ? eventTitle.substring(0, 50) + '...' : eventTitle || '';
+
+            // Navigate after the data has been refetched
+            navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}`);
         } catch (err) {
             console.error('Error creating event:', err);
             setError(err instanceof Error ? err.message : 'Failed to create event');
@@ -394,7 +436,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                             className="create-button"
                             disabled={loading || !title.trim()}
                         >
-                            {loading ? 'Creating...' : 'Create Event'}
+                            {loading ? 'Creating Event...' : 'Create Event'}
                         </button>
                     </div>
                 </form>

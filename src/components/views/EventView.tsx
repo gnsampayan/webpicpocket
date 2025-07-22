@@ -439,7 +439,7 @@ const EventView: React.FC = () => {
         const truncatedPocketTitle = pocket?.pocket_title && pocket.pocket_title.length > 50 ? pocket.pocket_title.substring(0, 50) + '...' : pocket?.pocket_title || '';
         const truncatedEventTitle = event.title.length > 50 ? event.title.substring(0, 50) + '...' : event.title;
         const photoShortId = photo.id.slice(-6); // Use last 6 characters like GridPhotoView does
-        navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}/photo/${photoShortId}`);
+        navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}/photo/${photoShortId}`, { state: { from: 'eventView' } });
     };
 
     // Handle options menu toggle
@@ -957,20 +957,39 @@ const EventView: React.FC = () => {
                         )}
                     </h2>
                     {events.length === 0 ? (
-                        <div className="empty-events">
-                            <div className="empty-icon">📅</div>
-                            <h3>No events in this pocket</h3>
-                            <p>This pocket doesn't have any events yet. Create your first event to start sharing photos!</p>
-                            <button className="create-event-button-large" onClick={() => setShowCreateModal(true)}>
-                                <span>+</span>
-                                Create Your First Event
-                            </button>
+                        <div className="empty-state">
+                            <div className="empty-state-content">
+                                <h3>Start your first event</h3>
+                                <p>Events help you organize photos by specific occasions, trips, or moments. Create your first event to start capturing memories!</p>
+                            </div>
+                            <div
+                                className="empty-state-cta"
+                                onClick={() => setShowCreateModal(true)}
+                            >
+                                <div className="cta-content">
+                                    <div className="cta-icon">✨</div>
+                                    <div className="cta-text">
+                                        <span className="cta-title">Create Your First Event</span>
+                                        <span className="cta-subtitle">Click here to get started</span>
+                                    </div>
+                                </div>
+                                <div className="cta-arrow">→</div>
+                            </div>
                         </div>
                     ) : filteredAndSortedEvents.length === 0 ? (
-                        <div className="empty-events">
-                            <div className="empty-icon">🔍</div>
-                            <h3>No events found</h3>
-                            <p>No events match "{searchTerm}"</p>
+                        <div className="empty-state">
+                            <div className="empty-state-icon search-icon">
+                                <div className="search-glass">
+                                    <div className="magnifying-glass">
+                                        <div className="glass-circle"></div>
+                                        <div className="glass-handle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="empty-state-content">
+                                <h3>No events found</h3>
+                                <p>No events match "{searchTerm}". Try a different search term or check your spelling.</p>
+                            </div>
                         </div>
                     ) : (
                         <div className={`events-list ${viewMode === 'list' ? 'events-list-view' : 'events-grid-view'}`}>

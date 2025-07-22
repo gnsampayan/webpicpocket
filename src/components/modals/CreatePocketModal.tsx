@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
 import { useCreatePocketMutation } from '../../hooks/usePhotos';
 import type { Pocket, ContactUser } from '../../types';
-import './CreatePocketModal.css';
+import styles from './CreatePocketModal.module.css';
 import { API_CONFIG } from '../../config/api';
 import env from '../../config/env';
 
@@ -12,10 +12,15 @@ interface CreatePocketModalProps {
     onPocketCreated?: (pocket: Pocket) => void;
 }
 
+type WizardStep = 'members' | 'details';
 
 const API_URL = env.API_URL;
 
 const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, onPocketCreated }) => {
+    // Wizard state
+    const [currentStep, setCurrentStep] = useState<WizardStep>('members');
+
+    // Form state
     const [title, setTitle] = useState('');
     const [memberSearch, setMemberSearch] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<ContactUser[]>([]);
@@ -33,30 +38,49 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
     const [coverPhotoObjectKey, setCoverPhotoObjectKey] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isDragOver, setIsDragOver] = useState(false);
 
     // React Query mutation
     const createPocketMutation = useCreatePocketMutation();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleNextStep = () => {
+        if (currentStep === 'members') {
+            if (selectedMembers.length === 0) {
+                setError('Please add at least one member to create a pocket');
+                return;
+            }
 
-        if (!title.trim()) {
-            setError('Pocket title is required');
-            return;
+            // If only one member, create pocket immediately
+            if (selectedMembers.length === 1) {
+                handleCreatePocket();
+                return;
+            }
+
+            // If multiple members, go to details step
+            setError(null);
+            setCurrentStep('details');
         }
+    };
 
+    const handlePreviousStep = () => {
+        if (currentStep === 'details') {
+            setCurrentStep('members');
+        }
+    };
+
+    const handleCreatePocket = async () => {
         try {
             setLoading(true);
             setError(null);
 
             // Prepare request body
             const requestBody: any = {
-                title: title.trim()
+                members: selectedMembers.map(member => member.id)
             };
 
-            // Add members if selected
-            if (selectedMembers.length > 0) {
-                requestBody.members = selectedMembers.map(member => member.id);
+            // Add title if provided (only for multiple members step)
+            if (title.trim()) {
+                requestBody.title = title.trim();
             }
 
             // Add cover photo object key if available
@@ -69,7 +93,6 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
             // If cover photo is still uploading, wait for it
             if (coverPhotoFile && !coverPhotoObjectKey && coverPhotoUploading) {
                 console.log('⏳ Waiting for cover photo upload to complete...');
-                // Wait for upload to complete (this will be handled by the state changes)
                 return;
             }
 
@@ -77,11 +100,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
             console.log('✅ Pocket created successfully:', newPocket);
 
             // Reset form
-            setTitle('');
-            setMemberSearch('');
-            setSelectedMembers([]);
-            setCoverPhotoFile(null);
-            setCoverPhotoObjectKey(null);
+            resetForm();
 
             // Call callback and close modal
             onPocketCreated?.(newPocket);
@@ -108,9 +127,22 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const resetForm = () => {
+        setCurrentStep('members');
+        setTitle('');
+        setMemberSearch('');
+        setSelectedMembers([]);
+        setCoverPhotoFile(null);
+        setCoverPhotoObjectKey(null);
+        setError(null);
+        setShouldShowDropdown(false);
+        shouldShowDropdownRef.current = false;
+        setShowSearchResults(false);
+        setLoadingContacts(false);
+        currentRequestRef.current = null;
+    };
 
-        const file = e.target.files?.[0];
+    const handleFileChange = async (file: File) => {
         if (file) {
             setCoverPhotoFile(file);
             setCoverPhotoObjectKey(null); // Reset previous object key
@@ -155,6 +187,39 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
     };
 
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileChange(file);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            const file = files[0];
+            // Check if it's an image file
+            if (file.type.startsWith('image/')) {
+                handleFileChange(file);
+            } else {
+                setError('Please select a valid image file for the cover photo.');
+            }
+        }
+    };
+
     const handleClose = () => {
         if (!loading) {
             // Cancel any ongoing request
@@ -163,17 +228,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                 setAbortController(null);
             }
 
-            setTitle('');
-            setMemberSearch('');
-            setSelectedMembers([]);
-            setCoverPhotoFile(null);
-            setCoverPhotoObjectKey(null);
-            setError(null);
-            setShouldShowDropdown(false);
-            shouldShowDropdownRef.current = false;
-            setShowSearchResults(false);
-            setLoadingContacts(false);
-            currentRequestRef.current = null;
+            resetForm();
             onClose();
         }
     };
@@ -189,7 +244,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
 
         // If clicking outside the member search container, hide the dropdown
-        if (!target.closest('.member-search-container')) {
+        if (!target.closest(`.${styles.memberSearchContainer}`)) {
             console.log('🔄 Clicking outside, hiding dropdown');
 
             // Cancel any ongoing request
@@ -214,6 +269,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
         setMemberSearch('');
         setShowSearchResults(false);
+        setError(null); // Clear error when member is added
     };
 
     const handleRemoveMember = (contactId: string) => {
@@ -300,207 +356,383 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
         }
     };
 
+    const getStepTitle = () => {
+        // If only one member selected, show quick create title
+        if (selectedMembers.length === 1) {
+            return 'Quick Create Pocket';
+        }
+
+        switch (currentStep) {
+            case 'members':
+                return 'Add Members';
+            case 'details':
+                return 'Pocket Details';
+            default:
+                return 'Create New Pocket';
+        }
+    };
+
+    const getStepDescription = () => {
+        // If only one member selected, show quick create description
+        if (selectedMembers.length === 1) {
+            return 'Creating a pocket with one person';
+        }
+
+        switch (currentStep) {
+            case 'members':
+                return 'Choose people to share memories with';
+            case 'details':
+                return 'Add a title and cover photo (optional)';
+            default:
+                return '';
+        }
+    };
+
+    const getAvailableContacts = () => {
+        return searchResults.filter(contact => !selectedMembers.find(member => member.id === contact.id));
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="create-pocket-modal-overlay" onClick={handleClose}>
-            <div className="create-pocket-modal" onClick={handleModalClick}>
-                <div className="modal-header">
-                    <h2>Create New Pocket</h2>
-                    <button className="close-button" onClick={handleClose} disabled={loading}>
-                        ✕
-                    </button>
+        <div className={styles.createPocketModalOverlay} onClick={handleClose}>
+            <div className={`${styles.createPocketModal} ${styles.wizardModal}`} onClick={handleModalClick}>
+                <div className={styles.modalHeader}>
+                    <div className={styles.wizardHeader}>
+                        {/* Only show steps if multiple members or no members selected */}
+                        {selectedMembers.length !== 1 ? (
+                            <div className={styles.wizardSteps}>
+                                <div className={`${styles.wizardStep} ${currentStep === 'members' ? 'active' : 'completed'}`}>
+                                    <div className={styles.stepNumber}>1</div>
+                                    <span>Members</span>
+                                </div>
+                                <div className={styles.wizardDivider}></div>
+                                <div className={`${styles.wizardStep} ${currentStep === 'details' ? 'active' : 'pending'}`}>
+                                    <div className={styles.stepNumber}>2</div>
+                                    <span>Details</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div></div>
+                        )}
+                        <button className={styles.closeButton} onClick={handleClose} disabled={loading}>
+                            ✕
+                        </button>
+                    </div>
+                    <div className={styles.wizardTitle}>
+                        <h2>{getStepTitle()}</h2>
+                        <p>{getStepDescription()}</p>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-form">
+                <div className={styles.modalForm}>
                     {error && (
-                        <div className="error-message">
+                        <div className={styles.errorMessage}>
                             <span>❌ {error}</span>
                         </div>
                     )}
 
-                    <div className="form-group">
-                        <label htmlFor="cover-photo">Cover Photo (Optional)</label>
-                        <input
-                            id="cover-photo"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            disabled={loading}
-                        />
-                        {coverPhotoFile && (
-                            <div className="selected-file">
-                                <span>📷 {coverPhotoFile.name}</span>
-                                {coverPhotoUploading && (
-                                    <span className="upload-status">⏳ Uploading...</span>
-                                )}
-                                {coverPhotoObjectKey && !coverPhotoUploading && (
-                                    <span className="upload-status success">✅ Uploaded</span>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setCoverPhotoFile(null);
-                                        setCoverPhotoObjectKey(null);
-                                    }}
-                                    disabled={loading}
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="pocket-title">Pocket Title *</label>
-                        <input
-                            id="pocket-title"
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Enter pocket title"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="pocket-members">Add Members (Optional)</label>
-                        <div className="member-search-container">
-                            <input
-                                ref={memberInputRef}
-                                id="pocket-members"
-                                type="text"
-                                value={memberSearch}
-                                onChange={(e) => setMemberSearch(e.target.value)}
-                                onClick={handleMemberSearchClick}
-                                placeholder="Search contacts by name or username..."
-                                disabled={loading}
-                            />
-                            {shouldShowDropdown && (showSearchResults || loadingContacts) && (
-                                <div
-                                    className="search-results"
-                                    style={{
-                                        top: dropdownPosition.top,
-                                        left: dropdownPosition.left,
-                                        width: dropdownPosition.width
-                                    }}
-                                >
-                                    {loadingContacts ? (
-                                        <div className="search-result-loading">
-                                            <div className="loading-spinner"></div>
-                                            <span>Loading contacts...</span>
-                                        </div>
-                                    ) : searchResults.length > 0 ? (
-                                        searchResults.map((contact) => (
-                                            <div
-                                                key={contact.id}
-                                                className="search-result-item"
-                                                onClick={() => handleMemberSelect(contact)}
-                                            >
-                                                <div className="contact-avatar">
-                                                    {contact.profile_picture?.url_small ? (
-                                                        <img
-                                                            src={contact.profile_picture.url_small.startsWith('http')
-                                                                ? contact.profile_picture.url_small
-                                                                : `https://${contact.profile_picture.url_small}`}
-                                                            alt={`${contact.first_name} ${contact.last_name}`}
-                                                            onError={(e) => {
-                                                                // Fallback to initials if image fails to load
-                                                                e.currentTarget.style.display = 'none';
-                                                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
-                                                                if (fallback) {
-                                                                    fallback.classList.remove('fallback');
-                                                                }
-                                                            }}
-                                                        />
-                                                    ) : null}
-                                                    <div className="avatar-fallback">
-                                                        {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
+                    {/* Step 1: Members */}
+                    {currentStep === 'members' && (
+                        <div className={styles.wizardStepContent}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="pocket-members">Search and add people</label>
+                                <div className={styles.memberSearchContainer}>
+                                    <input
+                                        ref={memberInputRef}
+                                        id="pocket-members"
+                                        type="text"
+                                        value={memberSearch}
+                                        onChange={(e) => setMemberSearch(e.target.value)}
+                                        onClick={handleMemberSearchClick}
+                                        placeholder="Search contacts by name or username..."
+                                        disabled={loading}
+                                    />
+                                    {shouldShowDropdown && (showSearchResults || loadingContacts) && (
+                                        <div
+                                            className={styles.searchResults}
+                                            style={{
+                                                top: dropdownPosition.top,
+                                                left: dropdownPosition.left,
+                                                width: dropdownPosition.width
+                                            }}
+                                        >
+                                            {loadingContacts ? (
+                                                <div className={styles.searchResultLoading}>
+                                                    <div className={styles.loadingSpinner}></div>
+                                                    <span>Loading contacts...</span>
+                                                </div>
+                                            ) : searchResults.length > 0 ? (
+                                                getAvailableContacts().map((contact) => (
+                                                    <div
+                                                        key={contact.id}
+                                                        className={styles.searchResultItem}
+                                                        onClick={() => handleMemberSelect(contact)}
+                                                    >
+                                                        <div className={styles.contactAvatar}>
+                                                            {contact.profile_picture?.url_small ? (
+                                                                <img
+                                                                    src={contact.profile_picture.url_small.startsWith('http')
+                                                                        ? contact.profile_picture.url_small
+                                                                        : `https://${contact.profile_picture.url_small}`}
+                                                                    alt={`${contact.first_name} ${contact.last_name}`}
+                                                                    onError={(e) => {
+                                                                        // Fallback to initials if image fails to load
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        const fallback = e.currentTarget.parentElement?.querySelector(`.${styles.avatarFallback}`);
+                                                                        if (fallback) {
+                                                                            fallback.classList.remove('fallback');
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            ) : null}
+                                                            <div className={styles.avatarFallback}>
+                                                                {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
+                                                            </div>
+                                                        </div>
+                                                        <div className={styles.contactInfo}>
+                                                            <span className={styles.contactName}>
+                                                                {contact.first_name} {contact.last_name}
+                                                            </span>
+                                                            <span className={styles.contactUsername}>
+                                                                @{contact.username}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="contact-info">
-                                                    <span className="contact-name">
-                                                        {contact.first_name} {contact.last_name}
+                                                ))
+                                            ) : (
+                                                <div className={styles.searchResultEmpty}>
+                                                    <span>
+                                                        {searchResults.length > 0 && getAvailableContacts().length === 0
+                                                            ? 'All contacts are already selected'
+                                                            : 'No contacts found'
+                                                        }
                                                     </span>
-                                                    <span className="contact-username">
-                                                        @{contact.username}
-                                                    </span>
+                                                    <small>
+                                                        {searchResults.length > 0 && getAvailableContacts().length === 0
+                                                            ? 'Try removing some members or searching for different people'
+                                                            : 'Try searching with a different name or username'
+                                                        }
+                                                    </small>
                                                 </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="search-result-empty">
-                                            <span>No contacts found</span>
-                                            <small>Try searching with a different name or username</small>
+                                            )}
                                         </div>
                                     )}
                                 </div>
+
+                                {selectedMembers.length > 0 && (
+                                    <div className={styles.selectedMembers}>
+                                        <small>Selected members ({selectedMembers.length}):</small>
+                                        {selectedMembers.map((member) => (
+                                            <div key={member.id} className={styles.selectedMember}>
+                                                <div className={styles.selectedMemberInfo}>
+                                                    <div className={styles.contactAvatar}>
+                                                        {member.profile_picture?.url_small ? (
+                                                            <img
+                                                                src={member.profile_picture.url_small.startsWith('http')
+                                                                    ? member.profile_picture.url_small
+                                                                    : `https://${member.profile_picture.url_small}`}
+                                                                alt={`${member.first_name} ${member.last_name}`}
+                                                                onError={(e) => {
+                                                                    // Fallback to initials if image fails to load
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const fallback = e.currentTarget.parentElement?.querySelector(`.${styles.avatarFallback}`);
+                                                                    if (fallback) {
+                                                                        fallback.classList.remove('fallback');
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <div className={styles.avatarFallback}>
+                                                            {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                                        </div>
+                                                    </div>
+                                                    <span>{member.first_name} {member.last_name}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveMember(member.id)}
+                                                    disabled={loading}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedMembers.length === 1 && (
+                                <div className={styles.singleMemberNotice}>
+                                    <div className={styles.noticeContent}>
+                                        <span className={styles.noticeIcon}>💡</span>
+                                        <div className={styles.noticeText}>
+                                            <strong>Quick Create</strong>
+                                            <p>Since you've added just one person, we'll create the pocket immediately when you click "Create Pocket".</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedMembers.length > 1 && (
+                                <div className={styles.multipleMembersNotice}>
+                                    <div className={styles.noticeContent}>
+                                        <span className={styles.noticeIcon}>✨</span>
+                                        <div className={styles.noticeText}>
+                                            <strong>Multiple Members</strong>
+                                            <p>You can add a title and cover photo in the next step to personalize your pocket.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </div>
+                    )}
 
-                        {selectedMembers.length > 0 && (
-                            <div className="selected-members">
-                                <small>Selected members:</small>
-                                {selectedMembers.map((member) => (
-                                    <div key={member.id} className="selected-member">
-                                        <div className="selected-member-info">
-                                            <div className="contact-avatar">
-                                                {member.profile_picture?.url_small ? (
-                                                    <img
-                                                        src={member.profile_picture.url_small.startsWith('http')
-                                                            ? member.profile_picture.url_small
-                                                            : `https://${member.profile_picture.url_small}`}
-                                                        alt={`${member.first_name} ${member.last_name}`}
-                                                        onError={(e) => {
-                                                            // Fallback to initials if image fails to load
-                                                            e.currentTarget.style.display = 'none';
-                                                            const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback');
-                                                            if (fallback) {
-                                                                fallback.classList.remove('fallback');
-                                                            }
-                                                        }}
-                                                    />
-                                                ) : null}
-                                                <div className="avatar-fallback">
-                                                    {member.first_name.charAt(0)}{member.last_name.charAt(0)}
-                                                </div>
-                                            </div>
-                                            <span>{member.first_name} {member.last_name}</span>
+                    {/* Step 2: Details (only for multiple members) */}
+                    {currentStep === 'details' && (
+                        <div className={styles.wizardStepContent}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="cover-photo">Cover Photo (Optional)</label>
+                                <input
+                                    id="cover-photo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileInputChange}
+                                    disabled={loading}
+                                    style={{ display: 'none' }}
+                                />
+                                <div
+                                    className={`${styles.uploadArea} ${isDragOver ? styles.dragOver : ''}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => document.getElementById('cover-photo')?.click()}
+                                >
+                                    <div className={styles.uploadContent}>
+                                        <div className={styles.uploadIcon}>📷</div>
+                                        <div className={styles.uploadText}>
+                                            <span className={styles.uploadTitle}>Click to upload or drag & drop</span>
+                                            <span className={styles.uploadSubtitle}>Supports: JPG, PNG, GIF (max 10MB)</span>
                                         </div>
+                                    </div>
+                                </div>
+                                {coverPhotoFile && (
+                                    <div className={styles.selectedFile}>
+                                        <span>📷 {coverPhotoFile.name}</span>
+                                        {coverPhotoUploading && (
+                                            <span className={styles.uploadStatus}>⏳ Uploading...</span>
+                                        )}
+                                        {coverPhotoObjectKey && !coverPhotoUploading && (
+                                            <span className={`${styles.uploadStatus} ${styles.success}`}>✅ Uploaded</span>
+                                        )}
                                         <button
                                             type="button"
-                                            onClick={() => handleRemoveMember(member.id)}
+                                            onClick={() => {
+                                                setCoverPhotoFile(null);
+                                                setCoverPhotoObjectKey(null);
+                                            }}
                                             disabled={loading}
                                         >
                                             ✕
                                         </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    <div className="modal-actions">
+                            <div className={styles.formGroup}>
+                                <label htmlFor="pocket-title">Pocket Title (Optional)</label>
+                                <input
+                                    id="pocket-title"
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="Give your pocket a name..."
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div className={styles.selectedMembersSummary}>
+                                <small>Creating pocket with {selectedMembers.length} members:</small>
+                                <div className={styles.membersAvatars}>
+                                    {selectedMembers.map((member) => (
+                                        <div key={member.id} className={styles.memberAvatarSmall}>
+                                            {member.profile_picture?.url_small ? (
+                                                <img
+                                                    src={member.profile_picture.url_small.startsWith('http')
+                                                        ? member.profile_picture.url_small
+                                                        : `https://${member.profile_picture.url_small}`}
+                                                    alt={`${member.first_name} ${member.last_name}`}
+                                                    onError={(e) => {
+                                                        // Fallback to initials if image fails to load
+                                                        e.currentTarget.style.display = 'none';
+                                                        const fallback = e.currentTarget.parentElement?.querySelector(`.${styles.avatarFallback}`);
+                                                        if (fallback) {
+                                                            fallback.classList.remove('fallback');
+                                                        }
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div className={styles.avatarFallback}>
+                                                {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.modalActions}>
+                    <div className={styles.actionButtons}>
+                        {/* Back button (only on details step) */}
+                        {currentStep === 'details' && (
+                            <button
+                                type="button"
+                                className={styles.backButton}
+                                onClick={handlePreviousStep}
+                                disabled={loading}
+                            >
+                                ← Back
+                            </button>
+                        )}
+
+                        {/* Cancel button */}
                         <button
                             type="button"
-                            className="cancel-button"
+                            className={styles.cancelButton}
                             onClick={handleClose}
                             disabled={loading}
                         >
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            className="create-button"
-                            disabled={loading || !title.trim() || (!!coverPhotoFile && coverPhotoUploading)}
-                        >
-                            {loading ? 'Creating...' :
-                                coverPhotoFile && coverPhotoUploading ? 'Waiting for upload...' :
-                                    'Create Pocket'}
-                        </button>
+
+                        {/* Primary action button */}
+                        {currentStep === 'members' ? (
+                            <button
+                                type="button"
+                                className={styles.nextButton}
+                                onClick={handleNextStep}
+                                disabled={loading || selectedMembers.length === 0}
+                            >
+                                {selectedMembers.length === 1 ? 'Create Pocket' :
+                                    selectedMembers.length > 1 ? 'Next →' :
+                                        'Add Members'}
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className={styles.createButton}
+                                onClick={handleCreatePocket}
+                                disabled={loading || (!!coverPhotoFile && coverPhotoUploading)}
+                            >
+                                {loading ? 'Creating...' :
+                                    coverPhotoFile && coverPhotoUploading ? 'Waiting for upload...' :
+                                        'Create Pocket'}
+                            </button>
+                        )}
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     );

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Photo, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
 import MembersModal from '../modals/MembersModal';
-import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation } from '../../hooks/usePhotos';
+import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation, useAddMediaMutation } from '../../hooks/usePhotos';
 import { getInitialSortFilter, saveSortFilter, sortPhotos } from '../../utils/sorting';
 import './GridPhotoView.css';
 
@@ -17,11 +17,17 @@ const GridPhotoView: React.FC = () => {
     const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
     const [showMembersModal, setShowMembersModal] = useState(false);
 
+    // Drag and drop state
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // React Query hooks - using shared cached data
     const { pocket, event, isLoading: isLoadingPocketEvent, error: pocketEventError } = usePocketAndEventFromUrl(pocketTitle, eventTitle);
     const { data: eventData, isLoading: isLoadingEventPhotos, error: eventPhotosError } = useEventPhotos(event?.id);
     const favoriteMutation = useFavoriteMutation();
     const deletePhotoMutation = useDeletePhotoMutation();
+    const addMediaMutation = useAddMediaMutation();
 
     // Combined loading and error states
     const isLoading = isLoadingPocketEvent || isLoadingEventPhotos;
@@ -105,7 +111,7 @@ const GridPhotoView: React.FC = () => {
         // Navigate to the new photo details route
         if (pocketTitle && eventTitle) {
             const shortId = photo.id.slice(-6);
-            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+            navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`, { state: { from: 'gridPhotoView' } });
         }
     };
 
@@ -185,6 +191,76 @@ const GridPhotoView: React.FC = () => {
     // Handle viewing all members
     const handleViewAllMembers = () => {
         setShowMembersModal(true);
+    };
+
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+
+        if (!event?.id || !eventData?.current_user_add_permissions) {
+            return;
+        }
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+
+        // Filter for image files
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        if (imageFiles.length === 0) {
+            alert('Please select image files only.');
+            return;
+        }
+
+        await handleFileUpload(imageFiles);
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        await handleFileUpload(files);
+
+        // Clear the input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileUpload = async (files: File[]) => {
+        if (!event?.id) return;
+
+        setIsUploading(true);
+        try {
+            await addMediaMutation.mutateAsync({
+                eventId: event.id,
+                mediaFiles: files
+            });
+
+            // Refresh the page to show new photos
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to upload files:', error);
+            alert('Failed to upload files. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleEmptyStateClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
     };
 
     // Get photos to show based on loading progress and sorting
@@ -303,7 +379,10 @@ const GridPhotoView: React.FC = () => {
                                         <div
                                             key={member.id}
                                             className="member-avatar member-avatar--clickable"
-                                            onClick={() => handleMemberClick(member)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMemberClick(member);
+                                            }}
                                             title={`View ${member.first_name}'s profile`}
                                         >
                                             <img
@@ -320,7 +399,10 @@ const GridPhotoView: React.FC = () => {
                                         <div
                                             key={member.id}
                                             className="member-avatar member-avatar--clickable"
-                                            onClick={() => handleMemberClick(member)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMemberClick(member);
+                                            }}
                                             title={`View ${member.first_name}'s profile`}
                                         >
                                             <img
@@ -335,7 +417,10 @@ const GridPhotoView: React.FC = () => {
                                     {totalMemberCount > 3 && (
                                         <span
                                             className="more-members more-members--clickable"
-                                            onClick={handleViewAllMembers}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewAllMembers();
+                                            }}
                                             title={`View all ${totalMemberCount} members`}
                                         >
                                             +{totalMemberCount - 3}
@@ -347,7 +432,10 @@ const GridPhotoView: React.FC = () => {
                         {eventData.current_user_add_permissions && (
                             <button
                                 className="add-photos-button"
-                                onClick={() => setIsAddMediaModalOpen(true)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsAddMediaModalOpen(true);
+                                }}
                             >
                                 <span>+</span>
                             </button>
@@ -375,24 +463,77 @@ const GridPhotoView: React.FC = () => {
             {/* Main Content - Only show grid */}
             <main className="grid-photo-content">
                 {eventData.photos.length === 0 ? (
-                    <div className="empty-photos">
-                        <div className="empty-icon">📷</div>
-                        <h3>No photos in this event</h3>
-                        <p>This event doesn't have any photos yet.</p>
-                        {eventData.current_user_add_permissions && (
-                            <button
-                                className="add-photos-button-large"
-                                onClick={() => setIsAddMediaModalOpen(true)}
-                            >
-                                <span>+</span>
-                                Add Your First Photo
-                            </button>
+                    <div
+                        className={`empty-photos ${isDragOver ? 'drag-over' : ''} ${isUploading ? 'uploading' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (eventData.current_user_add_permissions) {
+                                handleEmptyStateClick();
+                            }
+                        }}
+                    >
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            style={{ display: 'none' }}
+                        />
+
+                        {isUploading ? (
+                            <>
+                                <div className="uploading-icon">⏳</div>
+                                <h3>Uploading photos...</h3>
+                                <p>Please wait while your photos are being uploaded.</p>
+                            </>
+                        ) : isDragOver ? (
+                            <>
+                                <div className="drag-over-icon">📁</div>
+                                <h3>Drop your photos here</h3>
+                                <p>Release to upload your photos to this event.</p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="empty-icon">📷</div>
+                                <h3>No photos in this event</h3>
+                                <p>
+                                    {eventData.current_user_add_permissions
+                                        ? "Start capturing memories by adding your first photos!"
+                                        : "This event doesn't have any photos yet."
+                                    }
+                                </p>
+                                {eventData.current_user_add_permissions && (
+                                    <div
+                                        className="empty-state-cta"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEmptyStateClick();
+                                        }}
+                                    >
+                                        <div className="cta-content">
+                                            <div className="cta-icon">✨</div>
+                                            <div className="cta-text">
+                                                <span className="cta-title">Add Your First Photo</span>
+                                                <span className="cta-subtitle">Click here or drag and drop</span>
+                                            </div>
+                                        </div>
+                                        <div className="cta-arrow">→</div>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 ) : (
                     <div className="photos-grid">
                         {getPhotosToShow().map((photo) => (
-                            <div key={photo.id} className="photo-item" onClick={() => handlePhotoClick(photo)}>
+                            <div key={photo.id} className="photo-item" onClick={(e) => {
+                                e.stopPropagation();
+                                handlePhotoClick(photo);
+                            }}>
                                 <img
                                     src={getPhotoUrl(photo)}
                                     alt="Event photo"
