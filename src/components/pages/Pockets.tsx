@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Pockets.css';
+import styles from './Pockets.module.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import CreatePocketModal from '../modals/CreatePocketModal';
@@ -252,11 +252,11 @@ const Pockets: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="media-page">
+            <div className={styles.mediaPage}>
                 <NavBar />
-                <main className="main-content">
-                    <div className="loading-state">
-                        <div className="loading-spinner"></div>
+                <main className={styles.mainContent}>
+                    <div className={styles.loadingState}>
+                        <div className={styles.loadingSpinner}></div>
                         <p>Loading pockets...</p>
                     </div>
                 </main>
@@ -267,15 +267,15 @@ const Pockets: React.FC = () => {
     if (error) {
         const errorMessage = typeof error === 'string' ? error : error?.message || 'Failed to load pockets';
         return (
-            <div className="media-page">
+            <div className={styles.mediaPage}>
                 <NavBar />
-                <main className="main-content">
-                    <div className="error-state">
+                <main className={styles.mainContent}>
+                    <div className={styles.errorState}>
                         <h2>Error Loading Pockets</h2>
                         <p>{errorMessage}</p>
                         {errorMessage.includes('verify your email') && (
                             <button
-                                className="verify-email-button"
+                                className={styles.verifyEmailButton}
                                 onClick={() => {
                                     setEmailVerifiedCallback(() => () => {
                                         window.location.reload();
@@ -286,7 +286,7 @@ const Pockets: React.FC = () => {
                                 Verify Email
                             </button>
                         )}
-                        <button onClick={() => window.location.reload()} className="retry-button">
+                        <button onClick={() => window.location.reload()} className={styles.retryButton}>
                             Try Again
                         </button>
                     </div>
@@ -296,45 +296,45 @@ const Pockets: React.FC = () => {
     }
 
     return (
-        <div className="media-page">
+        <div className={styles.mediaPage}>
             <NavBar />
 
             {/* Main Content */}
-            <main className="main-content">
+            <main className={styles.mainContent}>
                 {/* Header */}
-                <header className="media-header">
-                    <div className="header-left">
+                <header className={styles.mediaHeader}>
+                    <div className={styles.headerLeft}>
                         <h1>Pockets</h1>
                         <p>Manage and organize your photos, videos, pockets, events, and members</p>
                     </div>
-                    <div className="header-right">
+                    <div className={styles.headerRight}>
                         <button
-                            className="upload-button"
+                            className={styles.uploadButton}
                             onClick={() => setShowCreateModal(true)}
                         >
                             <span>+</span>
                             Create Pocket
                         </button>
-                        <div className="user-menu">
+                        <div className={styles.userMenu}>
                             <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>
 
                 {/* Controls */}
-                <section className="controls-section">
-                    <div className="controls-left">
-                        <div className="search-box">
+                <section className={styles.controlsSection}>
+                    <div className={styles.controlsLeft}>
+                        <div className={styles.searchBox}>
                             <input
                                 type="text"
                                 placeholder="Search pockets..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <span className="search-icon">🔍</span>
+                            <span className={styles.searchIcon}>🔍</span>
                             {searchQuery.trim() && (
                                 <button
-                                    className="clear-search-button"
+                                    className={styles.clearSearchButton}
                                     onClick={() => setSearchQuery('')}
                                     type="button"
                                     aria-label="Clear search"
@@ -344,22 +344,22 @@ const Pockets: React.FC = () => {
                             )}
                         </div>
                     </div>
-                    <div className="controls-right">
-                        <div className="view-toggle">
+                    <div className={styles.controlsRight}>
+                        <div className={styles.viewToggle}>
                             <button
-                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
+                                className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
                                 onClick={() => handleViewModeChange('grid')}
                             >
                                 <span>⊞</span>
                             </button>
                             <button
-                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                                className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
                                 onClick={() => handleViewModeChange('list')}
                             >
                                 <span>☰</span>
                             </button>
                         </div>
-                        <div className="filter-dropdown">
+                        <div className={styles.filterDropdown}>
                             <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
                                 <option value="newest-updated">Most Recently Updated</option>
                                 <option value="oldest-updated">Least Recently Updated</option>
@@ -377,12 +377,12 @@ const Pockets: React.FC = () => {
                 </section>
 
                 {/* Pockets Section */}
-                <section className="albums-section">
+                <section className={styles.albumsSection}>
                     <h2>
                         {searchQuery.trim() ? (
                             <>
                                 Search Results
-                                <span className="search-results-info">
+                                <span className={styles.searchResultsInfo}>
                                     {sortedPockets.length} pocket{sortedPockets.length !== 1 ? 's' : ''} found for "{searchQuery}"
                                 </span>
                             </>
@@ -391,50 +391,50 @@ const Pockets: React.FC = () => {
                         )}
                     </h2>
                     {sortedPockets.length === 0 ? (
-                        <div className="empty-state">
+                        <div className={styles.emptyState}>
                             {searchQuery.trim() ? (
                                 <>
-                                    <div className="empty-state-icon search-icon">
-                                        <div className="search-glass">
-                                            <div className="magnifying-glass">
-                                                <div className="glass-circle"></div>
-                                                <div className="glass-handle"></div>
+                                    <div className={`${styles.emptyStateIcon} ${styles.searchIcon}`}>
+                                        <div className={styles.searchGlass}>
+                                            <div className={styles.magnifyingGlass}>
+                                                <div className={styles.glassCircle}></div>
+                                                <div className={styles.glassHandle}></div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="empty-state-content">
+                                    <div className={styles.emptyStateContent}>
                                         <h3>No pockets found</h3>
                                         <p>No pockets match "{searchQuery}". Try a different search term or check your spelling.</p>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="empty-state-content">
+                                    <div className={styles.emptyStateContent}>
                                         <h3>Start your first pocket</h3>
                                         <p>Pockets help you organize and share your memories with friends and family. Create your first pocket to get started!</p>
                                     </div>
                                     <div
-                                        className="empty-state-cta"
+                                        className={styles.emptyStateCta}
                                         onClick={() => setShowCreateModal(true)}
                                     >
-                                        <div className="cta-content">
-                                            <div className="cta-icon">✨</div>
-                                            <div className="cta-text">
-                                                <span className="cta-title">Create Your First Pocket</span>
-                                                <span className="cta-subtitle">Click here to get started</span>
+                                        <div className={styles.ctaContent}>
+                                            <div className={styles.ctaIcon}>✨</div>
+                                            <div className={styles.ctaText}>
+                                                <span className={styles.ctaTitle}>Create Your First Pocket</span>
+                                                <span className={styles.ctaSubtitle}>Click here to get started</span>
                                             </div>
                                         </div>
-                                        <div className="cta-arrow">→</div>
+                                        <div className={styles.ctaArrow}>→</div>
                                     </div>
                                 </>
                             )}
                         </div>
                     ) : (
-                        <div className={`pockets-container ${viewMode === 'list' ? 'pockets-list' : 'albums-grid'}`}>
+                        <div className={`${styles.pocketsContainer} ${viewMode === 'list' ? styles.pocketsList : styles.albumsGrid}`}>
                             {sortedPockets.map((pocket, index) => (
                                 <div
                                     key={pocket.pocket_id}
-                                    className={`pocket-card ${viewMode === 'list' ? 'pocket-list-item' : 'album-card'}`}
+                                    className={`${styles.pocketCard} ${viewMode === 'list' ? styles.pocketListItem : styles.albumCard}`}
                                     onClick={() => handlePocketClick(pocket)}
                                     style={{
                                         cursor: 'pointer',
@@ -444,39 +444,39 @@ const Pockets: React.FC = () => {
                                     <img
                                         src={getCoverPhotoUrl(pocket)}
                                         alt={pocket.pocket_title}
-                                        className={viewMode === 'list' ? 'pocket-list-cover' : 'album-cover'}
+                                        className={viewMode === 'list' ? styles.pocketListCover : styles.albumCover}
                                         onError={(e) => {
                                             // Fallback if the cover photo fails to load
                                             e.currentTarget.src = DEFAULT_COVER_PLACEHOLDER;
                                         }}
                                     />
-                                    <div className={viewMode === 'list' ? 'pocket-list-info' : 'album-info'}>
+                                    <div className={viewMode === 'list' ? styles.pocketListInfo : styles.albumInfo}>
                                         <h3>{pocket.pocket_title}</h3>
                                         {viewMode === 'list' && (
                                             <>
-                                                <p className="member-count">{pocket.pocket_members.length} members</p>
-                                                <div className="pocket-list-dates">
-                                                    <span className="pocket-updated">
+                                                <p className={styles.memberCount}>{pocket.pocket_members.length} members</p>
+                                                <div className={styles.pocketListDates}>
+                                                    <span className={styles.pocketUpdated}>
                                                         Updated: {formatDate(pocket.pocket_updated_at)}
                                                     </span>
-                                                    <span className="pocket-activity">
+                                                    <span className={styles.pocketActivity}>
                                                         Last Activity: {formatDate(pocket.pocket_last_activity_at)}
                                                     </span>
-                                                    <span className="pocket-created">
+                                                    <span className={styles.pocketCreated}>
                                                         Created: {formatDate(pocket.pocket_created_at)}
                                                     </span>
                                                 </div>
                                             </>
                                         )}
                                         {viewMode === 'grid' && (
-                                            <div className="pocket-dates">
-                                                <p className="pocket-updated">
+                                            <div className={styles.pocketDates}>
+                                                <p className={styles.pocketUpdated}>
                                                     Updated: {formatDate(pocket.pocket_updated_at)}
                                                 </p>
-                                                <p className="pocket-activity">
+                                                <p className={styles.pocketActivity}>
                                                     Last Activity: {formatDate(pocket.pocket_last_activity_at)}
                                                 </p>
-                                                <p className="pocket-created">
+                                                <p className={styles.pocketCreated}>
                                                     Created: {formatDate(pocket.pocket_created_at)}
                                                 </p>
                                             </div>
@@ -484,16 +484,16 @@ const Pockets: React.FC = () => {
                                     </div>
 
                                     {/* Member Avatars Section */}
-                                    <div className="pocket-members">
+                                    <div className={styles.pocketMembers}>
                                         {viewMode === 'grid' && (
-                                            <span className="member-count">{pocket.pocket_members.length} members</span>
+                                            <span className={styles.memberCount}>{pocket.pocket_members.length} members</span>
                                         )}
-                                        <div className="member-avatars">
+                                        <div className={styles.memberAvatars}>
                                             {/* Show up to 3 member avatars */}
                                             {pocket.pocket_members?.slice(0, 3).map((member) => (
                                                 <div
                                                     key={member.id}
-                                                    className="member-avatar member-avatar--clickable"
+                                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // Prevent pocket card click
                                                         navigate(`/profile/${member.id}`);
@@ -512,7 +512,7 @@ const Pockets: React.FC = () => {
                                             {/* Show "+X" if more than 3 members */}
                                             {pocket.pocket_members.length > 3 && (
                                                 <span
-                                                    className="more-members more-members--clickable"
+                                                    className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // Prevent pocket card click
                                                         handleViewAllMembers(pocket);
@@ -527,7 +527,7 @@ const Pockets: React.FC = () => {
 
                                     {/* Options Button */}
                                     <button
-                                        className="pocket-options-button"
+                                        className={styles.pocketOptionsButton}
                                         onClick={(e) => handleOptionsClick(e, pocket.pocket_id)}
                                     >
                                         ⋯
@@ -535,40 +535,40 @@ const Pockets: React.FC = () => {
 
                                     {/* Options Menu */}
                                     {openOptionsMenu === pocket.pocket_id && (
-                                        <div className="pocket-options-menu">
-                                            <div className="options-menu-item" onClick={(e) => {
+                                        <div className={styles.pocketOptionsMenu}>
+                                            <div className={styles.optionsMenuItem} onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOptionSelect('add-photos', pocket)
                                             }}>
-                                                <span className="option-icon">📸</span>
+                                                <span className={styles.optionIcon}>📸</span>
                                                 Add Photos
                                             </div>
-                                            <div className="options-menu-item" onClick={(e) => {
+                                            <div className={styles.optionsMenuItem} onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOptionSelect('add-people', pocket)
                                             }}>
-                                                <span className="option-icon">👥</span>
+                                                <span className={styles.optionIcon}>👥</span>
                                                 Add People
                                             </div>
-                                            <div className="options-menu-item" onClick={(e) => {
+                                            <div className={styles.optionsMenuItem} onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOptionSelect('share', pocket)
                                             }}>
-                                                <span className="option-icon">📤</span>
+                                                <span className={styles.optionIcon}>📤</span>
                                                 Share
                                             </div>
-                                            <div className="options-menu-item" onClick={(e) => {
+                                            <div className={styles.optionsMenuItem} onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOptionSelect('edit', pocket)
                                             }}>
-                                                <span className="option-icon">✏️</span>
+                                                <span className={styles.optionIcon}>✏️</span>
                                                 Edit
                                             </div>
-                                            <div className="options-menu-item" onClick={(e) => {
+                                            <div className={styles.optionsMenuItem} onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOptionSelect('leave', pocket)
                                             }}>
-                                                <span className="option-icon">🚪</span>
+                                                <span className={styles.optionIcon}>🚪</span>
                                                 Leave Pocket
                                             </div>
                                         </div>

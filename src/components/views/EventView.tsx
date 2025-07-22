@@ -374,6 +374,9 @@ const EventView: React.FC = () => {
 
     // Handle back to pockets view
     const handleBackToPockets = () => {
+        // Clear last selected event card when navigating away
+        sessionStorage.removeItem('last-selected-event-card');
+        setLastSelectedEventCardState(null);
         navigate('/pockets');
     };
 
@@ -996,8 +999,6 @@ const EventView: React.FC = () => {
                                 </button>
                             )}
                         </div>
-                    </div>
-                    <div className={styles.controlsRight}>
                         <div className={styles.inheritedToggle}>
                             <label className={styles.toggleLabel}>
                                 <input
@@ -1009,6 +1010,8 @@ const EventView: React.FC = () => {
                                 <span className={styles.toggleText}>Hide Inherited</span>
                             </label>
                         </div>
+                    </div>
+                    <div className={styles.controlsRight}>
                         <div className={styles.viewToggle}>
                             <button
                                 className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}

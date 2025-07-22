@@ -27,6 +27,8 @@ const NavBar: React.FC = () => {
     // Handle Pockets navigation - always go to main pockets page
     const handlePocketsClick = (e: React.MouseEvent) => {
         e.preventDefault();
+        // Clear last selected event card when navigating to pockets
+        sessionStorage.removeItem('last-selected-event-card');
         navigate('/pockets');
     };
 
