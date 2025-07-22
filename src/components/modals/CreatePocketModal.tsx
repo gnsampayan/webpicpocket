@@ -73,6 +73,13 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
             setLoading(true);
             setError(null);
 
+            // Validate title is required for multiple members
+            if (selectedMembers.length > 1 && !title.trim()) {
+                setError('Please enter a pocket title');
+                setLoading(false);
+                return;
+            }
+
             // Prepare request body
             const requestBody: any = {
                 members: selectedMembers.map(member => member.id)
@@ -382,7 +389,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
             case 'members':
                 return 'Choose people to share memories with';
             case 'details':
-                return 'Add a title and cover photo (optional)';
+                return 'Add a title (required) and cover photo (optional)';
             default:
                 return '';
         }
@@ -640,7 +647,7 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label htmlFor="pocket-title">Pocket Title (Optional)</label>
+                                <label htmlFor="pocket-title">Pocket Title</label>
                                 <input
                                     id="pocket-title"
                                     type="text"
@@ -724,11 +731,12 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
                                 type="button"
                                 className={styles.createButton}
                                 onClick={handleCreatePocket}
-                                disabled={loading || (!!coverPhotoFile && coverPhotoUploading)}
+                                disabled={loading || (!!coverPhotoFile && coverPhotoUploading) || (selectedMembers.length > 1 && !title.trim())}
                             >
                                 {loading ? 'Creating...' :
                                     coverPhotoFile && coverPhotoUploading ? 'Waiting for upload...' :
-                                        'Create Pocket'}
+                                        selectedMembers.length > 1 && !title.trim() ? 'Enter title...' :
+                                            'Create Pocket'}
                             </button>
                         )}
                     </div>
