@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './EventView.css';
+import styles from './EventView.module.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import CreateEventModal from '../modals/CreateEventModal';
@@ -62,6 +62,7 @@ const EventView: React.FC = () => {
 
     // Refs for event cards to handle scrolling
     const eventCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const mainContentRef = useRef<HTMLDivElement | null>(null);
 
     // Function to calculate how many photos can fit in the container
     const calculateMaxPhotos = () => {
@@ -307,31 +308,20 @@ const EventView: React.FC = () => {
 
     // Handle scroll positioning to last selected event card
     useEffect(() => {
-        if (events.length > 0 && lastSelectedEventCard) {
+        if (events.length > 0 && lastSelectedEventCard && mainContentRef.current) {
             console.log('🔄 Scrolling to last selected event:', lastSelectedEventCard);
 
-            // Small delay to ensure DOM has updated and layout is complete
-            const timer = setTimeout(() => {
+            // Use requestAnimationFrame to ensure DOM has been updated
+            requestAnimationFrame(() => {
                 const eventCardElement = eventCardRefs.current[lastSelectedEventCard];
+                const scrollContainer = mainContentRef.current;
 
-                if (eventCardElement) {
-                    console.log('📍 Found event card element, attempting to scroll to it');
-
-                    // Find the scrollable container - likely the main content area
-                    let scrollContainer = eventCardElement.closest('.main-content');
-                    if (!scrollContainer) {
-                        // Fallback to other possible containers
-                        scrollContainer = eventCardElement.closest('.events-section');
-                        if (!scrollContainer) {
-                            scrollContainer = document.documentElement;
-                        }
-                    }
-
-                    console.log('📍 Scroll container found:', scrollContainer.className || 'documentElement');
+                if (eventCardElement && scrollContainer) {
+                    console.log('📍 Found event card element and scroll container, attempting to scroll to it');
 
                     // Get container's scroll properties
-                    const containerScrollTop = scrollContainer.scrollTop || 0;
-                    const containerHeight = scrollContainer.clientHeight || window.innerHeight;
+                    const containerScrollTop = scrollContainer.scrollTop;
+                    const containerHeight = scrollContainer.clientHeight;
                     const containerScrollHeight = scrollContainer.scrollHeight;
 
                     console.log('📍 Container scroll top:', containerScrollTop);
@@ -355,51 +345,24 @@ const EventView: React.FC = () => {
                     console.log('📍 Target scroll top:', targetScrollTop);
                     console.log('📍 Safe scroll top:', safeScrollTop);
 
-                    // Scroll the container
-                    if (scrollContainer === document.documentElement) {
-                        // Use window scroll methods for document with smooth animation
-                        window.scrollTo({
-                            top: safeScrollTop,
-                            left: 0,
-                            behavior: 'smooth'
-                        });
-                    } else {
-                        // Use element scroll methods for containers with smooth animation
-                        scrollContainer.scrollTo({
-                            top: safeScrollTop,
-                            left: 0,
-                            behavior: 'smooth'
-                        });
-                    }
-
-                    // Also try scrollIntoView as a fallback with smooth animation
-                    try {
-                        eventCardElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center',
-                            inline: 'nearest'
-                        });
-                    } catch (e) {
-                        eventCardElement.scrollIntoView(false);
-                    }
+                    // Scroll the main content container instantly
+                    scrollContainer.scrollTop = safeScrollTop;
 
                     // Verify the scroll worked
-                    setTimeout(() => {
-                        const newScrollTop = scrollContainer.scrollTop || window.pageYOffset || document.documentElement.scrollTop;
-                        console.log('📍 New scroll position:', newScrollTop);
-                        if (Math.abs(newScrollTop - safeScrollTop) < 50) {
-                            console.log('✅ Successfully scrolled to event card');
-                        } else {
-                            console.log('❌ Scroll verification failed');
-                            console.log('📍 Expected:', safeScrollTop, 'Got:', newScrollTop);
-                        }
-                    }, 800); // Increased timeout to allow smooth scroll animation to complete
+                    const newScrollTop = scrollContainer.scrollTop;
+                    console.log('📍 New scroll position:', newScrollTop);
+                    if (Math.abs(newScrollTop - safeScrollTop) < 50) {
+                        console.log('✅ Successfully scrolled to event card');
+                    } else {
+                        console.log('❌ Scroll verification failed');
+                        console.log('📍 Expected:', safeScrollTop, 'Got:', newScrollTop);
+                    }
                 } else {
-                    console.log('❌ Event card element not found');
+                    console.log('❌ Event card element or scroll container not found');
+                    console.log('Event card element:', !!eventCardElement);
+                    console.log('Scroll container:', !!scrollContainer);
                 }
-            }, 500);
-
-            return () => clearTimeout(timer);
+            });
         }
     }, [events, lastSelectedEventCard]);
 
@@ -620,7 +583,7 @@ const EventView: React.FC = () => {
         const totalMemberCount = (pocket?.pocket_members?.length || 0) + (event.additional_member_count || 0);
 
         return (
-            <div key={event.id} className={`event-card ${viewMode === 'list' ? 'event-list-item' : ''}`}
+            <div key={event.id} className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
                 onClick={() => {
                     handleEventCardSelection(event.id);
                     handleOpenGridPhotoView(event);
@@ -630,10 +593,10 @@ const EventView: React.FC = () => {
                     zIndex: viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1
                 }}>
                 {/* Event Header */}
-                <div className="event-header">
-                    <div className="event-title-section">
+                <div className={styles.eventHeader}>
+                    <div className={styles.eventTitleSection}>
                         <h3
-                            className="event-title clickable-title"
+                            className={`${styles.eventTitle} clickable-title`}
                             onClick={() => {
                                 handleEventCardSelection(event.id);
                                 handleOpenGridPhotoView(event);
@@ -642,14 +605,14 @@ const EventView: React.FC = () => {
                             {event.title}
                         </h3>
                     </div>
-                    <div className="event-meta">
-                        <span className="event-date">{totalPhotoCount} photos</span>
+                    <div className={styles.eventMeta}>
+                        <span className={styles.eventDate}>{totalPhotoCount} photos</span>
                         {formatDateRange(event.date_range_start, event.date_range_end) && (
-                            <span className="event-date-range">{formatDateRange(event.date_range_start, event.date_range_end)}</span>
+                            <span className={styles.eventDateRange}>{formatDateRange(event.date_range_start, event.date_range_end)}</span>
                         )}
-                        <span className="event-updated">Updated {formatDate(event.updated_at)}</span>
+                        <span className={styles.eventUpdated}>Updated {formatDate(event.updated_at)}</span>
                         <button
-                            className="event-options-button"
+                            className={styles.eventOptionsButton}
                             onClick={(e) => handleOptionsClick(e, event.id)}
                         >
                             <span>⋯</span>
@@ -658,15 +621,15 @@ const EventView: React.FC = () => {
                 </div>
 
                 {/* Event Photo Preview */}
-                <div className="event-photos-preview">
+                <div className={styles.eventPhotosPreview}>
                     {previewPhotos.length > 0 ? (
                         viewMode === 'list' ? (
                             // List view: single row of photos
-                            <div className="photo-row" ref={photoRowRef}>
+                            <div className={styles.photoRow} ref={photoRowRef}>
                                 {previewPhotos.slice(0, maxPhotosInRow).map((photo, index) => (
                                     <div
                                         key={index}
-                                        className="row-photo"
+                                        className={styles.rowPhoto}
                                         onClick={(e) => {
                                             handleEventCardSelection(event.id);
                                             handleOpenPhotoDetails(e, photo, event);
@@ -683,7 +646,7 @@ const EventView: React.FC = () => {
                                         {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
                                             (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
                                                 <div
-                                                    className="more-photos-overlay"
+                                                    className={styles.morePhotosOverlay}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleEventCardSelection(event.id);
@@ -698,11 +661,11 @@ const EventView: React.FC = () => {
                             </div>
                         ) : (
                             // Grid view: existing layout
-                            <div className="photo-grid">
+                            <div className={styles.photoGrid}>
                                 {/* Large photo on the left */}
                                 {previewPhotos[0] && (
                                     <div
-                                        className="large-photo"
+                                        className={styles.largePhoto}
                                         onClick={(e) => {
                                             handleEventCardSelection(event.id);
                                             handleOpenPhotoDetails(e, previewPhotos[0], event);
@@ -719,11 +682,11 @@ const EventView: React.FC = () => {
                                 )}
 
                                 {/* 2x2 grid on the right */}
-                                <div className="small-photos-grid">
-                                    <div className="top-row">
+                                <div className={styles.smallPhotosGrid}>
+                                    <div className={styles.topRow}>
                                         {previewPhotos[1] && (
                                             <div
-                                                className="small-photo"
+                                                className={styles.smallPhoto}
                                                 onClick={(e) => {
                                                     handleEventCardSelection(event.id);
                                                     handleOpenPhotoDetails(e, previewPhotos[1], event);
@@ -740,7 +703,7 @@ const EventView: React.FC = () => {
                                         )}
                                         {previewPhotos[2] && (
                                             <div
-                                                className="small-photo"
+                                                className={styles.smallPhoto}
                                                 onClick={(e) => {
                                                     handleEventCardSelection(event.id);
                                                     handleOpenPhotoDetails(e, previewPhotos[2], event);
@@ -756,10 +719,10 @@ const EventView: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="bottom-row">
+                                    <div className={styles.bottomRow}>
                                         {previewPhotos[3] && (
                                             <div
-                                                className="small-photo"
+                                                className={styles.smallPhoto}
                                                 onClick={(e) => {
                                                     handleEventCardSelection(event.id);
                                                     handleOpenPhotoDetails(e, previewPhotos[3], event);
@@ -776,7 +739,7 @@ const EventView: React.FC = () => {
                                         )}
                                         {previewPhotos[4] && (
                                             <div
-                                                className="small-photo"
+                                                className={styles.smallPhoto}
                                                 onClick={(e) => {
                                                     handleEventCardSelection(event.id);
                                                     handleOpenPhotoDetails(e, previewPhotos[4], event);
@@ -792,7 +755,7 @@ const EventView: React.FC = () => {
                                                 {/* Show "more" overlay if there are more than 5 photos (since grid shows 5) */}
                                                 {totalPhotoCount > 5 && (
                                                     <div
-                                                        className="more-photos-overlay"
+                                                        className={styles.morePhotosOverlay}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleEventCardSelection(event.id);
@@ -809,9 +772,9 @@ const EventView: React.FC = () => {
                             </div>
                         )
                     ) : (
-                        <div className="empty-event-photos">
-                            <div className="empty-photos-placeholder">
-                                <div className="placeholder-icon">📷</div>
+                        <div className={styles.emptyEventPhotos}>
+                            <div className={styles.emptyPhotosPlaceholder}>
+                                <div className={styles.placeholderIcon}>📷</div>
                                 <p>No photos yet</p>
                             </div>
                         </div>
@@ -819,15 +782,15 @@ const EventView: React.FC = () => {
                 </div>
 
                 {/* Event Footer */}
-                <div className="event-footer">
-                    <div className="event-members">
-                        <span className="member-count">{totalMemberCount} members</span>
-                        <div className="member-avatars">
+                <div className={styles.eventFooter}>
+                    <div className={styles.eventMembers}>
+                        <span className={styles.memberCount}>{totalMemberCount} members</span>
+                        <div className={styles.memberAvatars}>
                             {/* Show pocket members first */}
                             {pocket?.pocket_members?.slice(0, 3).map((member) => (
                                 <div
                                     key={member.id}
-                                    className="member-avatar member-avatar--clickable"
+                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
                                         handleEventCardSelection(event.id);
@@ -848,7 +811,7 @@ const EventView: React.FC = () => {
                             {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
                                 <div
                                     key={member.id}
-                                    className="member-avatar member-avatar--clickable"
+                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
                                         handleEventCardSelection(event.id);
@@ -867,7 +830,7 @@ const EventView: React.FC = () => {
                             ))}
                             {totalMemberCount > 3 && (
                                 <span
-                                    className="more-members more-members--clickable"
+                                    className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent event card click
                                         handleEventCardSelection(event.id);
@@ -883,9 +846,9 @@ const EventView: React.FC = () => {
 
                     {/* Show source pocket if event is inherited */}
                     {event.inherited && event.source_pocket_id && (
-                        <div className="event-source-pocket">
-                            <span className="source-label">Inherited from:</span>
-                            <span className="source-pocket-name">
+                        <div className={styles.eventSourcePocket}>
+                            <span className={styles.sourceLabel}>Inherited from:</span>
+                            <span className={styles.sourcePocketName}>
                                 {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
                             </span>
                         </div>
@@ -894,40 +857,40 @@ const EventView: React.FC = () => {
 
                 {/* Options Menu */}
                 {openOptionsMenu === event.id && (
-                    <div className="event-options-menu">
-                        <div className="options-menu-item" onClick={(e) => {
+                    <div className={styles.eventOptionsMenu}>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
                             e.stopPropagation();
                             handleOptionSelect('add-photos', event)
                         }}>
-                            <span className="option-icon">📸</span>
+                            <span className={styles.optionIcon}>📸</span>
                             Add Photos
                         </div>
-                        <div className="options-menu-item" onClick={(e) => {
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
                             e.stopPropagation();
                             handleOptionSelect('add-people', event)
                         }}>
-                            <span className="option-icon">👥</span>
+                            <span className={styles.optionIcon}>👥</span>
                             Add People
                         </div>
-                        <div className="options-menu-item" onClick={(e) => {
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
                             e.stopPropagation();
                             handleOptionSelect('share', event)
                         }}>
-                            <span className="option-icon">📤</span>
+                            <span className={styles.optionIcon}>📤</span>
                             Share
                         </div>
-                        <div className="options-menu-item" onClick={(e) => {
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
                             e.stopPropagation();
                             handleOptionSelect('edit', event)
                         }}>
-                            <span className="option-icon">✏️</span>
+                            <span className={styles.optionIcon}>✏️</span>
                             Edit
                         </div>
-                        <div className="options-menu-item" onClick={(e) => {
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
                             e.stopPropagation();
                             handleOptionSelect('leave', event)
                         }}>
-                            <span className="option-icon">🚪</span>
+                            <span className={styles.optionIcon}>🚪</span>
                             Leave Event
                         </div>
                     </div>
@@ -941,11 +904,11 @@ const EventView: React.FC = () => {
     // Show loading state
     if (isLoading) {
         return (
-            <div className="event-view-page">
+            <div className={styles.eventViewPage}>
                 <NavBar />
-                <main className="main-content">
-                    <div className="loading-state">
-                        <div className="loading-spinner"></div>
+                <main className={styles.mainContent}>
+                    <div className={styles.loadingContainer}>
+                        <div className={styles.loadingSpinner}></div>
                         <p>Loading events...</p>
                     </div>
                 </main>
@@ -956,13 +919,13 @@ const EventView: React.FC = () => {
     // Show error state
     if (error || !pocket) {
         return (
-            <div className="event-view-page">
+            <div className={styles.eventViewPage}>
                 <NavBar />
-                <main className="main-content">
-                    <div className="error-state">
+                <main className={styles.mainContent}>
+                    <div className={styles.errorContainer}>
                         <h2>Error Loading Events</h2>
                         <p>{typeof error === 'string' ? error : error?.message || 'Pocket not found'}</p>
-                        <button onClick={handleBackToPockets} className="retry-button">
+                        <button onClick={handleBackToPockets} className={styles.retryButton}>
                             Back to Pockets
                         </button>
                     </div>
@@ -972,18 +935,18 @@ const EventView: React.FC = () => {
     }
 
     return (
-        <div className="event-view-page">
+        <div className={styles.eventViewPage}>
             <NavBar />
-            <main className="main-content">
+            <main className={styles.mainContent} ref={mainContentRef}>
                 {/* Header */}
-                <header className="event-view-header">
-                    <div className="header-left">
-                        <div className="back-button-section">
-                            <button onClick={handleBackToPockets} className="back-button">
+                <header className={styles.eventViewHeader}>
+                    <div className={styles.headerLeft}>
+                        <div className={styles.backButtonSection}>
+                            <button onClick={handleBackToPockets} className={styles.backButton}>
                                 <span>←</span>
                             </button>
-                            <div className="pocket-info">
-                                <div className="pocket-cover-avatar">
+                            <div className={styles.pocketInfo}>
+                                <div className={styles.pocketCoverAvatar}>
                                     <img
                                         src={getPocketCoverUrl(pocket)}
                                         alt={pocket.pocket_title}
@@ -992,39 +955,39 @@ const EventView: React.FC = () => {
                                         }}
                                     />
                                 </div>
-                                <h1 className="pocket-title">{pocket.pocket_title}</h1>
+                                <h1 className={styles.pocketTitle}>{pocket.pocket_title}</h1>
                             </div>
                         </div>
                         <p>Events and photos in this pocket</p>
                     </div>
-                    <div className="header-right">
+                    <div className={styles.headerRight}>
                         <button
-                            className="upload-button"
+                            className={styles.uploadButton}
                             onClick={() => setShowCreateModal(true)}
                         >
                             <span>+</span>
                             Create Event
                         </button>
-                        <div className="user-menu">
+                        <div className={styles.userMenu}>
                             <UserAvatar size="medium" clickable={true} />
                         </div>
                     </div>
                 </header>
 
                 {/* Controls */}
-                <section className="controls-section">
-                    <div className="controls-left">
-                        <div className="search-box">
+                <section className={styles.controlsSection}>
+                    <div className={styles.controlsLeft}>
+                        <div className={styles.searchBox}>
                             <input
                                 type="text"
                                 placeholder="Search events..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <span className="search-icon">🔍</span>
+                            <span className={styles.searchIcon}>🔍</span>
                             {searchTerm.trim() && (
                                 <button
-                                    className="clear-search-button"
+                                    className={styles.clearSearchButton}
                                     onClick={() => setSearchTerm('')}
                                     type="button"
                                     aria-label="Clear search"
@@ -1034,33 +997,33 @@ const EventView: React.FC = () => {
                             )}
                         </div>
                     </div>
-                    <div className="controls-right">
-                        <div className="inherited-toggle">
-                            <label className="toggle-label">
+                    <div className={styles.controlsRight}>
+                        <div className={styles.inheritedToggle}>
+                            <label className={styles.toggleLabel}>
                                 <input
                                     type="checkbox"
                                     checked={hideInherited}
                                     onChange={(e) => handleHideInheritedChange(e.target.checked)}
                                 />
-                                <span className="toggle-slider"></span>
-                                <span className="toggle-text">Hide Inherited</span>
+                                <span className={styles.toggleSlider}></span>
+                                <span className={styles.toggleText}>Hide Inherited</span>
                             </label>
                         </div>
-                        <div className="view-toggle">
+                        <div className={styles.viewToggle}>
                             <button
-                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
+                                className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
                                 onClick={() => handleViewModeChange('grid')}
                             >
                                 <span>⊞</span>
                             </button>
                             <button
-                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                                className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
                                 onClick={() => handleViewModeChange('list')}
                             >
                                 <span>☰</span>
                             </button>
                         </div>
-                        <div className="filter-dropdown">
+                        <div className={styles.filterDropdown}>
                             <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
                                 <option value="newest-updated">Most Recently Updated</option>
                                 <option value="oldest-updated">Least Recently Updated</option>
@@ -1084,12 +1047,12 @@ const EventView: React.FC = () => {
                 </section>
 
                 {/* Events List */}
-                <section className="events-section">
+                <section className={styles.eventsSection}>
                     <h2>
                         {searchTerm.trim() ? (
                             <>
                                 Search Results
-                                <span className="search-results-info">
+                                <span className={styles.searchResultsInfo}>
                                     {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''} found for "{searchTerm}"
                                     {hideInherited ? ' (inherited events hidden)' : ''}
                                 </span>
@@ -1098,48 +1061,48 @@ const EventView: React.FC = () => {
                             <>
                                 Events ({filteredAndSortedEvents.length})
                                 {hideInherited && (
-                                    <span className="filter-info"> - inherited events hidden</span>
+                                    <span className={styles.filterInfo}> - inherited events hidden</span>
                                 )}
                             </>
                         )}
                     </h2>
                     {events.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-content">
+                        <div className={styles.emptyState}>
+                            <div className={styles.emptyStateContent}>
                                 <h3>Start your first event</h3>
                                 <p>Events help you organize photos by specific occasions, trips, or moments. Create your first event to start capturing memories!</p>
                             </div>
                             <div
-                                className="empty-state-cta"
+                                className={styles.emptyStateCta}
                                 onClick={() => setShowCreateModal(true)}
                             >
-                                <div className="cta-content">
-                                    <div className="cta-icon">✨</div>
-                                    <div className="cta-text">
-                                        <span className="cta-title">Create Your First Event</span>
-                                        <span className="cta-subtitle">Click here to get started</span>
+                                <div className={styles.ctaContent}>
+                                    <div className={styles.ctaIcon}>✨</div>
+                                    <div className={styles.ctaText}>
+                                        <span className={styles.ctaTitle}>Create Your First Event</span>
+                                        <span className={styles.ctaSubtitle}>Click here to get started</span>
                                     </div>
                                 </div>
-                                <div className="cta-arrow">→</div>
+                                <div className={styles.ctaArrow}>→</div>
                             </div>
                         </div>
                     ) : filteredAndSortedEvents.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon search-icon">
-                                <div className="search-glass">
-                                    <div className="magnifying-glass">
-                                        <div className="glass-circle"></div>
-                                        <div className="glass-handle"></div>
+                        <div className={styles.emptyState}>
+                            <div className={`${styles.emptyStateIcon} ${styles.searchIcon}`}>
+                                <div className={styles.searchGlass}>
+                                    <div className={styles.magnifyingGlass}>
+                                        <div className={styles.glassCircle}></div>
+                                        <div className={styles.glassHandle}></div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="empty-state-content">
+                            <div className={styles.emptyStateContent}>
                                 <h3>No events found</h3>
                                 <p>No events match "{searchTerm}". Try a different search term or check your spelling.</p>
                             </div>
                         </div>
                     ) : (
-                        <div className={`events-list ${viewMode === 'list' ? 'events-list-view' : 'events-grid-view'}`}>
+                        <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
                             {filteredAndSortedEvents.map((event, index) => (
                                 <div
                                     key={event.id}

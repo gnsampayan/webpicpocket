@@ -252,6 +252,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             const truncatedEventTitle = eventTitle?.length > 50 ? eventTitle.substring(0, 50) + '...' : eventTitle || '';
 
             // Navigate after the data has been refetched
+            // Set the newly created event as last selected
+            sessionStorage.setItem('last-selected-event-card', eventId);
+
             navigate(`/pockets/${encodeURIComponent(truncatedPocketTitle)}-${pocketIdSuffix}/${encodeURIComponent(truncatedEventTitle)}-${eventIdSuffix}`);
         } catch (err) {
             console.error('Error creating event:', err);
