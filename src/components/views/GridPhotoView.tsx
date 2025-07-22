@@ -383,7 +383,7 @@ const GridPhotoView: React.FC = () => {
                                                 e.stopPropagation();
                                                 handleMemberClick(member);
                                             }}
-                                            title={`View ${member.first_name}'s profile`}
+                                            title={`${member.first_name} ${member.last_name}`}
                                         >
                                             <img
                                                 src={getProfilePictureUrl(member)}
@@ -403,7 +403,7 @@ const GridPhotoView: React.FC = () => {
                                                 e.stopPropagation();
                                                 handleMemberClick(member);
                                             }}
-                                            title={`View ${member.first_name}'s profile`}
+                                            title={`${member.first_name} ${member.last_name}`}
                                         >
                                             <img
                                                 src={getProfilePictureUrl(member)}

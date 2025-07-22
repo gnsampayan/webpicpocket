@@ -690,6 +690,7 @@ const EventView: React.FC = () => {
                                         e.stopPropagation(); // Prevent event card click
                                         navigate(`/profile/${member.id}`);
                                     }}
+                                    title={`${member.first_name} ${member.last_name}`}
                                 >
                                     <img
                                         src={getProfilePictureUrl(member)}
@@ -709,6 +710,7 @@ const EventView: React.FC = () => {
                                         e.stopPropagation(); // Prevent event card click
                                         navigate(`/profile/${member.id}`);
                                     }}
+                                    title={`${member.first_name} ${member.last_name}`}
                                 >
                                     <img
                                         src={getProfilePictureUrl(member)}

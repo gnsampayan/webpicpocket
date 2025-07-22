@@ -490,7 +490,7 @@ const Pockets: React.FC = () => {
                                         )}
                                         <div className="member-avatars">
                                             {/* Show up to 3 member avatars */}
-                                            {pocket.pocket_members.slice(0, 3).map((member) => (
+                                            {pocket.pocket_members?.slice(0, 3).map((member) => (
                                                 <div
                                                     key={member.id}
                                                     className="member-avatar member-avatar--clickable"
@@ -498,6 +498,7 @@ const Pockets: React.FC = () => {
                                                         e.stopPropagation(); // Prevent pocket card click
                                                         navigate(`/profile/${member.id}`);
                                                     }}
+                                                    title={`${member.first_name} ${member.last_name}`}
                                                 >
                                                     <img
                                                         src={getProfilePictureUrl(member)}
