@@ -1021,6 +1021,18 @@
   border-color: var(--border-medium);
 }
 
+.actionButton.edit {
+  background: var(--bg-primary);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+.actionButton.edit:hover {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-text);
+}
+
 /* Disabled State */
 .actionButton:disabled {
   opacity: 0.5;

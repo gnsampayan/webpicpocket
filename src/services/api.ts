@@ -1028,6 +1028,60 @@ export const api = {
 		}
 	},
 
+	async updatePlaceholder(
+		placeholderId: string,
+		data: Partial<ApiTypes.CreatePlaceholderRequest>
+	): Promise<ApiTypes.PlaceholderContact> {
+		const url = `${API_URL}${API_CONFIG.endpoints.contact.edit_placeholder}/${placeholderId}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Update placeholder failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to update placeholder");
+			}
+			const responseData = await response.json();
+			console.log("✅ [API] Placeholder updated successfully:", responseData);
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error updating placeholder:", error);
+			throw error;
+		}
+	},
+
+	async assignPlaceholderToUser(realUserId: string): Promise<void> {
+		const url = `${API_URL}${API_CONFIG.endpoints.contact.assign_placeholder}/${realUserId}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Assign placeholder failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to assign placeholder");
+			}
+			console.log("✅ [API] Placeholder assigned successfully");
+		} catch (error) {
+			console.error("❌ [API] Error assigning placeholder:", error);
+			throw error;
+		}
+	},
+
 	// =============================================
 	// POCKET FUNCTIONS
 	// =============================================

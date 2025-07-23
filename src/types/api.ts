@@ -197,6 +197,7 @@ export interface CreatePlaceholderRequest {
 export interface PlaceholderContact extends ContactUser {
 	placeholder: true;
 	description?: string;
+	profile_object_key?: string;
 }
 
 // =============================================

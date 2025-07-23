@@ -154,6 +154,53 @@ export const useCreatePlaceholderMutation = () => {
 	});
 };
 
+// Hook for updating placeholder contacts
+export const useUpdatePlaceholderMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			placeholderId,
+			data,
+		}: {
+			placeholderId: string;
+			data: {
+				first_name?: string;
+				last_name?: string;
+				description?: string;
+				profile_object_key?: string;
+			};
+		}) => {
+			return api.updatePlaceholder(placeholderId, data);
+		},
+		onSuccess: () => {
+			// Invalidate and refetch contacts to show the updated placeholder
+			queryClient.invalidateQueries({ queryKey: contactKeys.all });
+		},
+		onError: (error) => {
+			console.error("Failed to update placeholder:", error);
+		},
+	});
+};
+
+// Hook for assigning placeholder to real user
+export const useAssignPlaceholderMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (realUserId: string) => {
+			return api.assignPlaceholderToUser(realUserId);
+		},
+		onSuccess: () => {
+			// Invalidate and refetch contacts after assignment
+			queryClient.invalidateQueries({ queryKey: contactKeys.all });
+		},
+		onError: (error) => {
+			console.error("Failed to assign placeholder:", error);
+		},
+	});
+};
+
 // Helper function to get contact avatar
 export const getContactAvatar = (
 	contact: ContactUser,

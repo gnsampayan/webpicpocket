@@ -42,8 +42,10 @@ export const API_CONFIG = {
 		contact: {
 			list: "/v1/contacts",
 			send: "/v1/contacts", // Append with: /{contact-user-id}
-			delete: "/v1/contacts", // Append with: /{contact-user-id}
+			delete: "/v1/contacts", // Append with: /{contact-user-id} or /{placeholder-id}
 			create_placeholder: "/v1/placeholder",
+			edit_placeholder: "/v1/placeholder", // Append with: /{placeholder-id}
+			assign_placeholder: "/v1/placeholder", // Append with: /{real-user-id}
 		},
 		pocket: {
 			list: "/v1/pockets",

@@ -5,6 +5,7 @@ import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import AddContactsModal from '../modals/AddContactsModal';
 import AddPlaceholderModal from '../modals/AddPlaceholderModal';
+import EditPlaceholderModal from '../modals/EditPlaceholderModal';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import {
     useContacts,
@@ -31,6 +32,8 @@ const Contacts: React.FC = () => {
     const [filter, setFilter] = useState('all');
     const [showAddContact, setShowAddContact] = useState(false);
     const [showAddPlaceholder, setShowAddPlaceholder] = useState(false);
+    const [showEditPlaceholder, setShowEditPlaceholder] = useState(false);
+    const [selectedPlaceholder, setSelectedPlaceholder] = useState<ApiTypes.PlaceholderContact | null>(null);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Functions to save state to localStorage
@@ -89,6 +92,17 @@ const Contacts: React.FC = () => {
 
     const handlePlaceholderAdded = () => {
         setShowAddPlaceholder(false);
+        // The mutation hook will automatically invalidate the contacts cache
+    };
+
+    const handleEditPlaceholder = (placeholder: ApiTypes.PlaceholderContact) => {
+        setSelectedPlaceholder(placeholder);
+        setShowEditPlaceholder(true);
+    };
+
+    const handlePlaceholderUpdated = () => {
+        setShowEditPlaceholder(false);
+        setSelectedPlaceholder(null);
         // The mutation hook will automatically invalidate the contacts cache
     };
 
@@ -219,6 +233,14 @@ const Contacts: React.FC = () => {
                     onPlaceholderAdded={handlePlaceholderAdded}
                 />
 
+                {/* Edit Placeholder Modal */}
+                <EditPlaceholderModal
+                    isOpen={showEditPlaceholder}
+                    onClose={() => setShowEditPlaceholder(false)}
+                    onPlaceholderUpdated={handlePlaceholderUpdated}
+                    placeholder={selectedPlaceholder}
+                />
+
                 {/* Controls */}
                 <section className={styles.controlsSection}>
                     <div className={styles.controlsLeft}>
@@ -323,6 +345,14 @@ const Contacts: React.FC = () => {
                                         )}
                                     </div>
                                     <div className={styles.contactActions}>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.edit}`}
+                                            onClick={() => handleEditPlaceholder(contact)}
+                                            title="Edit placeholder"
+                                        >
+                                            <span>✏️</span>
+                                            Edit
+                                        </button>
                                         <button className={`${styles.actionButton} ${styles.share}`}>
                                             <span>📤</span>
                                             Share
@@ -493,6 +523,14 @@ const Contacts: React.FC = () => {
                                         )}
                                     </div>
                                     <div className={styles.contactActions}>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.edit}`}
+                                            onClick={() => handleEditPlaceholder(contact)}
+                                            title="Edit placeholder"
+                                        >
+                                            <span>✏️</span>
+                                            Edit
+                                        </button>
                                         <button className={`${styles.actionButton} ${styles.share}`}>
                                             <span>📤</span>
                                             Share
