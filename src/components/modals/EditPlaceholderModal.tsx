@@ -30,7 +30,9 @@ const EditPlaceholderModal: React.FC<EditPlaceholderModalProps> = ({
         description: ''
     });
     const [error, setError] = useState<string | null>(null);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Use the mutation hook for updating placeholders
@@ -74,21 +76,22 @@ const EditPlaceholderModal: React.FC<EditPlaceholderModalProps> = ({
             return;
         }
 
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setSelectedFile(file);
+        setPreviewUrl(previewUrl);
+        setError(null);
+
         try {
-            setError(null);
-            setUploadProgress(0);
+            setIsUploading(true);
 
             // Get upload URL
             const uploadResponse = await api.uploadMedia({
                 files: [file.name]
             });
 
-            setUploadProgress(50);
-
             // Upload file to S3
             await api.uploadFileToS3(uploadResponse.uploads[0].upload_url, file);
-
-            setUploadProgress(100);
 
             // Update form data with the object key
             setFormData(prev => ({
@@ -100,8 +103,11 @@ const EditPlaceholderModal: React.FC<EditPlaceholderModalProps> = ({
         } catch (error) {
             console.error('Error uploading profile picture:', error);
             setError('Failed to upload profile picture. Please try again.');
+            // Clean up preview on error
+            setSelectedFile(null);
+            setPreviewUrl(null);
         } finally {
-            setUploadProgress(null);
+            setIsUploading(false);
         }
     };
 
@@ -165,6 +171,16 @@ const EditPlaceholderModal: React.FC<EditPlaceholderModalProps> = ({
             console.error('Error updating placeholder:', error);
             setError(error instanceof Error ? error.message : 'Failed to update placeholder');
         }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setFormData(prev => ({
+            ...prev,
+            profile_object_key: undefined
+        }));
+        setError(null);
     };
 
     const handleClose = () => {
@@ -250,28 +266,44 @@ const EditPlaceholderModal: React.FC<EditPlaceholderModalProps> = ({
                                 disabled={updatePlaceholderMutation.isPending}
                                 style={{ display: 'none' }}
                             />
+
+                            {/* Show preview if file is selected */}
+                            {(previewUrl || (placeholder.profile_object_key && !selectedFile)) && (
+                                <div className={styles.filePreview}>
+                                    <img
+                                        src={previewUrl || placeholder.profile_picture?.url_medium || placeholder.profile_picture?.url_small}
+                                        alt="Profile preview"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.removeFileButton}
+                                        onClick={handleRemoveFile}
+                                        disabled={updatePlaceholderMutation.isPending || isUploading}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Upload button */}
                             <button
                                 type="button"
                                 className={styles.uploadButton}
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={updatePlaceholderMutation.isPending}
+                                disabled={updatePlaceholderMutation.isPending || isUploading}
                             >
-                                {formData.profile_object_key && formData.profile_object_key !== placeholder.profile_object_key
-                                    ? '✓ New Picture Uploaded'
+                                {isUploading ? (
+                                    <>
+                                        <div className={styles.uploadSpinner}></div>
+                                        Uploading...
+                                    </>
+                                ) : selectedFile || (formData.profile_object_key && formData.profile_object_key !== placeholder.profile_object_key)
+                                    ? '✅ Picture Uploaded'
                                     : placeholder.profile_object_key
                                         ? '📷 Change Picture'
                                         : '📷 Choose Picture'
                                 }
                             </button>
-                            {uploadProgress !== null && (
-                                <div className={styles.uploadProgress}>
-                                    <div
-                                        className={styles.progressBar}
-                                        style={{ width: `${uploadProgress}%` }}
-                                    />
-                                    <span>{uploadProgress}%</span>
-                                </div>
-                            )}
                         </div>
                     </div>
 

@@ -27,7 +27,9 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
         description: ''
     });
     const [error, setError] = useState<string | null>(null);
-    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Use the mutation hook for creating placeholders
@@ -58,21 +60,22 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
             return;
         }
 
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setSelectedFile(file);
+        setPreviewUrl(previewUrl);
+        setError(null);
+
         try {
-            setError(null);
-            setUploadProgress(0);
+            setIsUploading(true);
 
             // Get upload URL
             const uploadResponse = await api.uploadMedia({
                 files: [file.name]
             });
 
-            setUploadProgress(50);
-
             // Upload file to S3
             await api.uploadFileToS3(uploadResponse.uploads[0].upload_url, file);
-
-            setUploadProgress(100);
 
             // Update form data with the object key
             setFormData(prev => ({
@@ -84,8 +87,11 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
         } catch (error) {
             console.error('Error uploading profile picture:', error);
             setError('Failed to upload profile picture. Please try again.');
+            // Clean up preview on error
+            setSelectedFile(null);
+            setPreviewUrl(null);
         } finally {
-            setUploadProgress(null);
+            setIsUploading(false);
         }
     };
 
@@ -134,6 +140,16 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
         }
     };
 
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setFormData(prev => ({
+            ...prev,
+            profile_object_key: undefined
+        }));
+        setError(null);
+    };
+
     const handleClose = () => {
         if (!createPlaceholderMutation.isPending) {
             setFormData({
@@ -141,6 +157,8 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
                 last_name: '',
                 description: ''
             });
+            setSelectedFile(null);
+            setPreviewUrl(null);
             setError(null);
             onClose();
         }
@@ -222,23 +240,42 @@ const AddPlaceholderModal: React.FC<AddPlaceholderModalProps> = ({
                                 disabled={createPlaceholderMutation.isPending}
                                 style={{ display: 'none' }}
                             />
+
+                            {/* Show preview if file is selected */}
+                            {previewUrl && (
+                                <div className={styles.filePreview}>
+                                    <img
+                                        src={previewUrl}
+                                        alt="Profile preview"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.removeFileButton}
+                                        onClick={handleRemoveFile}
+                                        disabled={createPlaceholderMutation.isPending || isUploading}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Upload button */}
                             <button
                                 type="button"
                                 className={styles.uploadButton}
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={createPlaceholderMutation.isPending}
+                                disabled={createPlaceholderMutation.isPending || isUploading}
                             >
-                                {formData.profile_object_key ? '✓ Picture Uploaded' : '📷 Choose Picture'}
+                                {isUploading ? (
+                                    <>
+                                        <div className={styles.uploadSpinner}></div>
+                                        Uploading...
+                                    </>
+                                ) : selectedFile || formData.profile_object_key
+                                    ? '✅ Picture Uploaded'
+                                    : '📷 Choose Picture'
+                                }
                             </button>
-                            {uploadProgress !== null && (
-                                <div className={styles.uploadProgress}>
-                                    <div
-                                        className={styles.progressBar}
-                                        style={{ width: `${uploadProgress}%` }}
-                                    />
-                                    <span>{uploadProgress}%</span>
-                                </div>
-                            )}
                         </div>
                     </div>
 
