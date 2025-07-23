@@ -695,9 +695,6 @@ export const api = {
 			API_CONFIG.endpoints.public_user_info
 		}/${encodeURIComponent(userId)}`;
 		try {
-			console.log("🔍 [API] Fetching public user info for userId:", userId);
-			console.log("🔍 [API] Request URL:", url);
-			
 			const response = await this.authenticatedRequest(url, {
 				method: "GET",
 			});
@@ -710,25 +707,12 @@ export const api = {
 				throw new Error(errorText || "Failed to get public user info");
 			}
 			const responseData = await response.json();
-			
-			console.log("✅ [API] Public user info fetched successfully");
-			console.log("🔍 [API] Backend response for public user info:", JSON.stringify(responseData, null, 2));
-			console.log("🔍 [API] Response keys:", Object.keys(responseData));
-			console.log("🔍 [API] Response data structure:", {
-				id: responseData.id,
-				username: responseData.username,
-				first_name: responseData.first_name,
-				last_name: responseData.last_name,
-				profile_picture_default: responseData.profile_picture_default,
-				profile_picture: responseData.profile_picture,
-				verified: responseData.verified,
-				email: responseData.email,
-				created_at: responseData.created_at,
-				other_fields: Object.keys(responseData).filter(key => 
-					!['id', 'username', 'first_name', 'last_name', 'profile_picture_default', 'profile_picture', 'verified', 'email', 'created_at'].includes(key)
-				)
-			});
-			
+
+			console.log(
+				"🔍 [API] Backend response for public user info:",
+				JSON.stringify(responseData, null, 2)
+			);
+
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Error getting public user info:", error);
@@ -1011,6 +995,35 @@ export const api = {
 			return;
 		} catch (error) {
 			console.error("❌ [API] Error sending contact request:", error);
+			throw error;
+		}
+	},
+
+	async createPlaceholder(
+		data: ApiTypes.CreatePlaceholderRequest
+	): Promise<ApiTypes.PlaceholderContact> {
+		const url = `${API_URL}${API_CONFIG.endpoints.contact.create_placeholder}`;
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error("❌ [API] Create placeholder failed:", {
+					status: response.status,
+					error: errorText,
+				});
+				throw new Error(errorText || "Failed to create placeholder");
+			}
+			const responseData = await response.json();
+			console.log("✅ [API] Placeholder created successfully:", responseData);
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error creating placeholder:", error);
 			throw error;
 		}
 	},
@@ -1454,9 +1467,6 @@ export const api = {
 				throw new Error(errorText || "Failed to get event details");
 			}
 			const responseData = await response.json();
-			console.log("✅ [API] Event details fetched successfully");
-			console.log("✅ [API] Event details date_range_start (UTC):", responseData.date_range_start);
-			console.log("✅ [API] Event details date_range_end (UTC):", responseData.date_range_end);
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Error getting event details:", error);

@@ -4,6 +4,7 @@ import styles from './Contacts.module.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import AddContactsModal from '../modals/AddContactsModal';
+import AddPlaceholderModal from '../modals/AddPlaceholderModal';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import {
     useContacts,
@@ -29,6 +30,7 @@ const Contacts: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [showAddContact, setShowAddContact] = useState(false);
+    const [showAddPlaceholder, setShowAddPlaceholder] = useState(false);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
 
     // Functions to save state to localStorage
@@ -55,6 +57,7 @@ const Contacts: React.FC = () => {
     const contacts = contactsData?.contacts || [];
     const contactRequestsReceived = contactsData?.contact_requests_received || [];
     const contactRequestsSent = contactsData?.contact_requests_sent || [];
+    const placeholderContacts = contactsData?.placeholder_contacts || [];
 
     const handleAcceptContact = (userId: string) => {
         acceptContactMutation.mutate(userId);
@@ -78,6 +81,15 @@ const Contacts: React.FC = () => {
     const handleContactAdded = () => {
         setShowAddContact(false);
         refetch(); // Refresh the contacts list
+    };
+
+    const handleAddPlaceholderContact = () => {
+        setShowAddPlaceholder(true);
+    };
+
+    const handlePlaceholderAdded = () => {
+        setShowAddPlaceholder(false);
+        // The mutation hook will automatically invalidate the contacts cache
     };
 
     const handleContactClick = (contact: ApiTypes.ContactUser) => {
@@ -107,6 +119,14 @@ const Contacts: React.FC = () => {
             contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             contact.username.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filter === 'all' || filter === 'sent';
+        return matchesSearch && matchesFilter;
+    });
+
+    const filteredPlaceholderContacts = placeholderContacts.filter(contact => {
+        const matchesSearch = contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (contact.username && contact.username.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesFilter = filter === 'all' || filter === 'placeholders';
         return matchesSearch && matchesFilter;
     });
 
@@ -142,6 +162,14 @@ const Contacts: React.FC = () => {
                         <p>Manage your contacts and sharing permissions</p>
                     </div>
                     <div className={styles.headerRight}>
+                        <button
+                            className={styles.addPlaceholderButton}
+                            onClick={handleAddPlaceholderContact}
+                            title="Add a placeholder contact for someone without an account"
+                        >
+                            <span>🎭</span>
+                            Add Placeholder
+                        </button>
                         <button
                             className={styles.addContactButton}
                             onClick={() => setShowAddContact(!showAddContact)}
@@ -182,6 +210,13 @@ const Contacts: React.FC = () => {
                     isOpen={showAddContact}
                     onClose={() => setShowAddContact(false)}
                     onContactAdded={handleContactAdded}
+                />
+
+                {/* Add Placeholder Modal */}
+                <AddPlaceholderModal
+                    isOpen={showAddPlaceholder}
+                    onClose={() => setShowAddPlaceholder(false)}
+                    onPlaceholderAdded={handlePlaceholderAdded}
                 />
 
                 {/* Controls */}
@@ -228,6 +263,7 @@ const Contacts: React.FC = () => {
                                 <option value="contacts">Contacts</option>
                                 <option value="requests">Requests Received</option>
                                 <option value="sent">Requests Sent</option>
+                                <option value="placeholders">Placeholders</option>
                             </select>
                         </div>
                     </div>
@@ -240,7 +276,7 @@ const Contacts: React.FC = () => {
                             <>
                                 Search Results
                                 <span className={styles.searchResultsInfo}>
-                                    {filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length} contact{(filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length) !== 1 ? 's' : ''} found for "{searchTerm}"
+                                    {filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length + filteredPlaceholderContacts.length} contact{(filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length + filteredPlaceholderContacts.length) !== 1 ? 's' : ''} found for "{searchTerm}"
                                 </span>
                             </>
                         ) : (
@@ -249,15 +285,62 @@ const Contacts: React.FC = () => {
                                 {filter === 'contacts' && 'My Contacts'}
                                 {filter === 'requests' && 'Contact Requests'}
                                 {filter === 'sent' && 'Sent Requests'}
+                                {filter === 'placeholders' && 'Placeholder Contacts'}
                                 {' '}
-                                ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length})
+                                ({filteredContacts.length + filteredRequestsReceived.length + filteredRequestsSent.length + filteredPlaceholderContacts.length})
                             </>
                         )}
                     </h2>
 
                     {/* Show contacts container only when there are contacts to display */}
-                    {(filteredContacts.length > 0 || filteredRequestsReceived.length > 0 || filteredRequestsSent.length > 0) ? (
+                    {(filteredContacts.length > 0 || filteredRequestsReceived.length > 0 || filteredRequestsSent.length > 0 || filteredPlaceholderContacts.length > 0) ? (
                         <div className={`${styles.contactsContainer} ${viewMode === 'list' ? styles.contactsList : styles.contactsGrid}`}>
+                            {/* Placeholder Contacts - Show first when filter is "All" */}
+                            {filter === 'all' && filteredPlaceholderContacts.map((contact) => (
+                                <div key={contact.id} className={`${styles.contactItem} ${styles.contactPlaceholder} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
+                                    <div
+                                        className={`${styles.contactAvatar} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <img
+                                            src={getContactAvatar(contact)}
+                                            alt={getContactName(contact)}
+                                            onError={(e) => {
+                                                // Fallback if the profile picture fails to load
+                                                e.currentTarget.src = getContactAvatar(contact);
+                                            }}
+                                        />
+                                        <span className={`${styles.statusIndicator} ${styles.placeholder}`}></span>
+                                    </div>
+                                    <div
+                                        className={`${styles.contactInfo} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <h3>{getContactName(contact)}</h3>
+                                        <p className={styles.contactUsername}>🎭 Placeholder</p>
+                                        {contact.description && (
+                                            <p className={styles.contactDescription}>{contact.description}</p>
+                                        )}
+                                    </div>
+                                    <div className={styles.contactActions}>
+                                        <button className={`${styles.actionButton} ${styles.share}`}>
+                                            <span>📤</span>
+                                            Share
+                                        </button>
+                                        <button className={`${styles.actionButton} ${styles.more}`}>
+                                            <span>💬</span>
+                                            Message
+                                        </button>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.delete}`}
+                                            onClick={() => handleDeleteContact(contact.id)}
+                                        >
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+
                             {/* Contact Requests Received */}
                             {filteredRequestsReceived.map((contact) => (
                                 <div key={`received-${contact.id}`} className={`${styles.contactItem} ${styles.contactRequest} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
@@ -381,6 +464,52 @@ const Contacts: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Placeholder Contacts - Show when filter is specifically "placeholders" */}
+                            {filter === 'placeholders' && filteredPlaceholderContacts.map((contact) => (
+                                <div key={contact.id} className={`${styles.contactItem} ${styles.contactPlaceholder} ${viewMode === 'list' ? styles.contactListItem : styles.contactGridItem}`}>
+                                    <div
+                                        className={`${styles.contactAvatar} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <img
+                                            src={getContactAvatar(contact)}
+                                            alt={getContactName(contact)}
+                                            onError={(e) => {
+                                                // Fallback if the profile picture fails to load
+                                                e.currentTarget.src = getContactAvatar(contact);
+                                            }}
+                                        />
+                                        <span className={`${styles.statusIndicator} ${styles.placeholder}`}></span>
+                                    </div>
+                                    <div
+                                        className={`${styles.contactInfo} ${styles.clickable}`}
+                                        onClick={() => handleContactClick(contact)}
+                                    >
+                                        <h3>{getContactName(contact)}</h3>
+                                        <p className={styles.contactUsername}>🎭 Placeholder</p>
+                                        {contact.description && (
+                                            <p className={styles.contactDescription}>{contact.description}</p>
+                                        )}
+                                    </div>
+                                    <div className={styles.contactActions}>
+                                        <button className={`${styles.actionButton} ${styles.share}`}>
+                                            <span>📤</span>
+                                            Share
+                                        </button>
+                                        <button className={`${styles.actionButton} ${styles.more}`}>
+                                            <span>💬</span>
+                                            Message
+                                        </button>
+                                        <button
+                                            className={`${styles.actionButton} ${styles.delete}`}
+                                            onClick={() => handleDeleteContact(contact.id)}
+                                        >
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         /* Empty State - Outside of any container */
@@ -409,6 +538,7 @@ const Contacts: React.FC = () => {
                                             {filter === 'contacts' && "You don't have any accepted contacts yet."}
                                             {filter === 'requests' && "No pending contact requests."}
                                             {filter === 'sent' && "No sent contact requests."}
+                                            {filter === 'placeholders' && "No placeholder contacts yet."}
                                         </p>
                                     </div>
                                     {filter === 'all' && (

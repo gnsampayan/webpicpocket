@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
 import { useCreatePocketMutation } from '../../hooks/usePhotos';
 import type { Pocket, ContactUser } from '../../types';
-import styles from './CreatePocketModal.module.css';
+import styles from './CreatePocketWizard.module.css';
 import { API_CONFIG } from '../../config/api';
 import env from '../../config/env';
 
-interface CreatePocketModalProps {
+interface CreatePocketWizardProps {
     isOpen: boolean;
     onClose: () => void;
     onPocketCreated?: (pocket: Pocket) => void;
@@ -16,7 +16,7 @@ type WizardStep = 'members' | 'details';
 
 const API_URL = env.API_URL;
 
-const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, onPocketCreated }) => {
+const CreatePocketWizard: React.FC<CreatePocketWizardProps> = ({ isOpen, onClose, onPocketCreated }) => {
     // Wizard state
     const [currentStep, setCurrentStep] = useState<WizardStep>('members');
 
@@ -746,4 +746,4 @@ const CreatePocketModal: React.FC<CreatePocketModalProps> = ({ isOpen, onClose, 
     );
 };
 
-export default CreatePocketModal; 
+export default CreatePocketWizard; 

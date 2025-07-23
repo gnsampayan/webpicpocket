@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Pockets.module.css';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
-import CreatePocketModal from '../modals/CreatePocketModal';
+import CreatePocketWizard from '../modals/CreatePocketWizard';
 import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
 import AddPocketMembersModal from '../modals/AddPocketMembersModal';
 import EditPocketModal from '../modals/EditPocketModal';
@@ -581,7 +581,7 @@ const Pockets: React.FC = () => {
             </main>
 
             {/* Create Pocket Modal */}
-            <CreatePocketModal
+            <CreatePocketWizard
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
             />

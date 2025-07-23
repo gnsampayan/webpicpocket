@@ -45,6 +45,8 @@ export interface PublicUserInfo {
 		url_large?: string;
 		[key: string]: any;
 	};
+	can_add_contact: boolean;
+	placeholder?: boolean;
 }
 
 export interface RegisterResponse {
@@ -175,6 +177,7 @@ export interface ContactsResponse {
 	contacts: ContactUser[];
 	contact_requests_received?: ContactUser[];
 	contact_requests_sent?: ContactUser[];
+	placeholder_contacts?: PlaceholderContact[];
 }
 
 export interface ContactUpdateRequest {
@@ -182,6 +185,18 @@ export interface ContactUpdateRequest {
 	accept?: boolean;
 	reject?: boolean;
 	delete?: boolean;
+}
+
+export interface CreatePlaceholderRequest {
+	first_name: string;
+	last_name: string;
+	description?: string;
+	profile_object_key?: string;
+}
+
+export interface PlaceholderContact extends ContactUser {
+	placeholder: true;
+	description?: string;
 }
 
 // =============================================

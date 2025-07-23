@@ -131,6 +131,29 @@ export const useSendContactRequestMutation = () => {
 	});
 };
 
+// Hook for creating placeholder contacts
+export const useCreatePlaceholderMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (data: {
+			first_name: string;
+			last_name: string;
+			description?: string;
+			profile_object_key?: string;
+		}) => {
+			return api.createPlaceholder(data);
+		},
+		onSuccess: () => {
+			// Invalidate and refetch contacts to show the new placeholder
+			queryClient.invalidateQueries({ queryKey: contactKeys.all });
+		},
+		onError: (error) => {
+			console.error("Failed to create placeholder:", error);
+		},
+	});
+};
+
 // Helper function to get contact avatar
 export const getContactAvatar = (
 	contact: ContactUser,
