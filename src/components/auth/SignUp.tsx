@@ -32,8 +32,8 @@ const SignUp: React.FC = () => {
                 const isAuthenticated = await attemptAutoAuthentication();
 
                 if (isAuthenticated) {
-                    console.log("🔐 [SignUp] User already authenticated, redirecting to dashboard");
-                    navigate('/dashboard');
+                    console.log("🔐 [SignUp] User already authenticated, redirecting to pockets");
+                    navigate('/pockets');
                     return;
                 }
 

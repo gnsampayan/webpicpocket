@@ -86,9 +86,7 @@ const PhotoDetailsView: React.FC = () => {
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         });
     };
 
@@ -251,6 +249,48 @@ const PhotoDetailsView: React.FC = () => {
         };
     }, [currentPhotoIndex, sortedPhotos]);
 
+    // Auto-scroll thumbnail carousel to keep active thumbnail visible
+    useEffect(() => {
+        if (sortedPhotos.length > 1 && currentPhotoIndex >= 0) {
+            // Small delay to ensure DOM has updated
+            const timeoutId = setTimeout(() => {
+                const thumbnailContainer = document.querySelector('.thumbnail-container') as HTMLElement;
+                const activeThumbnail = document.querySelector('.thumbnail-item.active') as HTMLElement;
+
+                if (thumbnailContainer && activeThumbnail) {
+                    const containerRect = thumbnailContainer.getBoundingClientRect();
+                    const thumbnailRect = activeThumbnail.getBoundingClientRect();
+                    const containerWidth = containerRect.width;
+                    const thumbnailWidth = thumbnailRect.width;
+
+                    // Calculate the center position of the container
+                    const containerCenter = containerRect.left + containerWidth / 2;
+                    const thumbnailCenter = thumbnailRect.left + thumbnailWidth / 2;
+
+                    // Check if active thumbnail is outside the visible area
+                    const isOutsideLeft = thumbnailRect.left < containerRect.left;
+                    const isOutsideRight = thumbnailRect.right > containerRect.right;
+
+                    if (isOutsideLeft) {
+                        // Scroll to show the active thumbnail at the left edge with some padding
+                        thumbnailContainer.scrollLeft -= (containerRect.left - thumbnailRect.left) + 20;
+                    } else if (isOutsideRight) {
+                        // Scroll to show the active thumbnail at the right edge with some padding
+                        thumbnailContainer.scrollLeft += (thumbnailRect.right - containerRect.right) + 20;
+                    } else {
+                        // If thumbnail is visible, try to center it if there's enough space
+                        const scrollOffset = thumbnailCenter - containerCenter;
+                        if (Math.abs(scrollOffset) > thumbnailWidth / 2) {
+                            thumbnailContainer.scrollLeft += scrollOffset;
+                        }
+                    }
+                }
+            }, 100); // Small delay to ensure DOM updates
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [currentPhotoIndex, sortedPhotos]);
+
     if (isLoading) {
         return (
             <div className="photo-detail-view">
@@ -393,6 +433,43 @@ const PhotoDetailsView: React.FC = () => {
                         ›
                     </button>
                 </div>
+
+                {/* Thumbnail Carousel */}
+                {sortedPhotos.length > 1 && (
+                    <div className="photo-thumbnail-carousel">
+                        <div
+                            className="thumbnail-container"
+                            onWheel={(e) => {
+                                e.preventDefault();
+                                const container = e.currentTarget;
+                                container.scrollLeft += e.deltaY;
+                            }}
+                        >
+                            {sortedPhotos.map((photoItem, index) => (
+                                <div
+                                    key={photoItem.id}
+                                    className={`thumbnail-item ${index === currentPhotoIndex ? 'active' : ''}`}
+                                    onClick={() => {
+                                        const shortId = photoItem.id.slice(-6);
+                                        navigate(`/pockets/${pocketTitle}/${eventTitle}/photo/${shortId}`);
+                                    }}
+                                >
+                                    <img
+                                        src={getPhotoUrl(photoItem)}
+                                        alt={`Photo ${index + 1}`}
+                                        onError={(e) => {
+                                            e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
+                                        }}
+                                    />
+                                    {photoItem.is_favorite && (
+                                        <div className="thumbnail-favorite-indicator">❤️</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="photo-detail-sidebar">
                     <div className="tabs-container">
                         <div className="tabs-header">

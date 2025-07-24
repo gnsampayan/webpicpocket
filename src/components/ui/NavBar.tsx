@@ -44,12 +44,7 @@ const NavBar: React.FC = () => {
                 <h2>PicPocket</h2>
             </div>
             <ul className="nav-menu">
-                <li className="nav-item">
-                    <Link to="/dashboard" className="nav-link">
-                        <span className="nav-icon">📊</span>
-                        Dashboard
-                    </Link>
-                </li>
+
                 <li className="nav-item">
                     <Link
                         to="/pockets"

@@ -25,8 +25,8 @@ const SignIn: React.FC = () => {
                 const isAuthenticated = await attemptAutoAuthentication();
 
                 if (isAuthenticated) {
-                    console.log("🔐 [SignIn] User already authenticated, redirecting to dashboard");
-                    navigate('/dashboard');
+                    console.log("🔐 [SignIn] User already authenticated, redirecting to pockets");
+                    navigate('/pockets');
                     return;
                 }
 
@@ -94,8 +94,8 @@ const SignIn: React.FC = () => {
 
             console.log('Sign in successful:', response);
 
-            // Handle successful sign in - redirect to dashboard
-            navigate('/dashboard');
+            // Handle successful sign in - redirect to pockets
+            navigate('/pockets');
 
         } catch (error) {
             console.error('Sign in failed:', error);

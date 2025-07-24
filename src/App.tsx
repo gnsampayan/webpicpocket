@@ -4,7 +4,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import LandingPage from './components/pages/LandingPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
-import Dashboard from './components/pages/Dashboard';
 import Pockets from './components/pages/Pockets';
 import Contacts from './components/pages/Contacts';
 import Settings from './components/pages/Settings';
@@ -43,7 +42,6 @@ function App() {
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/profile/:userId" element={<ProfileView />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/pockets" element={<ProtectedRoute><Pockets /></ProtectedRoute>} />
                 <Route path="/pockets/:pocketTitle" element={<ProtectedRoute><EventView /></ProtectedRoute>} />
                 <Route path="/pockets/:pocketTitle/:eventTitle" element={<ProtectedRoute><GridPhotoView /></ProtectedRoute>} />
