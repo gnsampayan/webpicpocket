@@ -24,7 +24,7 @@ const EventView: React.FC = () => {
 
     const getInitialFilter = (): string => {
         const saved = localStorage.getItem('events-sort-filter');
-        return saved || 'newest-updated';
+        return saved || 'event-date-latest';
     };
 
     const getInitialHideInherited = (): boolean => {
@@ -1099,16 +1099,16 @@ const EventView: React.FC = () => {
                         </div>
                         <div className={styles.filterDropdown}>
                             <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
-                                <option value="newest-updated">Most Recently Updated</option>
-                                <option value="oldest-updated">Least Recently Updated</option>
-                                <option value="newest-created">Newest Created</option>
-                                <option value="oldest-created">Oldest Created</option>
                                 <option value="event-date-latest">Event Date (Latest First)</option>
                                 <option value="event-date-earliest">Event Date (Earliest First)</option>
                                 <option value="event-end-latest">Event End Date (Latest First)</option>
                                 <option value="event-end-earliest">Event End Date (Earliest First)</option>
                                 <option value="date-range-longest">Date Range (Longest First)</option>
                                 <option value="date-range-shortest">Date Range (Shortest First)</option>
+                                <option value="newest-updated">Most Recently Updated</option>
+                                <option value="oldest-updated">Least Recently Updated</option>
+                                <option value="newest-created">Newest Created</option>
+                                <option value="oldest-created">Oldest Created</option>
                                 <option value="a-z">A-Z</option>
                                 <option value="z-a">Z-A</option>
                                 <option value="photo-high-low">Photo Count (High to Low)</option>
