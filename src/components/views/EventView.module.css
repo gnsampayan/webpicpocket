@@ -848,6 +848,44 @@
   z-index: 2;
 }
 
+.eventCard:hover .eventDateRange {
+  max-width: 350px;
+  transform: scale(1.02);
+  background: var(--primary-color);
+  color: var(--text-inverse);
+}
+
+.eventCard:hover .eventUpdated {
+  max-width: 280px;
+  transform: scale(1.02);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Date transition animations */
+@keyframes dateExpand {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.eventCard:hover .eventDateRange {
+  animation: dateExpand 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.eventCard:hover .eventUpdated {
+  animation: dateExpand 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+
 /* List View Event Card */
 .eventListItem {
   display: flex;
@@ -1283,6 +1321,13 @@
   display: flex;
   align-items: center;
   cursor: help;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  min-width: 0;
+  position: relative;
 }
 
 .eventUpdated {
@@ -1292,6 +1337,13 @@
   display: flex;
   align-items: center;
   cursor: help;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  min-width: 0;
+  position: relative;
 }
 
 .eventMembers {
@@ -1740,6 +1792,17 @@
 
   .eventUpdated {
     font-size: 0.75rem;
+    max-width: 120px;
+  }
+
+  .eventCard:hover .eventDateRange {
+    max-width: 280px;
+    transform: scale(1.01);
+  }
+
+  .eventCard:hover .eventUpdated {
+    max-width: 220px;
+    transform: scale(1.01);
   }
 
   .eventSourcePocket {
@@ -1852,6 +1915,17 @@
 
   .eventUpdated {
     font-size: 0.7rem;
+    max-width: 100px;
+  }
+
+  .eventCard:hover .eventDateRange {
+    max-width: 250px;
+    transform: scale(1.01);
+  }
+
+  .eventCard:hover .eventUpdated {
+    max-width: 200px;
+    transform: scale(1.01);
   }
 
   .eventSourcePocket {

@@ -55,6 +55,7 @@ const EventView: React.FC = () => {
     const [selectedEventForEdit, setSelectedEventForEdit] = useState<Event | null>(null);
     const [showMembersModal, setShowMembersModal] = useState(false);
     const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
+    const [hoveredEventCard, setHoveredEventCard] = useState<string | null>(null);
 
     // State for dynamic photo count calculation in list view
     const [maxPhotosInRow, setMaxPhotosInRow] = useState(5); // Default fallback
@@ -420,7 +421,6 @@ const EventView: React.FC = () => {
     const getFullDateTitle = (dateString: string): string => {
         const utcDate = new Date(dateString);
         return utcDate.toLocaleDateString('en-US', {
-            weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -461,7 +461,6 @@ const EventView: React.FC = () => {
         const formatFullDate = (dateString: string): string => {
             const utcDate = new Date(dateString);
             return utcDate.toLocaleDateString('en-US', {
-                weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
@@ -624,6 +623,8 @@ const EventView: React.FC = () => {
                     handleEventCardSelection(event.id);
                     handleOpenGridPhotoView(event);
                 }}
+                onMouseEnter={() => setHoveredEventCard(event.id)}
+                onMouseLeave={() => setHoveredEventCard(null)}
                 style={{
                     cursor: 'pointer',
                     zIndex: viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1
@@ -907,7 +908,10 @@ const EventView: React.FC = () => {
                                         }
                                     })()}
                                 >
-                                    {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)}
+                                    {hoveredEventCard === event.id
+                                        ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
+                                        : formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)
+                                    }
                                 </span>
                             )}
                         </div>
@@ -916,7 +920,10 @@ const EventView: React.FC = () => {
                                 className={styles.eventUpdated}
                                 title={`Updated: ${getFullDateTitle(event.updated_at)}`}
                             >
-                                Updated {formatDateMonthOnly(event.updated_at)}
+                                {hoveredEventCard === event.id
+                                    ? `Updated ${getFullDateTitle(event.updated_at)}`
+                                    : `Updated ${formatDateMonthOnly(event.updated_at)}`
+                                }
                             </span>
                         </div>
                     </div>
