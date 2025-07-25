@@ -408,44 +408,77 @@ const EventView: React.FC = () => {
         return `https://${rawUrl}`;
     };
 
-    // Helper function to format date (handles UTC/Zulu time conversion)
-    const formatDate = (dateString: string): string => {
+    // Helper function to format date as month only for display
+    const formatDateMonthOnly = (dateString: string): string => {
         const utcDate = new Date(dateString);
-        const formatted = utcDate.toLocaleDateString('en-US', {
-            month: 'short',
-            year: 'numeric'
+        return utcDate.toLocaleDateString('en-US', {
+            month: 'long'
         });
-        return formatted;
     };
 
-    // Helper function to format date range (handles UTC/Zulu time conversion)
-    const formatDateRange = (startDate?: string, endDate?: string): string | null => {
+    // Helper function to get full date for title attribute
+    const getFullDateTitle = (dateString: string): string => {
+        const utcDate = new Date(dateString);
+        return utcDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    // Helper function to format date range as month only for display
+    const formatDateRangeMonthOnly = (startDate?: string, endDate?: string): string | null => {
         if (!startDate && !endDate) return null;
 
-        const formatDateOnly = (dateString: string): string => {
-            // Parse the UTC/Zulu time string and convert to local timezone
+        const formatMonthOnly = (dateString: string): string => {
             const utcDate = new Date(dateString);
-
             return utcDate.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
+                month: 'long'
             });
         };
 
         if (startDate && endDate) {
-            const start = formatDateOnly(startDate);
-            const end = formatDateOnly(endDate);
+            const startMonth = formatMonthOnly(startDate);
+            const endMonth = formatMonthOnly(endDate);
+            if (startMonth === endMonth) {
+                return startMonth;
+            }
+            return `${startMonth} - ${endMonth}`;
+        } else if (startDate) {
+            return formatMonthOnly(startDate);
+        } else if (endDate) {
+            return `Until ${formatMonthOnly(endDate)}`;
+        }
+
+        return null;
+    };
+
+    // Helper function to get full date range for title attribute
+    const getFullDateRangeTitle = (startDate?: string, endDate?: string): string | null => {
+        if (!startDate && !endDate) return null;
+
+        const formatFullDate = (dateString: string): string => {
+            const utcDate = new Date(dateString);
+            return utcDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        };
+
+        if (startDate && endDate) {
+            const start = formatFullDate(startDate);
+            const end = formatFullDate(endDate);
             if (start === end) {
                 return start;
             }
             return `${start} - ${end}`;
         } else if (startDate) {
-            const formatted = formatDateOnly(startDate);
-            return formatted;
+            return formatFullDate(startDate);
         } else if (endDate) {
-            const formatted = formatDateOnly(endDate);
-            return `Until ${formatted}`;
+            return `Until ${formatFullDate(endDate)}`;
         }
 
         return null;
@@ -609,11 +642,6 @@ const EventView: React.FC = () => {
                         </h3>
                     </div>
                     <div className={styles.eventMeta}>
-                        <span className={styles.eventDate}>{totalPhotoCount} photos</span>
-                        {formatDateRange(event.date_range_start, event.date_range_end) && (
-                            <span className={styles.eventDateRange}>{formatDateRange(event.date_range_start, event.date_range_end)}</span>
-                        )}
-                        <span className={styles.eventUpdated}>Updated {formatDate(event.updated_at)}</span>
                         <button
                             className={styles.eventOptionsButton}
                             onClick={(e) => handleOptionsClick(e, event.id)}
@@ -786,76 +814,112 @@ const EventView: React.FC = () => {
 
                 {/* Event Footer */}
                 <div className={styles.eventFooter}>
-                    <div className={styles.eventMembers}>
-                        <span className={styles.memberCount}>{totalMemberCount} members</span>
-                        <div className={styles.memberAvatars}>
-                            {/* Show pocket members first */}
-                            {pocket?.pocket_members?.slice(0, 3).map((member) => (
-                                <div
-                                    key={member.id}
-                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent event card click
-                                        handleEventCardSelection(event.id);
-                                        navigate(`/profile/${member.id}`);
-                                    }}
-                                    title={`${member.first_name} ${member.last_name}`}
-                                >
-                                    <img
-                                        src={getProfilePictureUrl(member)}
-                                        alt={member.first_name}
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                    {/* Top Row - Members and Source Pocket */}
+                    <div className={styles.eventFooterTopRow}>
+                        <div className={styles.eventMembers}>
+                            <span className={styles.memberCount}>{totalMemberCount} members</span>
+                            <div className={styles.memberAvatars}>
+                                {/* Show pocket members first */}
+                                {pocket?.pocket_members?.slice(0, 3).map((member) => (
+                                    <div
+                                        key={member.id}
+                                        className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent event card click
+                                            handleEventCardSelection(event.id);
+                                            navigate(`/profile/${member.id}`);
                                         }}
-                                    />
-                                </div>
-                            ))}
-                            {/* Show additional members if any */}
-                            {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
-                                <div
-                                    key={member.id}
-                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent event card click
-                                        handleEventCardSelection(event.id);
-                                        navigate(`/profile/${member.id}`);
-                                    }}
-                                    title={`${member.first_name} ${member.last_name}`}
-                                >
-                                    <img
-                                        src={getProfilePictureUrl(member)}
-                                        alt={member.first_name}
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                        title={`${member.first_name} ${member.last_name}`}
+                                    >
+                                        <img
+                                            src={getProfilePictureUrl(member)}
+                                            alt={member.first_name}
+                                            onError={(e) => {
+                                                e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                                {/* Show additional members if any */}
+                                {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
+                                    <div
+                                        key={member.id}
+                                        className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent event card click
+                                            handleEventCardSelection(event.id);
+                                            navigate(`/profile/${member.id}`);
                                         }}
-                                    />
-                                </div>
-                            ))}
-                            {totalMemberCount > 3 && (
+                                        title={`${member.first_name} ${member.last_name}`}
+                                    >
+                                        <img
+                                            src={getProfilePictureUrl(member)}
+                                            alt={member.first_name}
+                                            onError={(e) => {
+                                                e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                                {totalMemberCount > 3 && (
+                                    <span
+                                        className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent event card click
+                                            handleEventCardSelection(event.id);
+                                            handleViewAllMembers(event);
+                                        }}
+                                        title={`View all ${totalMemberCount} members`}
+                                    >
+                                        +{totalMemberCount - 3}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Show source pocket if event is inherited */}
+                        {event.inherited && event.source_pocket_id && (
+                            <div className={styles.eventSourcePocket}>
+                                <span className={styles.sourceLabel}>Inherited from:</span>
+                                <span className={styles.sourcePocketName}>
+                                    {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Row - Photo Count, Date Range, and Updated Date */}
+                    <div className={styles.eventFooterBottomRow}>
+                        <div className={styles.eventMetaLeft}>
+                            <span className={styles.eventPhotoCount}>{totalPhotoCount} photos</span>
+                            {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end) && (
                                 <span
-                                    className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation(); // Prevent event card click
-                                        handleEventCardSelection(event.id);
-                                        handleViewAllMembers(event);
-                                    }}
-                                    title={`View all ${totalMemberCount} members`}
+                                    className={styles.eventDateRange}
+                                    title={(() => {
+                                        const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
+                                        if (!fullDateRange) return 'Unknown date range';
+
+                                        // If the result contains a dash, it's a date range
+                                        if (fullDateRange.includes(' - ')) {
+                                            return `Photos taken between: ${fullDateRange}`;
+                                        } else {
+                                            return `All photos taken on: ${fullDateRange}`;
+                                        }
+                                    })()}
                                 >
-                                    +{totalMemberCount - 3}
+                                    {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)}
                                 </span>
                             )}
                         </div>
-                    </div>
-
-                    {/* Show source pocket if event is inherited */}
-                    {event.inherited && event.source_pocket_id && (
-                        <div className={styles.eventSourcePocket}>
-                            <span className={styles.sourceLabel}>Inherited from:</span>
-                            <span className={styles.sourcePocketName}>
-                                {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                        <div className={styles.eventMetaRight}>
+                            <span
+                                className={styles.eventUpdated}
+                                title={`Updated: ${getFullDateTitle(event.updated_at)}`}
+                            >
+                                Updated {formatDateMonthOnly(event.updated_at)}
                             </span>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Options Menu */}
