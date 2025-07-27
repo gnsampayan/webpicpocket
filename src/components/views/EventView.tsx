@@ -56,6 +56,13 @@ const EventView: React.FC = () => {
     const [showMembersModal, setShowMembersModal] = useState(false);
     const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
     const [hoveredEventCard, setHoveredEventCard] = useState<string | null>(null);
+    // Load initial collapsed state from session storage
+    const getInitialEmptyEventsCollapsed = (): boolean => {
+        const saved = sessionStorage.getItem('empty-events-collapsed');
+        return saved === 'true';
+    };
+
+    const [isEmptyEventsCollapsed, setIsEmptyEventsCollapsed] = useState(getInitialEmptyEventsCollapsed);
 
     // State for dynamic photo count calculation in list view
     const [maxPhotosInRow, setMaxPhotosInRow] = useState(5); // Default fallback
@@ -635,6 +642,206 @@ const EventView: React.FC = () => {
         setShowMembersModal(true);
     };
 
+    // Save empty events collapsed state to session storage
+    const saveEmptyEventsCollapsed = (collapsed: boolean) => {
+        sessionStorage.setItem('empty-events-collapsed', collapsed.toString());
+    };
+
+    // Handle empty events toggle
+    const handleEmptyEventsToggle = () => {
+        const newCollapsedState = !isEmptyEventsCollapsed;
+        setIsEmptyEventsCollapsed(newCollapsedState);
+        saveEmptyEventsCollapsed(newCollapsedState);
+    };
+
+    // Render simplified event card for empty events
+    const renderEmptyEventCard = (event: Event, index?: number) => {
+        return (
+            <div key={event.id} className={`${styles.eventCard} ${styles.emptyEventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
+                onClick={() => {
+                    handleEventCardSelection(event.id);
+                    handleOpenGridPhotoView(event);
+                }}
+                onMouseEnter={() => setHoveredEventCard(event.id)}
+                onMouseLeave={() => setHoveredEventCard(null)}
+                style={{
+                    cursor: 'pointer',
+                    zIndex: viewMode === 'list' && index !== undefined ? 1000 - index : 1
+                }}>
+                {/* Event Header */}
+                <div className={styles.eventHeader}>
+                    <div className={styles.eventTitleSection}>
+                        <h3
+                            className={`${styles.eventTitle} clickable-title`}
+                            onClick={() => {
+                                handleEventCardSelection(event.id);
+                                handleOpenGridPhotoView(event);
+                            }}
+                        >
+                            {event.title}
+                        </h3>
+                    </div>
+                    <div className={styles.eventMeta}>
+                        <button
+                            className={styles.eventOptionsButton}
+                            onClick={(e) => handleOptionsClick(e, event.id)}
+                        >
+                            <span>⋯</span>
+                        </button>
+                    </div>
+                </div>
+
+
+
+                {/* Event Footer */}
+                <div className={styles.eventFooter}>
+                    {/* Top Row - Additional Members and Source Pocket */}
+                    <div className={styles.eventFooterTopRow}>
+                        <div className={styles.eventMembers}>
+                            {event.additional_members && event.additional_members.length > 0 ? (
+                                <>
+                                    <span className={styles.memberCount}>
+                                        {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
+                                    </span>
+                                    <div className={styles.memberAvatars}>
+                                        {event.additional_members.slice(0, 3).map((member) => (
+                                            <div
+                                                key={member.id}
+                                                className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent event card click
+                                                    handleEventCardSelection(event.id);
+                                                    navigate(`/profile/${member.id}`);
+                                                }}
+                                                title={`${member.first_name} ${member.last_name}`}
+                                            >
+                                                <img
+                                                    src={getProfilePictureUrl(member)}
+                                                    alt={member.first_name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                        {event.additional_members.length > 3 && (
+                                            <span
+                                                className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent event card click
+                                                    handleEventCardSelection(event.id);
+                                                    handleViewAllMembers(event);
+                                                }}
+                                                title={`View all ${event.additional_members.length} guests`}
+                                            >
+                                                +{event.additional_members.length - 3}
+                                            </span>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <span className={styles.memberCount}>No guests</span>
+                            )}
+                        </div>
+
+                        {/* Show source pocket if event is inherited */}
+                        {event.inherited && event.source_pocket_id && (
+                            <div className={styles.eventSourcePocket}>
+                                <span className={styles.sourceLabel}>Inherited from:</span>
+                                <span className={styles.sourcePocketName}>
+                                    {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Row - Date Range and Updated Date */}
+                    <div className={styles.eventFooterBottomRow}>
+                        <div className={styles.eventMetaLeft}>
+                            <span className={styles.eventPhotoCount}>
+                                <span className={styles.emptyPhotoIcon}>📷</span>
+                                <span className={styles.emptyPhotoText}>No photos</span>
+                            </span>
+                            {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end) && (
+                                <span
+                                    className={styles.eventDateRange}
+                                    title={(() => {
+                                        const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
+                                        if (!fullDateRange) return 'Unknown date range';
+
+                                        // If the result contains a dash, it's a date range
+                                        if (fullDateRange.includes(' - ')) {
+                                            return `Photos taken between: ${fullDateRange}`;
+                                        } else {
+                                            return `All photos taken on: ${fullDateRange}`;
+                                        }
+                                    })()}
+                                >
+                                    {hoveredEventCard === event.id
+                                        ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
+                                        : formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)
+                                    }
+                                </span>
+                            )}
+                        </div>
+                        <div className={styles.eventMetaRight}>
+                            <span
+                                className={styles.eventUpdated}
+                                title={`Updated: ${getFullDateTitle(event.updated_at)}`}
+                            >
+                                {hoveredEventCard === event.id
+                                    ? `Updated ${getFullDateTitle(event.updated_at)}`
+                                    : `Updated ${formatDateMonthOnly(event.updated_at)}`
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Options Menu */}
+                {openOptionsMenu === event.id && (
+                    <div className={styles.eventOptionsMenu}>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
+                            e.stopPropagation();
+                            handleOptionSelect('add-photos', event)
+                        }}>
+                            <span className={styles.optionIcon}>📸</span>
+                            Add Photos
+                        </div>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
+                            e.stopPropagation();
+                            handleOptionSelect('add-people', event)
+                        }}>
+                            <span className={styles.optionIcon}>👥</span>
+                            Add People
+                        </div>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
+                            e.stopPropagation();
+                            handleOptionSelect('share', event)
+                        }}>
+                            <span className={styles.optionIcon}>📤</span>
+                            Share
+                        </div>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
+                            e.stopPropagation();
+                            handleOptionSelect('edit', event)
+                        }}>
+                            <span className={styles.optionIcon}>✏️</span>
+                            Edit
+                        </div>
+                        <div className={styles.optionsMenuItem} onClick={(e) => {
+                            e.stopPropagation();
+                            handleOptionSelect('leave', event)
+                        }}>
+                            <span className={styles.optionIcon}>🚪</span>
+                            Leave Event
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     // Render event card with photo previews
     const renderEventCard = (event: Event, index?: number) => {
         // Get up to 10 photos for preview (1 large + 4 small in grid, more in list)
@@ -1185,6 +1392,52 @@ const EventView: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Empty Events Subsection */}
+                    {(() => {
+                        const emptyEvents = filteredAndSortedEvents.filter(event => (event.photo_count || 0) === 0);
+
+                        // Sort empty events by most recently updated
+                        const sortedEmptyEvents = sortEvents(emptyEvents, 'newest-updated');
+
+                        return emptyEvents.length > 0 ? (
+                            <div className={`${styles.emptyEventsSubsection} ${isEmptyEventsCollapsed ? styles.collapsed : ''}`}>
+                                <div className={styles.emptyEventsHeader}>
+                                    <h3
+                                        className={styles.emptyEventsTitle}
+                                        onClick={handleEmptyEventsToggle}
+                                        title={isEmptyEventsCollapsed ? "Click to expand empty events" : "Click to collapse empty events"}
+                                    >
+                                        Empty Events ({emptyEvents.length})
+                                    </h3>
+                                    <button
+                                        className={styles.collapseButton}
+                                        onClick={handleEmptyEventsToggle}
+                                        title={isEmptyEventsCollapsed ? "Expand empty events" : "Collapse empty events"}
+                                    >
+                                        <span>
+                                            {isEmptyEventsCollapsed ? '▼' : '▲'}
+                                        </span>
+                                    </button>
+                                </div>
+                                {!isEmptyEventsCollapsed && (
+                                    <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
+                                        {sortedEmptyEvents.map((event, index) => (
+                                            <div
+                                                key={event.id}
+                                                ref={(el) => {
+                                                    eventCardRefs.current[event.id] = el;
+                                                }}
+                                                onClick={() => handleEventCardSelection(event.id)}
+                                            >
+                                                {renderEmptyEventCard(event, index)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : null;
+                    })()}
                     {events.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyStateContent}>
@@ -1222,7 +1475,7 @@ const EventView: React.FC = () => {
                         </div>
                     ) : (
                         <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
-                            {filteredAndSortedEvents.map((event, index) => (
+                            {filteredAndSortedEvents.filter(event => (event.photo_count || 0) > 0).map((event, index) => (
                                 <div
                                     key={event.id}
                                     ref={(el) => {
