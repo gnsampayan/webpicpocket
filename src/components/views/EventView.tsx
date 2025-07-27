@@ -710,7 +710,7 @@ const EventView: React.FC = () => {
                 onMouseLeave={() => setHoveredEventCard(null)}
                 style={{
                     cursor: 'pointer',
-                    zIndex: viewMode === 'list' && index !== undefined ? 1000 - index : 1
+                    zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? 1000 - index : 1)
                 }}>
                 {/* Event Header */}
                 <div className={styles.eventHeader}>
@@ -902,7 +902,7 @@ const EventView: React.FC = () => {
                 onMouseLeave={() => setHoveredEventCard(null)}
                 style={{
                     cursor: 'pointer',
-                    zIndex: viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1
+                    zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1)
                 }}>
                 {/* Event Header */}
                 <div className={styles.eventHeader}>

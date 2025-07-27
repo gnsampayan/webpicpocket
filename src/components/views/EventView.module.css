@@ -1777,7 +1777,7 @@
   box-shadow: var(--shadow-xl);
   padding: 0.5rem 0;
   min-width: 160px;
-  z-index: 9999;
+  z-index: 99999;
   animation: slideIn 0.2s ease;
 }
 
