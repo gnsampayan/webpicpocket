@@ -606,7 +606,32 @@ const EventView: React.FC = () => {
     }, []);
 
     const handleViewAllMembers = (event: Event) => {
-        setSelectedEventForMembers(event);
+        // Create a modified event object with a guest-specific title
+        const eventWithGuestTitle: Event = {
+            ...event,
+            title: `${event.title} Guests`
+        };
+        setSelectedEventForMembers(eventWithGuestTitle);
+        setShowMembersModal(true);
+    };
+
+    const handleViewAllPocketMembers = () => {
+        // Create a dummy event object to pass to MembersModal for pocket members
+        const dummyEvent: Event = {
+            id: 'pocket-members',
+            title: `${pocket?.pocket_title}`,
+            created_at: '',
+            updated_at: '',
+            photo_count: 0,
+            additional_member_count: 0,
+            additional_members: [],
+            preview_photos: [],
+            date_range_start: undefined,
+            date_range_end: undefined,
+            inherited: false,
+            source_pocket_id: undefined
+        };
+        setSelectedEventForMembers(dummyEvent);
         setShowMembersModal(true);
     };
 
@@ -615,7 +640,6 @@ const EventView: React.FC = () => {
         // Get up to 10 photos for preview (1 large + 4 small in grid, more in list)
         const previewPhotos = event.preview_photos?.slice(0, 10) || [];
         const totalPhotoCount = event.photo_count || 0;
-        const totalMemberCount = (pocket?.pocket_members?.length || 0) + (event.additional_member_count || 0);
 
         return (
             <div key={event.id} className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
@@ -815,67 +839,53 @@ const EventView: React.FC = () => {
 
                 {/* Event Footer */}
                 <div className={styles.eventFooter}>
-                    {/* Top Row - Members and Source Pocket */}
+                    {/* Top Row - Additional Members and Source Pocket */}
                     <div className={styles.eventFooterTopRow}>
                         <div className={styles.eventMembers}>
-                            <span className={styles.memberCount}>{totalMemberCount} members</span>
-                            <div className={styles.memberAvatars}>
-                                {/* Show pocket members first */}
-                                {pocket?.pocket_members?.slice(0, 3).map((member) => (
-                                    <div
-                                        key={member.id}
-                                        className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevent event card click
-                                            handleEventCardSelection(event.id);
-                                            navigate(`/profile/${member.id}`);
-                                        }}
-                                        title={`${member.first_name} ${member.last_name}`}
-                                    >
-                                        <img
-                                            src={getProfilePictureUrl(member)}
-                                            alt={member.first_name}
-                                            onError={(e) => {
-                                                e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
-                                            }}
-                                        />
-                                    </div>
-                                ))}
-                                {/* Show additional members if any */}
-                                {event.additional_members?.slice(0, Math.max(0, 3 - (pocket?.pocket_members?.length || 0))).map((member) => (
-                                    <div
-                                        key={member.id}
-                                        className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevent event card click
-                                            handleEventCardSelection(event.id);
-                                            navigate(`/profile/${member.id}`);
-                                        }}
-                                        title={`${member.first_name} ${member.last_name}`}
-                                    >
-                                        <img
-                                            src={getProfilePictureUrl(member)}
-                                            alt={member.first_name}
-                                            onError={(e) => {
-                                                e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
-                                            }}
-                                        />
-                                    </div>
-                                ))}
-                                {totalMemberCount > 3 && (
-                                    <span
-                                        className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevent event card click
-                                            handleEventCardSelection(event.id);
-                                            handleViewAllMembers(event);
-                                        }}
-                                        title={`View all ${totalMemberCount} members`}
-                                    >
-                                        +{totalMemberCount - 3}
+                            {event.additional_members && event.additional_members.length > 0 ? (
+                                <>
+                                    <span className={styles.memberCount}>
+                                        {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
                                     </span>
-                                )}
-                            </div>
+                                    <div className={styles.memberAvatars}>
+                                        {event.additional_members.slice(0, 3).map((member) => (
+                                            <div
+                                                key={member.id}
+                                                className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent event card click
+                                                    handleEventCardSelection(event.id);
+                                                    navigate(`/profile/${member.id}`);
+                                                }}
+                                                title={`${member.first_name} ${member.last_name}`}
+                                            >
+                                                <img
+                                                    src={getProfilePictureUrl(member)}
+                                                    alt={member.first_name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                        {event.additional_members.length > 3 && (
+                                            <span
+                                                className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent event card click
+                                                    handleEventCardSelection(event.id);
+                                                    handleViewAllMembers(event);
+                                                }}
+                                                title={`View all ${event.additional_members.length} guests`}
+                                            >
+                                                +{event.additional_members.length - 3}
+                                            </span>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <span className={styles.memberCount}>No guests</span>
+                            )}
                         </div>
 
                         {/* Show source pocket if event is inherited */}
@@ -1122,24 +1132,59 @@ const EventView: React.FC = () => {
 
                 {/* Events List */}
                 <section className={styles.eventsSection}>
-                    <h2>
-                        {searchTerm.trim() ? (
-                            <>
-                                Search Results
-                                <span className={styles.searchResultsInfo}>
-                                    {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''} found for "{searchTerm}"
-                                    {hideInherited ? ' (inherited events hidden)' : ''}
+                    <div className={styles.eventsSectionHeader}>
+                        <h2>
+                            {searchTerm.trim() ? (
+                                <>
+                                    Search Results
+                                    <span className={styles.searchResultsInfo}>
+                                        {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''} found for "{searchTerm}"
+                                        {hideInherited ? ' (inherited events hidden)' : ''}
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    Events ({filteredAndSortedEvents.length})
+                                    {hideInherited && (
+                                        <span className={styles.filterInfo}> - inherited events hidden</span>
+                                    )}
+                                </>
+                            )}
+                        </h2>
+                        {pocket?.pocket_members && pocket.pocket_members.length > 0 && (
+                            <div className={styles.pocketMembersSection} onClick={handleViewAllPocketMembers}>
+                                <span className={styles.pocketMembersLabel}>
+                                    {pocket.pocket_members.length} member{pocket.pocket_members.length !== 1 ? 's' : ''}
                                 </span>
-                            </>
-                        ) : (
-                            <>
-                                Events ({filteredAndSortedEvents.length})
-                                {hideInherited && (
-                                    <span className={styles.filterInfo}> - inherited events hidden</span>
-                                )}
-                            </>
+                                <div className={styles.pocketMemberAvatars}>
+                                    {pocket.pocket_members.slice(0, 5).map((member) => (
+                                        <div
+                                            key={member.id}
+                                            className={`${styles.pocketMemberAvatar} ${styles.memberAvatarClickable}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent triggering the parent click
+                                                navigate(`/profile/${member.id}`);
+                                            }}
+                                            title={`${member.first_name} ${member.last_name}`}
+                                        >
+                                            <img
+                                                src={getProfilePictureUrl(member)}
+                                                alt={member.first_name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                    {pocket.pocket_members.length > 5 && (
+                                        <span className={styles.morePocketMembers}>
+                                            +{pocket.pocket_members.length - 5}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         )}
-                    </h2>
+                    </div>
                     {events.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyStateContent}>
@@ -1251,11 +1296,16 @@ const EventView: React.FC = () => {
                 <MembersModal
                     isOpen={showMembersModal}
                     onClose={() => setShowMembersModal(false)}
-                    title={`${selectedEventForMembers.title} Members`}
-                    members={[
-                        ...(pocket?.pocket_members || []),
-                        ...(selectedEventForMembers.additional_members || [])
-                    ]}
+                    title={
+                        selectedEventForMembers.id === 'pocket-members'
+                            ? `${selectedEventForMembers.title} Members`
+                            : `${selectedEventForMembers.title}`
+                    }
+                    members={
+                        selectedEventForMembers.id === 'pocket-members'
+                            ? (pocket?.pocket_members || [])
+                            : (selectedEventForMembers.additional_members || [])
+                    }
                 />
             )}
 
