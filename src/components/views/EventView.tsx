@@ -56,8 +56,6 @@ const EventView: React.FC = () => {
     const [showMembersModal, setShowMembersModal] = useState(false);
     const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
     const [hoveredEventCard, setHoveredEventCard] = useState<string | null>(null);
-    const [debouncedHoveredEventCard, setDebouncedHoveredEventCard] = useState<string | null>(null);
-    const [debouncedHoveredAnimationCard, setDebouncedHoveredAnimationCard] = useState<string | null>(null);
     // Load initial collapsed state from session storage
     const getInitialEmptyEventsCollapsed = (): boolean => {
         const saved = sessionStorage.getItem('empty-events-collapsed');
@@ -82,23 +80,7 @@ const EventView: React.FC = () => {
     const eventCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const mainContentRef = useRef<HTMLDivElement | null>(null);
 
-    // Debounce hover state to prevent animation loops
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedHoveredEventCard(hoveredEventCard);
-        }, 150); // 150ms debounce delay
 
-        return () => clearTimeout(timer);
-    }, [hoveredEventCard]);
-
-    // Debounce hover animation state to prevent rapid flickering
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedHoveredAnimationCard(hoveredEventCard);
-        }, 100); // 100ms debounce delay for animation
-
-        return () => clearTimeout(timer);
-    }, [hoveredEventCard]);
 
     // Function to calculate how many photos can fit in the container
     const calculateMaxPhotos = () => {
@@ -711,187 +693,190 @@ const EventView: React.FC = () => {
     // Render simplified event card for empty events
     const renderEmptyEventCard = (event: Event, index?: number) => {
         return (
-            <div key={event.id} className={`${styles.eventCard} ${styles.emptyEventCard} ${viewMode === 'list' ? styles.eventListItem : ''} ${debouncedHoveredAnimationCard === event.id ? styles.hovered : ''}`}
-                onClick={() => {
-                    handleEventCardSelection(event.id);
-                    handleOpenGridPhotoView(event);
-                }}
+            <div key={event.id} className={styles.eventCardWrapper}
                 onMouseEnter={() => setHoveredEventCard(event.id)}
                 onMouseLeave={() => setHoveredEventCard(null)}
-                style={{
-                    cursor: 'pointer',
-                    zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? 1000 - index : 1)
-                }}>
-                {/* Event Header */}
-                <div className={styles.eventHeader}>
-                    <div className={styles.eventTitleSection}>
-                        <h3
-                            className={`${styles.eventTitle} clickable-title`}
-                            onClick={() => {
-                                handleEventCardSelection(event.id);
-                                handleOpenGridPhotoView(event);
-                            }}
-                        >
-                            {event.title}
-                        </h3>
+            >
+                <div className={`${styles.eventCard} ${styles.emptyEventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
+                    onClick={() => {
+                        handleEventCardSelection(event.id);
+                        handleOpenGridPhotoView(event);
+                    }}
+                    style={{
+                        cursor: 'pointer',
+                        zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? 1000 - index : 1)
+                    }}>
+                    {/* Event Header */}
+                    <div className={styles.eventHeader}>
+                        <div className={styles.eventTitleSection}>
+                            <h3
+                                className={`${styles.eventTitle} clickable-title`}
+                                onClick={() => {
+                                    handleEventCardSelection(event.id);
+                                    handleOpenGridPhotoView(event);
+                                }}
+                            >
+                                {event.title}
+                            </h3>
+                        </div>
+                        <div className={styles.eventMeta}>
+                            <button
+                                className={styles.eventOptionsButton}
+                                onClick={(e) => handleOptionsClick(e, event.id)}
+                            >
+                                <span>⋯</span>
+                            </button>
+                        </div>
                     </div>
-                    <div className={styles.eventMeta}>
-                        <button
-                            className={styles.eventOptionsButton}
-                            onClick={(e) => handleOptionsClick(e, event.id)}
-                        >
-                            <span>⋯</span>
-                        </button>
-                    </div>
-                </div>
 
 
 
-                {/* Event Footer */}
-                <div className={styles.eventFooter}>
-                    {/* Top Row - Additional Members and Source Pocket */}
-                    <div className={styles.eventFooterTopRow}>
-                        <div className={styles.eventMembers}>
-                            {event.additional_members && event.additional_members.length > 0 ? (
-                                <>
-                                    <span className={styles.memberCount}>
-                                        {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
-                                    </span>
-                                    <div className={styles.memberAvatars}>
-                                        {event.additional_members.slice(0, 3).map((member) => (
-                                            <div
-                                                key={member.id}
-                                                className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent event card click
-                                                    handleEventCardSelection(event.id);
-                                                    navigate(`/profile/${member.id}`);
-                                                }}
-                                                title={`${member.first_name} ${member.last_name}`}
-                                            >
-                                                <img
-                                                    src={getProfilePictureUrl(member)}
-                                                    alt={member.first_name}
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                    {/* Event Footer */}
+                    <div className={styles.eventFooter}>
+                        {/* Top Row - Additional Members and Source Pocket */}
+                        <div className={styles.eventFooterTopRow}>
+                            <div className={styles.eventMembers}>
+                                {event.additional_members && event.additional_members.length > 0 ? (
+                                    <>
+                                        <span className={styles.memberCount}>
+                                            {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <div className={styles.memberAvatars}>
+                                            {event.additional_members.slice(0, 3).map((member) => (
+                                                <div
+                                                    key={member.id}
+                                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent event card click
+                                                        handleEventCardSelection(event.id);
+                                                        navigate(`/profile/${member.id}`);
                                                     }}
-                                                />
-                                            </div>
-                                        ))}
-                                        {event.additional_members.length > 3 && (
-                                            <span
-                                                className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent event card click
-                                                    handleEventCardSelection(event.id);
-                                                    handleViewAllMembers(event);
-                                                }}
-                                                title={`View all ${event.additional_members.length} guests`}
-                                            >
-                                                +{event.additional_members.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <span className={styles.memberCount}>No guests</span>
+                                                    title={`${member.first_name} ${member.last_name}`}
+                                                >
+                                                    <img
+                                                        src={getProfilePictureUrl(member)}
+                                                        alt={member.first_name}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {event.additional_members.length > 3 && (
+                                                <span
+                                                    className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent event card click
+                                                        handleEventCardSelection(event.id);
+                                                        handleViewAllMembers(event);
+                                                    }}
+                                                    title={`View all ${event.additional_members.length} guests`}
+                                                >
+                                                    +{event.additional_members.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <span className={styles.memberCount}>No guests</span>
+                                )}
+                            </div>
+
+                            {/* Show source pocket if event is inherited */}
+                            {event.inherited && event.source_pocket_id && (
+                                <div className={styles.eventSourcePocket}>
+                                    <span className={styles.sourceLabel}>Inherited from:</span>
+                                    <span className={styles.sourcePocketName}>
+                                        {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                                    </span>
+                                </div>
                             )}
                         </div>
 
-                        {/* Show source pocket if event is inherited */}
-                        {event.inherited && event.source_pocket_id && (
-                            <div className={styles.eventSourcePocket}>
-                                <span className={styles.sourceLabel}>Inherited from:</span>
-                                <span className={styles.sourcePocketName}>
-                                    {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                        {/* Bottom Row - Date Range and Updated Date */}
+                        <div className={styles.eventFooterBottomRow}>
+                            <div className={styles.eventMetaLeft}>
+                                <span className={styles.eventPhotoCount}>
+                                    <span className={styles.emptyPhotoIcon}>📷</span>
+                                    <span className={styles.emptyPhotoText}>No photos</span>
                                 </span>
-                            </div>
-                        )}
-                    </div>
+                                {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
+                                    <span
+                                        className={styles.eventDateRange}
+                                        title={(() => {
+                                            const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
+                                            if (!fullDateRange) return 'Unknown date range';
 
-                    {/* Bottom Row - Date Range and Updated Date */}
-                    <div className={styles.eventFooterBottomRow}>
-                        <div className={styles.eventMetaLeft}>
-                            <span className={styles.eventPhotoCount}>
-                                <span className={styles.emptyPhotoIcon}>📷</span>
-                                <span className={styles.emptyPhotoText}>No photos</span>
-                            </span>
-                            {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
-                                <span
-                                    className={styles.eventDateRange}
-                                    title={(() => {
-                                        const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
-                                        if (!fullDateRange) return 'Unknown date range';
-
-                                        // If the result contains a dash, it's a date range
-                                        if (fullDateRange.includes(' - ')) {
-                                            return `Photos taken between: ${fullDateRange}`;
-                                        } else {
-                                            return `All photos taken on: ${fullDateRange}`;
+                                            // If the result contains a dash, it's a date range
+                                            if (fullDateRange.includes(' - ')) {
+                                                return `Photos taken between: ${fullDateRange}`;
+                                            } else {
+                                                return `All photos taken on: ${fullDateRange}`;
+                                            }
+                                        })()}
+                                    >
+                                        {hoveredEventCard === event.id
+                                            ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
+                                            : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
                                         }
-                                    })()}
+                                    </span>
+                                )}
+                            </div>
+                            <div className={styles.eventMetaRight}>
+                                <span
+                                    className={styles.eventUpdated}
+                                    title={`Updated: ${getFullDateTitle(event.updated_at)}`}
                                 >
-                                    {debouncedHoveredEventCard === event.id
-                                        ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
-                                        : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
+                                    {hoveredEventCard === event.id
+                                        ? `Updated ${getFullDateTitle(event.updated_at)}`
+                                        : `Updated ${formatDateMonthYear(event.updated_at)}`
                                     }
                                 </span>
-                            )}
-                        </div>
-                        <div className={styles.eventMetaRight}>
-                            <span
-                                className={styles.eventUpdated}
-                                title={`Updated: ${getFullDateTitle(event.updated_at)}`}
-                            >
-                                {debouncedHoveredEventCard === event.id
-                                    ? `Updated ${getFullDateTitle(event.updated_at)}`
-                                    : `Updated ${formatDateMonthYear(event.updated_at)}`
-                                }
-                            </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Options Menu */}
-                {openOptionsMenu === event.id && (
-                    <div className={styles.eventOptionsMenu}>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('add-photos', event)
-                        }}>
-                            <span className={styles.optionIcon}>📸</span>
-                            Add Photos
+                    {/* Options Menu */}
+                    {openOptionsMenu === event.id && (
+                        <div className={styles.eventOptionsMenu}>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('add-photos', event)
+                            }}>
+                                <span className={styles.optionIcon}>📸</span>
+                                Add Photos
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('add-people', event)
+                            }}>
+                                <span className={styles.optionIcon}>👥</span>
+                                Add People
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('share', event)
+                            }}>
+                                <span className={styles.optionIcon}>📤</span>
+                                Share
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('edit', event)
+                            }}>
+                                <span className={styles.optionIcon}>✏️</span>
+                                Edit
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('leave', event)
+                            }}>
+                                <span className={styles.optionIcon}>🚪</span>
+                                Leave Event
+                            </div>
                         </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('add-people', event)
-                        }}>
-                            <span className={styles.optionIcon}>👥</span>
-                            Add People
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('share', event)
-                        }}>
-                            <span className={styles.optionIcon}>📤</span>
-                            Share
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('edit', event)
-                        }}>
-                            <span className={styles.optionIcon}>✏️</span>
-                            Edit
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('leave', event)
-                        }}>
-                            <span className={styles.optionIcon}>🚪</span>
-                            Leave Event
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         );
     };
@@ -903,174 +888,67 @@ const EventView: React.FC = () => {
         const totalPhotoCount = event.photo_count || 0;
 
         return (
-            <div key={event.id} className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''} ${debouncedHoveredAnimationCard === event.id ? styles.hovered : ''}`}
-                onClick={() => {
-                    handleEventCardSelection(event.id);
-                    handleOpenGridPhotoView(event);
-                }}
+            <div key={event.id} className={styles.eventCardWrapper}
                 onMouseEnter={() => setHoveredEventCard(event.id)}
                 onMouseLeave={() => setHoveredEventCard(null)}
-                style={{
-                    cursor: 'pointer',
-                    zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1)
-                }}>
-                {/* Event Header */}
-                <div className={styles.eventHeader}>
-                    <div className={styles.eventTitleSection}>
-                        <h3
-                            className={`${styles.eventTitle} clickable-title`}
-                            onClick={() => {
-                                handleEventCardSelection(event.id);
-                                handleOpenGridPhotoView(event);
-                            }}
-                        >
-                            {event.title}
-                        </h3>
+            >
+                <div className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
+                    onClick={() => {
+                        handleEventCardSelection(event.id);
+                        handleOpenGridPhotoView(event);
+                    }}
+                    style={{
+                        cursor: 'pointer',
+                        zIndex: openOptionsMenu === event.id ? 99998 : (viewMode === 'list' && index !== undefined ? filteredAndSortedEvents.length - index : 1)
+                    }}>
+                    {/* Event Header */}
+                    <div className={styles.eventHeader}>
+                        <div className={styles.eventTitleSection}>
+                            <h3
+                                className={`${styles.eventTitle} clickable-title`}
+                                onClick={() => {
+                                    handleEventCardSelection(event.id);
+                                    handleOpenGridPhotoView(event);
+                                }}
+                            >
+                                {event.title}
+                            </h3>
+                        </div>
+                        <div className={styles.eventMeta}>
+                            <button
+                                className={styles.eventOptionsButton}
+                                onClick={(e) => handleOptionsClick(e, event.id)}
+                            >
+                                <span>⋯</span>
+                            </button>
+                        </div>
                     </div>
-                    <div className={styles.eventMeta}>
-                        <button
-                            className={styles.eventOptionsButton}
-                            onClick={(e) => handleOptionsClick(e, event.id)}
-                        >
-                            <span>⋯</span>
-                        </button>
-                    </div>
-                </div>
 
-                {/* Event Photo Preview */}
-                <div className={styles.eventPhotosPreview}>
-                    {previewPhotos.length > 0 ? (
-                        viewMode === 'list' ? (
-                            // List view: single row of photos
-                            <div className={styles.photoRow} ref={photoRowRef}>
-                                {previewPhotos.slice(0, maxPhotosInRow).map((photo, index) => (
-                                    <div
-                                        key={index}
-                                        className={styles.rowPhoto}
-                                        onClick={(e) => {
-                                            handleEventCardSelection(event.id);
-                                            handleOpenPhotoDetails(e, photo, event);
-                                        }}
-                                    >
-                                        <img
-                                            src={getPhotoUrl(photo)}
-                                            alt="Event photo"
-                                            onError={(e) => {
-                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                    {/* Event Photo Preview */}
+                    <div className={styles.eventPhotosPreview}>
+                        {previewPhotos.length > 0 ? (
+                            viewMode === 'list' ? (
+                                // List view: single row of photos
+                                <div className={styles.photoRow} ref={photoRowRef}>
+                                    {previewPhotos.slice(0, maxPhotosInRow).map((photo, index) => (
+                                        <div
+                                            key={index}
+                                            className={styles.rowPhoto}
+                                            onClick={(e) => {
+                                                handleEventCardSelection(event.id);
+                                                handleOpenPhotoDetails(e, photo, event);
                                             }}
-                                        />
-                                        {/* Show "more" overlay logic */}
-                                        {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
-                                            (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
-                                                <div
-                                                    className={styles.morePhotosOverlay}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEventCardSelection(event.id);
-                                                        handleOpenGridPhotoView(event);
-                                                    }}
-                                                >
-                                                    <span>+{totalPhotoCount - Math.min(maxPhotosInRow, 10)}</span>
-                                                </div>
-                                            )}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            // Grid view: existing layout
-                            <div className={styles.photoGrid}>
-                                {/* Large photo on the left */}
-                                {previewPhotos[0] && (
-                                    <div
-                                        className={styles.largePhoto}
-                                        onClick={(e) => {
-                                            handleEventCardSelection(event.id);
-                                            handleOpenPhotoDetails(e, previewPhotos[0], event);
-                                        }}
-                                    >
-                                        <img
-                                            src={getPhotoUrl(previewPhotos[0])}
-                                            alt="Event photo"
-                                            onError={(e) => {
-                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {/* 2x2 grid on the right */}
-                                <div className={styles.smallPhotosGrid}>
-                                    <div className={styles.topRow}>
-                                        {previewPhotos[1] && (
-                                            <div
-                                                className={styles.smallPhoto}
-                                                onClick={(e) => {
-                                                    handleEventCardSelection(event.id);
-                                                    handleOpenPhotoDetails(e, previewPhotos[1], event);
+                                        >
+                                            <img
+                                                src={getPhotoUrl(photo)}
+                                                alt="Event photo"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
                                                 }}
-                                            >
-                                                <img
-                                                    src={getPhotoUrl(previewPhotos[1])}
-                                                    alt="Event photo"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                        {previewPhotos[2] && (
-                                            <div
-                                                className={styles.smallPhoto}
-                                                onClick={(e) => {
-                                                    handleEventCardSelection(event.id);
-                                                    handleOpenPhotoDetails(e, previewPhotos[2], event);
-                                                }}
-                                            >
-                                                <img
-                                                    src={getPhotoUrl(previewPhotos[2])}
-                                                    alt="Event photo"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className={styles.bottomRow}>
-                                        {previewPhotos[3] && (
-                                            <div
-                                                className={styles.smallPhoto}
-                                                onClick={(e) => {
-                                                    handleEventCardSelection(event.id);
-                                                    handleOpenPhotoDetails(e, previewPhotos[3], event);
-                                                }}
-                                            >
-                                                <img
-                                                    src={getPhotoUrl(previewPhotos[3])}
-                                                    alt="Event photo"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                        {previewPhotos[4] && (
-                                            <div
-                                                className={styles.smallPhoto}
-                                                onClick={(e) => {
-                                                    handleEventCardSelection(event.id);
-                                                    handleOpenPhotoDetails(e, previewPhotos[4], event);
-                                                }}
-                                            >
-                                                <img
-                                                    src={getPhotoUrl(previewPhotos[4])}
-                                                    alt="Event photo"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                    }}
-                                                />
-                                                {/* Show "more" overlay if there are more than 5 photos (since grid shows 5) */}
-                                                {totalPhotoCount > 5 && (
+                                            />
+                                            {/* Show "more" overlay logic */}
+                                            {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
+                                                (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
                                                     <div
                                                         className={styles.morePhotosOverlay}
                                                         onClick={(e) => {
@@ -1079,167 +957,277 @@ const EventView: React.FC = () => {
                                                             handleOpenGridPhotoView(event);
                                                         }}
                                                     >
-                                                        <span>+{totalPhotoCount - 5}</span>
+                                                        <span>+{totalPhotoCount - Math.min(maxPhotosInRow, 10)}</span>
                                                     </div>
                                                 )}
-                                            </div>
-                                        )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                // Grid view: existing layout
+                                <div className={styles.photoGrid}>
+                                    {/* Large photo on the left */}
+                                    {previewPhotos[0] && (
+                                        <div
+                                            className={styles.largePhoto}
+                                            onClick={(e) => {
+                                                handleEventCardSelection(event.id);
+                                                handleOpenPhotoDetails(e, previewPhotos[0], event);
+                                            }}
+                                        >
+                                            <img
+                                                src={getPhotoUrl(previewPhotos[0])}
+                                                alt="Event photo"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* 2x2 grid on the right */}
+                                    <div className={styles.smallPhotosGrid}>
+                                        <div className={styles.topRow}>
+                                            {previewPhotos[1] && (
+                                                <div
+                                                    className={styles.smallPhoto}
+                                                    onClick={(e) => {
+                                                        handleEventCardSelection(event.id);
+                                                        handleOpenPhotoDetails(e, previewPhotos[1], event);
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={getPhotoUrl(previewPhotos[1])}
+                                                        alt="Event photo"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {previewPhotos[2] && (
+                                                <div
+                                                    className={styles.smallPhoto}
+                                                    onClick={(e) => {
+                                                        handleEventCardSelection(event.id);
+                                                        handleOpenPhotoDetails(e, previewPhotos[2], event);
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={getPhotoUrl(previewPhotos[2])}
+                                                        alt="Event photo"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={styles.bottomRow}>
+                                            {previewPhotos[3] && (
+                                                <div
+                                                    className={styles.smallPhoto}
+                                                    onClick={(e) => {
+                                                        handleEventCardSelection(event.id);
+                                                        handleOpenPhotoDetails(e, previewPhotos[3], event);
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={getPhotoUrl(previewPhotos[3])}
+                                                        alt="Event photo"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {previewPhotos[4] && (
+                                                <div
+                                                    className={styles.smallPhoto}
+                                                    onClick={(e) => {
+                                                        handleEventCardSelection(event.id);
+                                                        handleOpenPhotoDetails(e, previewPhotos[4], event);
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={getPhotoUrl(previewPhotos[4])}
+                                                        alt="Event photo"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                    {/* Show "more" overlay if there are more than 5 photos (since grid shows 5) */}
+                                                    {totalPhotoCount > 5 && (
+                                                        <div
+                                                            className={styles.morePhotosOverlay}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEventCardSelection(event.id);
+                                                                handleOpenGridPhotoView(event);
+                                                            }}
+                                                        >
+                                                            <span>+{totalPhotoCount - 5}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    ) : (
-                        <div className={styles.emptyEventPhotos}>
-                            <div className={styles.emptyPhotosPlaceholder}>
-                                <div className={styles.placeholderIcon}>📷</div>
-                                <p>No photos yet</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Event Footer */}
-                <div className={styles.eventFooter}>
-                    {/* Top Row - Additional Members and Source Pocket */}
-                    <div className={styles.eventFooterTopRow}>
-                        <div className={styles.eventMembers}>
-                            {event.additional_members && event.additional_members.length > 0 ? (
-                                <>
-                                    <span className={styles.memberCount}>
-                                        {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
-                                    </span>
-                                    <div className={styles.memberAvatars}>
-                                        {event.additional_members.slice(0, 3).map((member) => (
-                                            <div
-                                                key={member.id}
-                                                className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent event card click
-                                                    handleEventCardSelection(event.id);
-                                                    navigate(`/profile/${member.id}`);
-                                                }}
-                                                title={`${member.first_name} ${member.last_name}`}
-                                            >
-                                                <img
-                                                    src={getProfilePictureUrl(member)}
-                                                    alt={member.first_name}
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
-                                                    }}
-                                                />
-                                            </div>
-                                        ))}
-                                        {event.additional_members.length > 3 && (
-                                            <span
-                                                className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // Prevent event card click
-                                                    handleEventCardSelection(event.id);
-                                                    handleViewAllMembers(event);
-                                                }}
-                                                title={`View all ${event.additional_members.length} guests`}
-                                            >
-                                                +{event.additional_members.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <span className={styles.memberCount}>No guests</span>
-                            )}
-                        </div>
-
-                        {/* Show source pocket if event is inherited */}
-                        {event.inherited && event.source_pocket_id && (
-                            <div className={styles.eventSourcePocket}>
-                                <span className={styles.sourceLabel}>Inherited from:</span>
-                                <span className={styles.sourcePocketName}>
-                                    {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
-                                </span>
+                            )
+                        ) : (
+                            <div className={styles.emptyEventPhotos}>
+                                <div className={styles.emptyPhotosPlaceholder}>
+                                    <div className={styles.placeholderIcon}>📷</div>
+                                    <p>No photos yet</p>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Bottom Row - Photo Count, Date Range, and Updated Date */}
-                    <div className={styles.eventFooterBottomRow}>
-                        <div className={styles.eventMetaLeft}>
-                            <span className={styles.eventPhotoCount}>{totalPhotoCount} photos</span>
-                            {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
-                                <span
-                                    className={styles.eventDateRange}
-                                    title={(() => {
-                                        const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
-                                        if (!fullDateRange) return 'Unknown date range';
+                    {/* Event Footer */}
+                    <div className={styles.eventFooter}>
+                        {/* Top Row - Additional Members and Source Pocket */}
+                        <div className={styles.eventFooterTopRow}>
+                            <div className={styles.eventMembers}>
+                                {event.additional_members && event.additional_members.length > 0 ? (
+                                    <>
+                                        <span className={styles.memberCount}>
+                                            {event.additional_members.length} guest{event.additional_members.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <div className={styles.memberAvatars}>
+                                            {event.additional_members.slice(0, 3).map((member) => (
+                                                <div
+                                                    key={member.id}
+                                                    className={`${styles.memberAvatar} ${styles.memberAvatarClickable}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent event card click
+                                                        handleEventCardSelection(event.id);
+                                                        navigate(`/profile/${member.id}`);
+                                                    }}
+                                                    title={`${member.first_name} ${member.last_name}`}
+                                                >
+                                                    <img
+                                                        src={getProfilePictureUrl(member)}
+                                                        alt={member.first_name}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = DEFAULT_PROFILE_PLACEHOLDER;
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {event.additional_members.length > 3 && (
+                                                <span
+                                                    className={`${styles.moreMembers} ${styles.moreMembersClickable}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent event card click
+                                                        handleEventCardSelection(event.id);
+                                                        handleViewAllMembers(event);
+                                                    }}
+                                                    title={`View all ${event.additional_members.length} guests`}
+                                                >
+                                                    +{event.additional_members.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <span className={styles.memberCount}>No guests</span>
+                                )}
+                            </div>
 
-                                        // If the result contains a dash, it's a date range
-                                        if (fullDateRange.includes(' - ')) {
-                                            return `Photos taken between: ${fullDateRange}`;
-                                        } else {
-                                            return `All photos taken on: ${fullDateRange}`;
-                                        }
-                                    })()}
-                                >
-                                    {debouncedHoveredEventCard === event.id
-                                        ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
-                                        : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
-                                    }
-                                </span>
+                            {/* Show source pocket if event is inherited */}
+                            {event.inherited && event.source_pocket_id && (
+                                <div className={styles.eventSourcePocket}>
+                                    <span className={styles.sourceLabel}>Inherited from:</span>
+                                    <span className={styles.sourcePocketName}>
+                                        {getSourcePocket(event.source_pocket_id)?.pocket_title || 'Unknown Pocket'}
+                                    </span>
+                                </div>
                             )}
                         </div>
-                        <div className={styles.eventMetaRight}>
-                            <span
-                                className={styles.eventUpdated}
-                                title={`Updated: ${getFullDateTitle(event.updated_at)}`}
-                            >
-                                {debouncedHoveredEventCard === event.id
-                                    ? `Updated ${getFullDateTitle(event.updated_at)}`
-                                    : `Updated ${formatDateMonthYear(event.updated_at)}`
-                                }
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Options Menu */}
-                {openOptionsMenu === event.id && (
-                    <div className={styles.eventOptionsMenu}>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('add-photos', event)
-                        }}>
-                            <span className={styles.optionIcon}>📸</span>
-                            Add Photos
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('add-people', event)
-                        }}>
-                            <span className={styles.optionIcon}>👥</span>
-                            Add People
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('share', event)
-                        }}>
-                            <span className={styles.optionIcon}>📤</span>
-                            Share
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('edit', event)
-                        }}>
-                            <span className={styles.optionIcon}>✏️</span>
-                            Edit
-                        </div>
-                        <div className={styles.optionsMenuItem} onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionSelect('leave', event)
-                        }}>
-                            <span className={styles.optionIcon}>🚪</span>
-                            Leave Event
+                        {/* Bottom Row - Photo Count, Date Range, and Updated Date */}
+                        <div className={styles.eventFooterBottomRow}>
+                            <div className={styles.eventMetaLeft}>
+                                <span className={styles.eventPhotoCount}>{totalPhotoCount} photos</span>
+                                {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
+                                    <span
+                                        className={styles.eventDateRange}
+                                        title={(() => {
+                                            const fullDateRange = getFullDateRangeTitle(event.date_range_start, event.date_range_end);
+                                            if (!fullDateRange) return 'Unknown date range';
+
+                                            // If the result contains a dash, it's a date range
+                                            if (fullDateRange.includes(' - ')) {
+                                                return `Photos taken between: ${fullDateRange}`;
+                                            } else {
+                                                return `All photos taken on: ${fullDateRange}`;
+                                            }
+                                        })()}
+                                    >
+                                        {hoveredEventCard === event.id
+                                            ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
+                                            : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
+                                        }
+                                    </span>
+                                )}
+                            </div>
+                            <div className={styles.eventMetaRight}>
+                                <span
+                                    className={styles.eventUpdated}
+                                    title={`Updated: ${getFullDateTitle(event.updated_at)}`}
+                                >
+                                    {hoveredEventCard === event.id
+                                        ? `Updated ${getFullDateTitle(event.updated_at)}`
+                                        : `Updated ${formatDateMonthYear(event.updated_at)}`
+                                    }
+                                </span>
+                            </div>
                         </div>
                     </div>
-                )}
+
+                    {/* Options Menu */}
+                    {openOptionsMenu === event.id && (
+                        <div className={styles.eventOptionsMenu}>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('add-photos', event)
+                            }}>
+                                <span className={styles.optionIcon}>📸</span>
+                                Add Photos
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('add-people', event)
+                            }}>
+                                <span className={styles.optionIcon}>👥</span>
+                                Add People
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('share', event)
+                            }}>
+                                <span className={styles.optionIcon}>📤</span>
+                                Share
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('edit', event)
+                            }}>
+                                <span className={styles.optionIcon}>✏️</span>
+                                Edit
+                            </div>
+                            <div className={styles.optionsMenuItem} onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionSelect('leave', event)
+                            }}>
+                                <span className={styles.optionIcon}>🚪</span>
+                                Leave Event
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     };

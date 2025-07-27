@@ -722,7 +722,7 @@
   transition: all 0.3s ease;
 }
 
-  .emptyEventCard.hovered {
+  .emptyEventCard:hover {
     opacity: 1;
     border-color: var(--primary-color);
     background: var(--bg-secondary);
@@ -1178,6 +1178,14 @@
 }
 
 /* Update event cards to work better in the scrollable container */
+.eventCardWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.5rem;
+}
+
 .eventCard {
   background: var(--bg-primary);
   border-radius: 16px;
@@ -1193,7 +1201,7 @@
   height: 100%;
 }
 
-.eventCard.hovered {
+.eventCardWrapper:hover .eventCard {
   box-shadow: var(--shadow-xl);
   transform: translateY(-6px);
   border-color: var(--primary-color);
@@ -1201,8 +1209,8 @@
   z-index: 2;
 }
 
-.eventCard.hovered .eventDateRange,
-.eventCard.hovered .eventUpdated {
+.eventCardWrapper:hover .eventCard .eventDateRange,
+.eventCardWrapper:hover .eventCard .eventUpdated {
   max-width: 500px;
 }
 
@@ -1865,7 +1873,7 @@
     gap: 0.75rem;
   }
 
-  .eventCard.hovered {
+  .eventCard:hover {
     transform: translateY(-4px);
   }
 
