@@ -57,6 +57,7 @@ const EventView: React.FC = () => {
     const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
     const [hoveredEventCard, setHoveredEventCard] = useState<string | null>(null);
     const [debouncedHoveredEventCard, setDebouncedHoveredEventCard] = useState<string | null>(null);
+    const [debouncedHoveredAnimationCard, setDebouncedHoveredAnimationCard] = useState<string | null>(null);
     // Load initial collapsed state from session storage
     const getInitialEmptyEventsCollapsed = (): boolean => {
         const saved = sessionStorage.getItem('empty-events-collapsed');
@@ -86,6 +87,15 @@ const EventView: React.FC = () => {
         const timer = setTimeout(() => {
             setDebouncedHoveredEventCard(hoveredEventCard);
         }, 150); // 150ms debounce delay
+
+        return () => clearTimeout(timer);
+    }, [hoveredEventCard]);
+
+    // Debounce hover animation state to prevent rapid flickering
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedHoveredAnimationCard(hoveredEventCard);
+        }, 100); // 100ms debounce delay for animation
 
         return () => clearTimeout(timer);
     }, [hoveredEventCard]);
@@ -701,7 +711,7 @@ const EventView: React.FC = () => {
     // Render simplified event card for empty events
     const renderEmptyEventCard = (event: Event, index?: number) => {
         return (
-            <div key={event.id} className={`${styles.eventCard} ${styles.emptyEventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
+            <div key={event.id} className={`${styles.eventCard} ${styles.emptyEventCard} ${viewMode === 'list' ? styles.eventListItem : ''} ${debouncedHoveredAnimationCard === event.id ? styles.hovered : ''}`}
                 onClick={() => {
                     handleEventCardSelection(event.id);
                     handleOpenGridPhotoView(event);
@@ -893,7 +903,7 @@ const EventView: React.FC = () => {
         const totalPhotoCount = event.photo_count || 0;
 
         return (
-            <div key={event.id} className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''}`}
+            <div key={event.id} className={`${styles.eventCard} ${viewMode === 'list' ? styles.eventListItem : ''} ${debouncedHoveredAnimationCard === event.id ? styles.hovered : ''}`}
                 onClick={() => {
                     handleEventCardSelection(event.id);
                     handleOpenGridPhotoView(event);

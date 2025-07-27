@@ -722,7 +722,7 @@
   transition: all 0.3s ease;
 }
 
-  .emptyEventCard:hover {
+  .emptyEventCard.hovered {
     opacity: 1;
     border-color: var(--primary-color);
     background: var(--bg-secondary);
@@ -1193,7 +1193,7 @@
   height: 100%;
 }
 
-.eventCard:hover {
+.eventCard.hovered {
   box-shadow: var(--shadow-xl);
   transform: translateY(-6px);
   border-color: var(--primary-color);
@@ -1201,8 +1201,8 @@
   z-index: 2;
 }
 
-.eventCard:hover .eventDateRange,
-.eventCard:hover .eventUpdated {
+.eventCard.hovered .eventDateRange,
+.eventCard.hovered .eventUpdated {
   max-width: 500px;
 }
 
@@ -1865,7 +1865,7 @@
     gap: 0.75rem;
   }
 
-  .eventCard:hover {
+  .eventCard.hovered {
     transform: translateY(-4px);
   }
 
