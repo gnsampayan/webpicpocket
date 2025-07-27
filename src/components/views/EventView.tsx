@@ -56,6 +56,7 @@ const EventView: React.FC = () => {
     const [showMembersModal, setShowMembersModal] = useState(false);
     const [lastSelectedEventCard, setLastSelectedEventCardState] = useState<string | null>(getLastSelectedEventCard);
     const [hoveredEventCard, setHoveredEventCard] = useState<string | null>(null);
+    const [debouncedHoveredEventCard, setDebouncedHoveredEventCard] = useState<string | null>(null);
     // Load initial collapsed state from session storage
     const getInitialEmptyEventsCollapsed = (): boolean => {
         const saved = sessionStorage.getItem('empty-events-collapsed');
@@ -64,6 +65,14 @@ const EventView: React.FC = () => {
 
     const [isEmptyEventsCollapsed, setIsEmptyEventsCollapsed] = useState(getInitialEmptyEventsCollapsed);
 
+    // Load initial collapsed state for events without dates from session storage
+    const getInitialNoDateEventsCollapsed = (): boolean => {
+        const saved = sessionStorage.getItem('no-date-events-collapsed');
+        return saved === 'true';
+    };
+
+    const [isNoDateEventsCollapsed, setIsNoDateEventsCollapsed] = useState(getInitialNoDateEventsCollapsed);
+
     // State for dynamic photo count calculation in list view
     const [maxPhotosInRow, setMaxPhotosInRow] = useState(5); // Default fallback
     const photoRowRef = useRef<HTMLDivElement>(null);
@@ -71,6 +80,15 @@ const EventView: React.FC = () => {
     // Refs for event cards to handle scrolling
     const eventCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const mainContentRef = useRef<HTMLDivElement | null>(null);
+
+    // Debounce hover state to prevent animation loops
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedHoveredEventCard(hoveredEventCard);
+        }, 150); // 150ms debounce delay
+
+        return () => clearTimeout(timer);
+    }, [hoveredEventCard]);
 
     // Function to calculate how many photos can fit in the container
     const calculateMaxPhotos = () => {
@@ -416,11 +434,12 @@ const EventView: React.FC = () => {
         return `https://${rawUrl}`;
     };
 
-    // Helper function to format date as month only for display
-    const formatDateMonthOnly = (dateString: string): string => {
+    // Helper function to format date as month and year for display
+    const formatDateMonthYear = (dateString: string): string => {
         const utcDate = new Date(dateString);
         return utcDate.toLocaleDateString('en-US', {
-            month: 'long'
+            month: 'long',
+            year: 'numeric'
         });
     };
 
@@ -434,28 +453,29 @@ const EventView: React.FC = () => {
         });
     };
 
-    // Helper function to format date range as month only for display
-    const formatDateRangeMonthOnly = (startDate?: string, endDate?: string): string | null => {
+    // Helper function to format date range as month and year for display
+    const formatDateRangeMonthYear = (startDate?: string, endDate?: string): string | null => {
         if (!startDate && !endDate) return null;
 
-        const formatMonthOnly = (dateString: string): string => {
+        const formatMonthYear = (dateString: string): string => {
             const utcDate = new Date(dateString);
             return utcDate.toLocaleDateString('en-US', {
-                month: 'long'
+                month: 'long',
+                year: 'numeric'
             });
         };
 
         if (startDate && endDate) {
-            const startMonth = formatMonthOnly(startDate);
-            const endMonth = formatMonthOnly(endDate);
-            if (startMonth === endMonth) {
-                return startMonth;
+            const startMonthYear = formatMonthYear(startDate);
+            const endMonthYear = formatMonthYear(endDate);
+            if (startMonthYear === endMonthYear) {
+                return startMonthYear;
             }
-            return `${startMonth} - ${endMonth}`;
+            return `${startMonthYear} - ${endMonthYear}`;
         } else if (startDate) {
-            return formatMonthOnly(startDate);
+            return formatMonthYear(startDate);
         } else if (endDate) {
-            return `Until ${formatMonthOnly(endDate)}`;
+            return `Until ${formatMonthYear(endDate)}`;
         }
 
         return null;
@@ -488,6 +508,18 @@ const EventView: React.FC = () => {
         }
 
         return null;
+    };
+
+    // Helper function to check if current sort is date-related
+    const isDateRelatedSort = (sortFilter: string): boolean => {
+        return [
+            'event-date-latest',
+            'event-date-earliest',
+            'event-end-latest',
+            'event-end-earliest',
+            'date-range-longest',
+            'date-range-shortest'
+        ].includes(sortFilter);
     };
 
     // Helper function to get profile picture URL - similar to React Native implementation
@@ -654,6 +686,18 @@ const EventView: React.FC = () => {
         saveEmptyEventsCollapsed(newCollapsedState);
     };
 
+    // Save no-date events collapsed state to session storage
+    const saveNoDateEventsCollapsed = (collapsed: boolean) => {
+        sessionStorage.setItem('no-date-events-collapsed', collapsed.toString());
+    };
+
+    // Handle no-date events toggle
+    const handleNoDateEventsToggle = () => {
+        const newCollapsedState = !isNoDateEventsCollapsed;
+        setIsNoDateEventsCollapsed(newCollapsedState);
+        saveNoDateEventsCollapsed(newCollapsedState);
+    };
+
     // Render simplified event card for empty events
     const renderEmptyEventCard = (event: Event, index?: number) => {
         return (
@@ -762,7 +806,7 @@ const EventView: React.FC = () => {
                                 <span className={styles.emptyPhotoIcon}>📷</span>
                                 <span className={styles.emptyPhotoText}>No photos</span>
                             </span>
-                            {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end) && (
+                            {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
                                 <span
                                     className={styles.eventDateRange}
                                     title={(() => {
@@ -777,9 +821,9 @@ const EventView: React.FC = () => {
                                         }
                                     })()}
                                 >
-                                    {hoveredEventCard === event.id
+                                    {debouncedHoveredEventCard === event.id
                                         ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
-                                        : formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)
+                                        : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
                                     }
                                 </span>
                             )}
@@ -789,9 +833,9 @@ const EventView: React.FC = () => {
                                 className={styles.eventUpdated}
                                 title={`Updated: ${getFullDateTitle(event.updated_at)}`}
                             >
-                                {hoveredEventCard === event.id
+                                {debouncedHoveredEventCard === event.id
                                     ? `Updated ${getFullDateTitle(event.updated_at)}`
-                                    : `Updated ${formatDateMonthOnly(event.updated_at)}`
+                                    : `Updated ${formatDateMonthYear(event.updated_at)}`
                                 }
                             </span>
                         </div>
@@ -1110,7 +1154,7 @@ const EventView: React.FC = () => {
                     <div className={styles.eventFooterBottomRow}>
                         <div className={styles.eventMetaLeft}>
                             <span className={styles.eventPhotoCount}>{totalPhotoCount} photos</span>
-                            {formatDateRangeMonthOnly(event.date_range_start, event.date_range_end) && (
+                            {formatDateRangeMonthYear(event.date_range_start, event.date_range_end) && (
                                 <span
                                     className={styles.eventDateRange}
                                     title={(() => {
@@ -1125,9 +1169,9 @@ const EventView: React.FC = () => {
                                         }
                                     })()}
                                 >
-                                    {hoveredEventCard === event.id
+                                    {debouncedHoveredEventCard === event.id
                                         ? getFullDateRangeTitle(event.date_range_start, event.date_range_end)
-                                        : formatDateRangeMonthOnly(event.date_range_start, event.date_range_end)
+                                        : formatDateRangeMonthYear(event.date_range_start, event.date_range_end)
                                     }
                                 </span>
                             )}
@@ -1137,9 +1181,9 @@ const EventView: React.FC = () => {
                                 className={styles.eventUpdated}
                                 title={`Updated: ${getFullDateTitle(event.updated_at)}`}
                             >
-                                {hoveredEventCard === event.id
+                                {debouncedHoveredEventCard === event.id
                                     ? `Updated ${getFullDateTitle(event.updated_at)}`
-                                    : `Updated ${formatDateMonthOnly(event.updated_at)}`
+                                    : `Updated ${formatDateMonthYear(event.updated_at)}`
                                 }
                             </span>
                         </div>
@@ -1351,7 +1395,7 @@ const EventView: React.FC = () => {
                                 </>
                             ) : (
                                 <>
-                                    Events ({filteredAndSortedEvents.length})
+                                    All ({filteredAndSortedEvents.length})
                                     {hideInherited && (
                                         <span className={styles.filterInfo}> - inherited events hidden</span>
                                     )}
@@ -1406,7 +1450,7 @@ const EventView: React.FC = () => {
                                     <h3
                                         className={styles.emptyEventsTitle}
                                         onClick={handleEmptyEventsToggle}
-                                        title={isEmptyEventsCollapsed ? "Click to expand empty events" : "Click to collapse empty events"}
+                                        title={isEmptyEventsCollapsed ? "Click to expand empty events - Add photos to make these events more meaningful" : "Click to collapse empty events - Add photos to make these events more meaningful"}
                                     >
                                         Empty Events ({emptyEvents.length})
                                     </h3>
@@ -1438,6 +1482,54 @@ const EventView: React.FC = () => {
                             </div>
                         ) : null;
                     })()}
+
+                    {/* No Date Events Subsection */}
+                    {(() => {
+                        const isDateSort = isDateRelatedSort(filter);
+                        const noDateEvents = isDateSort ? filteredAndSortedEvents.filter(event => !event.date_range_start && (event.photo_count || 0) > 0) : [];
+
+                        // Sort no-date events by most recently updated
+                        const sortedNoDateEvents = sortEvents(noDateEvents, 'newest-updated');
+
+                        return isDateSort && noDateEvents.length > 0 ? (
+                            <div className={`${styles.noDateEventsSubsection} ${isNoDateEventsCollapsed ? styles.collapsed : ''}`}>
+                                <div className={styles.noDateEventsHeader}>
+                                    <h3
+                                        className={styles.noDateEventsTitle}
+                                        onClick={handleNoDateEventsToggle}
+                                        title={isNoDateEventsCollapsed ? "Click to expand events without dates - Edit events to add dates for better organization" : "Click to collapse events without dates - Edit events to add dates for better organization"}
+                                    >
+                                        Events Without Dates ({noDateEvents.length})
+                                    </h3>
+                                    <button
+                                        className={styles.collapseButton}
+                                        onClick={handleNoDateEventsToggle}
+                                        title={isNoDateEventsCollapsed ? "Expand events without dates" : "Collapse events without dates"}
+                                    >
+                                        <span>
+                                            {isNoDateEventsCollapsed ? '▼' : '▲'}
+                                        </span>
+                                    </button>
+                                </div>
+                                {!isNoDateEventsCollapsed && (
+                                    <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
+                                        {sortedNoDateEvents.map((event, index) => (
+                                            <div
+                                                key={event.id}
+                                                ref={(el) => {
+                                                    eventCardRefs.current[event.id] = el;
+                                                }}
+                                                onClick={() => handleEventCardSelection(event.id)}
+                                            >
+                                                {renderEventCard(event, index)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : null;
+                    })()}
+
                     {events.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyStateContent}>
@@ -1474,19 +1566,43 @@ const EventView: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
-                            {filteredAndSortedEvents.filter(event => (event.photo_count || 0) > 0).map((event, index) => (
-                                <div
-                                    key={event.id}
-                                    ref={(el) => {
-                                        eventCardRefs.current[event.id] = el;
-                                    }}
-                                    onClick={() => handleEventCardSelection(event.id)}
-                                >
-                                    {renderEventCard(event, index)}
-                                </div>
-                            ))}
-                        </div>
+                        <>
+                            {/* Normal Events Subsection */}
+                            {(() => {
+                                const normalEvents = filteredAndSortedEvents.filter(event => {
+                                    const hasPhotos = (event.photo_count || 0) > 0;
+                                    const isDateSort = isDateRelatedSort(filter);
+                                    // If it's a date sort, exclude events without dates (they go in the no-date subsection)
+                                    if (isDateSort && !event.date_range_start) {
+                                        return false;
+                                    }
+                                    return hasPhotos;
+                                });
+
+                                return normalEvents.length > 0 ? (
+                                    <div className={styles.normalEventsSubsection}>
+                                        <div className={styles.normalEventsHeader}>
+                                            <h3 className={styles.normalEventsTitle}>
+                                                Events ({normalEvents.length})
+                                            </h3>
+                                        </div>
+                                        <div className={`${styles.eventsList} ${viewMode === 'list' ? styles.eventsListView : styles.eventsGridView}`}>
+                                            {normalEvents.map((event, index) => (
+                                                <div
+                                                    key={event.id}
+                                                    ref={(el) => {
+                                                        eventCardRefs.current[event.id] = el;
+                                                    }}
+                                                    onClick={() => handleEventCardSelection(event.id)}
+                                                >
+                                                    {renderEventCard(event, index)}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null;
+                            })()}
+                        </>
                     )}
                 </section>
             </main>
