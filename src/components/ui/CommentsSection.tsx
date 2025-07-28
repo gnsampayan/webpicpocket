@@ -89,14 +89,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
         try {
             setError(null);
-            const result = await editCommentMutation.mutateAsync({
+            await editCommentMutation.mutateAsync({
                 commentId,
                 text: editText.trim(),
                 photoId
             });
-
-            // Log the backend response
-            console.log('✅ [CommentsSection] Edit comment response:', result);
 
             // Clear edit state
             setEditingCommentId(null);
@@ -159,9 +156,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
     const isVoiceNote = (comment: PhotoCommentView): boolean => {
         const hasObjectUrl = !!comment.object_url;
-        if (hasObjectUrl) {
-            console.log('🎵 [CommentsSection] Voice note detected:', comment.id, 'object_url:', comment.object_url);
-        }
         return hasObjectUrl;
     };
 

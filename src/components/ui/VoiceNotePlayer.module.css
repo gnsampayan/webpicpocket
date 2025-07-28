@@ -1,4 +1,4 @@
-.voice-note-player {
+.voiceNotePlayer {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -10,13 +10,13 @@
     box-shadow: var(--shadow-sm);
 }
 
-.voice-note-player:hover {
+.voiceNotePlayer:hover {
     background: var(--bg-primary);
     border-color: var(--border-medium);
     box-shadow: var(--shadow-md);
 }
 
-.voice-note-player.preview-player {
+.previewPlayer {
     background: var(--bg-primary);
     border: 2px solid var(--border-medium);
     border-radius: 16px;
@@ -24,30 +24,50 @@
     box-shadow: var(--shadow-md);
 }
 
-.voice-note-player.preview-player:hover {
+.previewPlayer:hover {
     border-color: var(--primary-color);
     box-shadow: var(--shadow-lg);
 }
 
-.voice-note-player.error {
+.error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    padding: 0.75rem;
+    border-radius: 8px;
+    box-shadow: none;
+    min-height: auto;
+    justify-content: center;
+}
+
+.error:hover {
     background: var(--error-bg);
     border-color: var(--error-border);
+    box-shadow: none;
 }
 
-.error-message {
+.errorMessage {
     color: var(--error-text);
-    font-size: 0.9rem;
-    font-style: italic;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.voice-note-controls {
+.voiceNoteControls {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex: 1;
 }
 
-.play-pause-button {
+.playPauseButton {
     width: 40px;
     height: 40px;
     background: var(--button-primary-bg);
@@ -64,7 +84,7 @@
     box-shadow: var(--shadow-sm);
 }
 
-.loading-button {
+.loadingButton {
     width: 40px;
     height: 40px;
     background: var(--border-medium);
@@ -78,7 +98,7 @@
     opacity: 0.8;
 }
 
-.loading-button .loading-spinner {
+.loadingButton .loadingSpinner {
     width: 18px;
     height: 18px;
     border: 2px solid rgba(255, 255, 255, 0.3);
@@ -87,43 +107,43 @@
     animation: spin 1s linear infinite;
 }
 
-.preview-player .play-pause-button {
+.previewPlayer .playPauseButton {
     width: 44px;
     height: 44px;
     font-size: 1.2rem;
     box-shadow: var(--shadow-md);
 }
 
-.preview-player .loading-button {
+.previewPlayer .loadingButton {
     width: 44px;
     height: 44px;
     box-shadow: var(--shadow-md);
 }
 
-.preview-player .loading-button .loading-spinner {
+.previewPlayer .loadingButton .loadingSpinner {
     width: 20px;
     height: 20px;
     border-width: 3px;
 }
 
-.play-pause-button:hover:not(:disabled) {
+.playPauseButton:hover:not(:disabled) {
     background: var(--button-primary-hover);
     transform: scale(1.1);
     box-shadow: var(--shadow-md);
 }
 
-.preview-player .play-pause-button:hover:not(:disabled) {
+.previewPlayer .playPauseButton:hover:not(:disabled) {
     transform: scale(1.15);
     box-shadow: var(--shadow-lg);
 }
 
-.play-pause-button:disabled {
+.playPauseButton:disabled {
     background: var(--border-medium);
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.voice-note-progress {
+.voiceNoteProgress {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -131,7 +151,7 @@
     min-width: 0;
 }
 
-.progress-slider {
+.progressSlider {
     width: 100%;
     height: 6px;
     background: var(--border-light);
@@ -143,12 +163,12 @@
     appearance: none;
 }
 
-.preview-player .progress-slider {
+.previewPlayer .progressSlider {
     height: 8px;
     border-radius: 4px;
 }
 
-.progress-slider::-webkit-slider-thumb {
+.progressSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 16px;
@@ -160,19 +180,19 @@
     box-shadow: var(--shadow-sm);
 }
 
-.preview-player .progress-slider::-webkit-slider-thumb {
+.previewPlayer .progressSlider::-webkit-slider-thumb {
     width: 18px;
     height: 18px;
     box-shadow: var(--shadow-md);
 }
 
-.progress-slider::-webkit-slider-thumb:hover {
+.progressSlider::-webkit-slider-thumb:hover {
     background: var(--button-primary-hover);
     transform: scale(1.2);
     box-shadow: var(--shadow-md);
 }
 
-.progress-slider::-moz-range-thumb {
+.progressSlider::-moz-range-thumb {
     width: 16px;
     height: 16px;
     background: var(--primary-color);
@@ -183,24 +203,24 @@
     box-shadow: var(--shadow-sm);
 }
 
-.preview-player .progress-slider::-moz-range-thumb {
+.previewPlayer .progressSlider::-moz-range-thumb {
     width: 18px;
     height: 18px;
     box-shadow: var(--shadow-md);
 }
 
-.progress-slider::-moz-range-thumb:hover {
+.progressSlider::-moz-range-thumb:hover {
     background: var(--button-primary-hover);
     transform: scale(1.2);
     box-shadow: var(--shadow-md);
 }
 
-.progress-slider:disabled {
+.progressSlider:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.time-display {
+.timeDisplay {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
@@ -209,18 +229,18 @@
     font-weight: 500;
 }
 
-.preview-player .time-display {
+.previewPlayer .timeDisplay {
     font-size: 0.9rem;
     font-weight: 600;
 }
 
-.current-time,
+.currentTime,
 .duration {
     font-family: monospace;
     font-weight: 500;
 }
 
-.loading-spinner {
+.loadingSpinner {
     width: 18px;
     height: 18px;
     border: 2px solid rgba(255, 255, 255, 0.3);
@@ -230,89 +250,72 @@
     margin: 0;
 }
 
-.play-pause-button .loading-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid var(--text-inverse);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.preview-player .loading-spinner,
-.preview-player .play-pause-button .loading-spinner {
-    width: 18px;
-    height: 18px;
-    border-width: 2px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid var(--text-inverse);
-}
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-.loading-indicator {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    font-style: italic;
-    text-align: center;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.loading-indicator .loading-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--border-light);
-    border-top: 2px solid var(--primary-color);
-}
-
-.preview-player .loading-indicator {
-    font-size: 0.9rem;
-}
-
-.preview-player .loading-indicator .loading-spinner {
-    width: 16px;
-    height: 16px;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
-    .voice-note-player {
+    .voiceNotePlayer {
         padding: 0.75rem;
         gap: 0.5rem;
     }
     
-    .voice-note-player.preview-player {
+    .previewPlayer {
         padding: 1rem;
     }
     
-    .voice-note-controls {
+    .error {
+        padding: 0.5rem;
+    }
+    
+    .errorMessage {
+        font-size: 0.8rem;
+        padding: 0.4rem;
+    }
+    
+    .voiceNoteControls {
         gap: 0.75rem;
     }
     
-    .play-pause-button {
+    .playPauseButton {
         width: 36px;
         height: 36px;
         font-size: 1rem;
     }
     
-    .preview-player .play-pause-button {
+    .loadingButton {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .loadingButton .loadingSpinner {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .previewPlayer .playPauseButton {
         width: 40px;
         height: 40px;
         font-size: 1.1rem;
     }
     
-    .time-display {
+    .previewPlayer .loadingButton {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .previewPlayer .loadingButton .loadingSpinner {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .timeDisplay {
         font-size: 0.8rem;
     }
     
-    .preview-player .time-display {
+    .previewPlayer .timeDisplay {
         font-size: 0.85rem;
     }
 } 

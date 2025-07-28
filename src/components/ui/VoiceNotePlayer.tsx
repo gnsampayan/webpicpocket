@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './VoiceNotePlayer.css';
+import styles from './VoiceNotePlayer.module.css';
 
 interface VoiceNotePlayerProps {
     objectUrl: string; // Can be either a blob URL (preview) or complete URL (posted voice note)
@@ -19,23 +19,51 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
     const isBlobUrl = objectUrl.startsWith('blob:');
     const mediaUrl = objectUrl;
 
-    console.log('🎵 [VoicePlayer] Object URL (using directly):', objectUrl);
-    console.log('🎵 [VoicePlayer] Is blob URL:', isBlobUrl);
-    console.log('🎵 [VoicePlayer] Final media URL:', mediaUrl);
+    const isValidDuration = (dur: number): boolean => {
+        return isFinite(dur) && !isNaN(dur) && dur > 0 && dur !== Infinity;
+    };
+
+    const formatTime = (time: number): string => {
+        if (!isFinite(time) || isNaN(time) || time < 0) {
+            return '0:00';
+        }
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const newTime = parseFloat(e.target.value);
+        audio.currentTime = newTime;
+        setCurrentTime(newTime);
+    };
+
+    const togglePlayPause = () => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        if (isPlaying) {
+            audio.pause();
+            setIsPlaying(false);
+        } else {
+            audio.play().catch(err => {
+                console.error('Failed to play audio:', err);
+                setError('Failed to play audio');
+            });
+            setIsPlaying(true);
+        }
+    };
 
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        const isValidDuration = (dur: number): boolean => {
-            return isFinite(dur) && !isNaN(dur) && dur > 0 && dur !== Infinity;
-        };
-
         const handleLoadedMetadata = () => {
             const duration = audio.duration;
-            console.log('🎵 [VoicePlayer] Duration loaded:', duration);
             if (isValidDuration(duration)) {
-                console.log('🎵 [VoicePlayer] Setting valid duration from metadata:', duration);
                 setDuration(duration);
                 setIsLoading(false);
                 setError(null);
@@ -45,9 +73,7 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
         const handleCanPlay = () => {
             // Try to get duration when audio can play
             const duration = audio.duration;
-            console.log('🎵 [VoicePlayer] Can play, duration:', duration);
             if (isValidDuration(duration)) {
-                console.log('🎵 [VoicePlayer] Setting valid duration from canplay:', duration);
                 setDuration(duration);
                 setIsLoading(false);
                 setError(null);
@@ -59,9 +85,7 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
 
         const handleDurationChange = () => {
             const duration = audio.duration;
-            console.log('🎵 [VoicePlayer] Duration changed event:', duration);
             if (isValidDuration(duration)) {
-                console.log('🎵 [VoicePlayer] Setting valid duration from durationchange:', duration);
                 setDuration(duration);
                 setIsLoading(false);
             }
@@ -72,7 +96,6 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
             // Update duration if it wasn't available before
             const audioDuration = audio.duration;
             if (isValidDuration(audioDuration) && duration === 0) {
-                console.log('🎵 [VoicePlayer] Setting valid duration from timeupdate:', audioDuration);
                 setDuration(audioDuration);
             }
         };
@@ -128,10 +151,15 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
 
         // Add a timeout to prevent infinite loading
         const loadingTimeoutRef = setTimeout(() => {
-            if (isLoading) {
-                console.log('🎵 [VoicePlayer] Loading timeout - clearing loading state');
+            const currentAudio = audioRef.current;
+            if (currentAudio) {
+                const hasValidDuration = isValidDuration(currentAudio.duration);
+
+                if (!hasValidDuration && currentAudio.readyState < 3) {
+                    // Audio hasn't loaded properly
+                    setError('Audio took too long to load');
+                }
                 setIsLoading(false);
-                setError('Audio took too long to load');
             }
         }, 5000); // 5 second timeout
 
@@ -149,7 +177,6 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
 
                     // Get the duration from the decoded audio buffer
                     const duration = audioBuffer.duration;
-                    console.log('🎵 [VoicePlayer] Got duration from Web Audio API:', duration);
 
                     if (isValidDuration(duration)) {
                         setDuration(duration);
@@ -159,7 +186,6 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
                     // Clean up audio context
                     await audioContext.close();
                 } catch (err) {
-                    console.log('🎵 [VoicePlayer] Web Audio API failed:', err);
                     // Fallback to natural loading
                     setIsLoading(false);
                 }
@@ -182,87 +208,65 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
             audio.removeEventListener('ended', handleEnded);
             audio.removeEventListener('error', handleError);
         };
-    }, [mediaUrl]);
-
-    const togglePlayPause = () => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        if (isPlaying) {
-            audio.pause();
-            setIsPlaying(false);
-        } else {
-            audio.play().catch(err => {
-                console.error('Failed to play audio:', err);
-                setError('Failed to play audio');
-            });
-            setIsPlaying(true);
-        }
-    };
-
-    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const newTime = parseFloat(e.target.value);
-        audio.currentTime = newTime;
-        setCurrentTime(newTime);
-    };
-
-    const formatTime = (time: number): string => {
-        if (!isFinite(time) || isNaN(time) || time < 0) {
-            return '0:00';
-        }
-        const minutes = Math.floor(time / 60);
-        const seconds = Math.floor(time % 60);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
+    }, [mediaUrl, isBlobUrl, objectUrl]);
 
     if (error) {
         return (
-            <div className={`voice-note-player error ${className}`}>
-                <span className="error-message">🎵 Audio unavailable</span>
+            <div className={`${styles.voiceNotePlayer} ${styles.error} ${className}`}>
+                <span className={styles.errorMessage}>🎵 Audio unavailable</span>
             </div>
         );
     }
 
+    const playerClasses = [
+        styles.voiceNotePlayer,
+        className.includes('preview-player') ? styles.previewPlayer : '',
+        className
+    ].filter(Boolean).join(' ');
+
     return (
-        <div className={`voice-note-player ${className}`}>
+        <div className={playerClasses}>
             <audio ref={audioRef} preload="metadata">
                 <source src={mediaUrl} type="audio/webm; codecs=opus" />
                 <source src={mediaUrl} type="audio/webm" />
+                <source src={mediaUrl} type="audio/mp4" />
+                <source src={mediaUrl} type="audio/mpeg" />
+                <source src={mediaUrl} type="audio/mp3" />
                 <source src={mediaUrl} type="audio/ogg" />
+                <source src={mediaUrl} type="audio/wav" />
+                <source src={mediaUrl} type="audio/aac" />
+                <source src={mediaUrl} type="audio/flac" />
                 Your browser does not support the audio element.
             </audio>
 
-            <div className="voice-note-controls">
+            <div className={styles.voiceNoteControls}>
                 {isLoading ? (
-                    <div className="loading-button">
-                        <div className="loading-spinner"></div>
+                    <div className={styles.loadingButton}>
+                        <div className={styles.loadingSpinner}></div>
                     </div>
                 ) : (
                     <button
                         onClick={togglePlayPause}
-                        className="play-pause-button"
+                        className={styles.playPauseButton}
                         title={isPlaying ? 'Pause' : 'Play'}
                     >
                         {isPlaying ? '⏸️' : '▶️'}
                     </button>
                 )}
 
-                <div className="voice-note-progress">
+                <div className={styles.voiceNoteProgress}>
                     <input
                         type="range"
                         min="0"
                         max={duration > 0 ? duration : 1}
                         value={currentTime}
                         onChange={handleSeek}
-                        className="progress-slider"
+                        className={styles.progressSlider}
                         disabled={isLoading || duration === 0}
                     />
-                    <div className="time-display">
-                        <span className="current-time">{formatTime(currentTime)}</span>
-                        <span className="duration">{duration > 0 ? formatTime(duration) : '--:--'}</span>
+                    <div className={styles.timeDisplay}>
+                        <span className={styles.currentTime}>{formatTime(currentTime)}</span>
+                        <span className={styles.duration}>{duration > 0 ? formatTime(duration) : '--:--'}</span>
                     </div>
                 </div>
             </div>

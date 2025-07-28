@@ -33,24 +33,8 @@ const PhotoDetailsView: React.FC = () => {
     // Get detailed photo metadata
     const {
         data: photoDetails,
-        isLoading: isLoadingPhotoDetails,
-        error: photoDetailsError
+        isLoading: isLoadingPhotoDetails
     } = usePhotoDetails(photoData?.photo?.id);
-
-    // Debug logging for metadata
-    React.useEffect(() => {
-        if (photoDetails) {
-            console.log('📸 [PhotoDetailsView] Photo details loaded:', photoDetails);
-            console.log('📸 [PhotoDetailsView] Photo metadata:', photoDetails.photo_metadata);
-            console.log('📸 [PhotoDetailsView] Metadata valid?', photoDetails.photo_metadata?.Valid);
-            if (photoDetails.photo_metadata?.Valid) {
-                console.log('📸 [PhotoDetailsView] Raw metadata message:', photoDetails.photo_metadata.RawMessage);
-            }
-        }
-        if (photoDetailsError) {
-            console.error('❌ [PhotoDetailsView] Error loading photo details:', photoDetailsError);
-        }
-    }, [photoDetails, photoDetailsError]);
 
     // Parse metadata from API response
     const getMetadata = () => {
@@ -143,14 +127,12 @@ const PhotoDetailsView: React.FC = () => {
 
     const handleToggleFavorite = async (photo: Media) => {
         try {
-            console.log('🔄 [PhotoDetailsView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
 
             await favoriteMutation.mutateAsync({
                 photoId: photo.id,
                 isFavorite: photo.is_favorite
             });
 
-            console.log('✅ Photo favorite status updated');
         } catch (err) {
             console.error('❌ [PhotoDetailsView] Failed to toggle favorite:', err);
 
@@ -169,7 +151,6 @@ const PhotoDetailsView: React.FC = () => {
 
     const handleDeletePhoto = async (photo: Media) => {
         if (!photo.can_delete) {
-            console.log('❌ User cannot delete this photo');
             return;
         }
 
@@ -180,11 +161,8 @@ const PhotoDetailsView: React.FC = () => {
         }
 
         try {
-            console.log('🔄 [PhotoDetailsView] Deleting photo:', photo.id);
 
             await deletePhotoMutation.mutateAsync(photo.id);
-
-            console.log('✅ Photo deleted successfully');
 
             // Navigate back to the grid view
             handleBack();

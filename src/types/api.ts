@@ -97,7 +97,13 @@ export type MimeType =
 	| "audio/mp4"
 	| "audio/wav"
 	| "audio/ogg"
-	| "image/webp";
+	| "audio/mp3"
+	| "audio/wma"
+	| "audio/flac"
+	| "audio/aac"
+	| "audio/ape"
+	| "audio/opus"
+	| "image/webp"
 
 export interface UploadRequest {
 	files: string[];

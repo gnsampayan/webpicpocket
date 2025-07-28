@@ -1,4 +1,4 @@
-.voice-note-recorder {
+.voiceNoteRecorder {
     padding: 1rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-light);
@@ -7,7 +7,7 @@
     transition: all 0.3s ease;
 }
 
-.voice-note-error {
+.voiceNoteError {
     background: var(--error-bg);
     color: var(--error-text);
     border: 1px solid var(--error-border);
@@ -18,14 +18,14 @@
     transition: all 0.3s ease;
 }
 
-.voice-note-controls {
+.voiceNoteControls {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     align-items: center;
 }
 
-.voice-note-record-button {
+.voiceNoteRecordButton {
     padding: 0.75rem 1.5rem;
     background: var(--button-primary-bg);
     color: var(--text-inverse);
@@ -40,19 +40,19 @@
     gap: 0.5rem;
 }
 
-.voice-note-record-button:hover:not(:disabled) {
+.voiceNoteRecordButton:hover:not(:disabled) {
     background: var(--button-primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
-.voice-note-record-button:disabled {
+.voiceNoteRecordButton:disabled {
     background: var(--border-medium);
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.voice-note-recording {
+.voiceNoteRecording {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -60,7 +60,7 @@
     width: 100%;
 }
 
-.recording-indicator {
+.recordingIndicator {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -69,7 +69,7 @@
     font-size: 1rem;
 }
 
-.recording-dot {
+.recordingDot {
     width: 12px;
     height: 12px;
     background: var(--error-text);
@@ -88,7 +88,7 @@
     }
 }
 
-.voice-note-stop-button {
+.voiceNoteStopButton {
     padding: 0.75rem 1.5rem;
     background: var(--error-bg);
     color: var(--error-text);
@@ -103,7 +103,7 @@
     gap: 0.5rem;
 }
 
-.voice-note-stop-button:hover:not(:disabled) {
+.voiceNoteStopButton:hover:not(:disabled) {
     background: var(--error-text);
     color: var(--text-inverse);
     transform: translateY(-1px);
@@ -111,7 +111,7 @@
 }
 
 /* Preview Styles */
-.voice-note-preview {
+.voiceNotePreview {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -124,7 +124,7 @@
     box-shadow: var(--shadow-sm);
 }
 
-.voice-note-preview h4 {
+.voiceNotePreview h4 {
     margin: 0;
     color: var(--text-primary);
     font-size: 1.1rem;
@@ -135,18 +135,18 @@
     gap: 0.5rem;
 }
 
-.voice-note-preview h4::before {
+.voiceNotePreview h4::before {
     content: '🎵';
     font-size: 1.2rem;
 }
 
-.preview-player {
+.previewPlayer {
     width: 100%;
     max-width: 450px;
     margin: 0.5rem 0;
 }
 
-.preview-actions {
+.previewActions {
     display: flex;
     gap: 1rem;
     align-items: center;
@@ -155,7 +155,7 @@
     max-width: 400px;
 }
 
-.retry-button {
+.retryButton {
     padding: 0.75rem 1.25rem;
     background: var(--button-secondary-bg);
     color: var(--button-secondary-text);
@@ -173,7 +173,7 @@
     min-height: 44px;
 }
 
-.retry-button:hover:not(:disabled) {
+.retryButton:hover:not(:disabled) {
     background: var(--button-secondary-hover);
     border-color: var(--primary-color);
     color: var(--primary-color);
@@ -181,12 +181,12 @@
     box-shadow: var(--shadow-sm);
 }
 
-.retry-button:disabled {
+.retryButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.post-voice-note-button {
+.postVoiceNoteButton {
     padding: 0.75rem 1.25rem;
     background: var(--button-primary-bg);
     color: var(--text-inverse);
@@ -205,20 +205,20 @@
     position: relative;
 }
 
-.post-voice-note-button:hover:not(:disabled) {
+.postVoiceNoteButton:hover:not(:disabled) {
     background: var(--button-primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.post-voice-note-button:disabled {
+.postVoiceNoteButton:disabled {
     background: var(--border-medium);
     cursor: not-allowed;
     opacity: 0.6;
     transform: none;
 }
 
-.post-voice-note-button .uploading-spinner {
+.postVoiceNoteButton .uploadingSpinner {
     width: 16px;
     height: 16px;
     border: 2px solid transparent;
@@ -227,7 +227,7 @@
     animation: spin 1s linear infinite;
 }
 
-.voice-note-uploading {
+.voiceNoteUploading {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -235,7 +235,7 @@
     font-size: 0.9rem;
 }
 
-.uploading-spinner {
+.uploadingSpinner {
     width: 16px;
     height: 16px;
     border: 2px solid var(--border-light);
@@ -249,13 +249,13 @@
     100% { transform: rotate(360deg); }
 }
 
-.voice-note-actions {
+.voiceNoteActions {
     display: flex;
     justify-content: center;
     margin-top: 1rem;
 }
 
-.voice-note-cancel-button {
+.voiceNoteCancelButton {
     padding: 0.5rem 1rem;
     background: var(--button-secondary-bg);
     color: var(--button-secondary-text);
@@ -267,36 +267,36 @@
     transition: all 0.3s ease;
 }
 
-.voice-note-cancel-button:hover:not(:disabled) {
+.voiceNoteCancelButton:hover:not(:disabled) {
     background: var(--button-secondary-hover);
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
 
-.voice-note-cancel-button:disabled {
+.voiceNoteCancelButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .voice-note-recorder {
+    .voiceNoteRecorder {
         padding: 0.75rem;
     }
     
-    .voice-note-record-button,
-    .voice-note-stop-button {
+    .voiceNoteRecordButton,
+    .voiceNoteStopButton {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
     }
     
-    .preview-actions {
+    .previewActions {
         flex-direction: column;
         width: 100%;
     }
     
-    .retry-button,
-    .post-voice-note-button {
+    .retryButton,
+    .postVoiceNoteButton {
         width: 100%;
         justify-content: center;
     }
