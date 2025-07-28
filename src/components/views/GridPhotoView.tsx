@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Media, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
@@ -6,6 +6,21 @@ import MembersModal from '../modals/MembersModal';
 import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation, useAddMediaMutation } from '../../hooks/useMedia';
 import { getInitialSortFilter, saveSortFilter, sortPhotos } from '../../utils/sorting';
 import './GridPhotoView.css';
+
+// Video Preview Component that handles loading state
+const VideoPreview: React.FC<{ photo: Media; onLoad: () => void }> = ({ onLoad }) => {
+    useEffect(() => {
+        // Mark video as loaded immediately since it's just a static preview
+        onLoad();
+    }, [onLoad]);
+
+    return (
+        <div className="video-preview">
+            <div className="video-icon">🎥</div>
+            <span className="video-label">Video</span>
+        </div>
+    );
+};
 
 const GridPhotoView: React.FC = () => {
     const { pocketTitle, eventTitle } = useParams<{ pocketTitle: string; eventTitle: string }>();
@@ -547,10 +562,7 @@ const GridPhotoView: React.FC = () => {
                                 handlePhotoClick(photo);
                             }}>
                                 {isVideo(photo) ? (
-                                    <div className="video-preview">
-                                        <div className="video-icon">🎥</div>
-                                        <span className="video-label">Video</span>
-                                    </div>
+                                    <VideoPreview photo={photo} onLoad={() => handlePhotoLoad(photo.id)} />
                                 ) : (
                                     <img
                                         src={getPhotoUrl(photo)}

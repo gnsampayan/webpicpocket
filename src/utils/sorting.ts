@@ -1,4 +1,4 @@
-import type { Photo } from '../types';
+import type { Media } from '../types';
 
 // Load initial state from localStorage
 export const getInitialSortFilter = (): string => {
@@ -12,7 +12,7 @@ export const saveSortFilter = (filterValue: string) => {
 };
 
 // Helper function to sort photos based on filter
-export const sortPhotos = (photosToSort: Photo[], sortFilter: string): Photo[] => {
+export const sortPhotos = (photosToSort: Media[], sortFilter: string): Media[] => {
     const sorted = [...photosToSort];
 
     switch (sortFilter) {
