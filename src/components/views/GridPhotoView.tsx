@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Media, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
@@ -12,7 +12,7 @@ const VideoPreview: React.FC<{ photo: Media; onLoad: () => void }> = ({ onLoad }
     useEffect(() => {
         // Mark video as loaded immediately since it's just a static preview
         onLoad();
-    }, [onLoad]);
+    }, []); // Empty dependency array since we only want to call onLoad once
 
     return (
         <div className="video-preview">
@@ -60,9 +60,14 @@ const GridPhotoView: React.FC = () => {
 
     // Handle back to event view
     const handleBackToEventView = () => {
+        console.log('🔄 [GridPhotoView] Back navigation - pocketTitle:', pocketTitle, 'eventTitle:', eventTitle);
+
         if (pocketTitle) {
-            navigate(`/pockets/${pocketTitle}`);
+            const targetUrl = `/pockets/${pocketTitle}`;
+            console.log('🔄 [GridPhotoView] Navigating to:', targetUrl);
+            navigate(targetUrl);
         } else {
+            console.log('🔄 [GridPhotoView] No pocketTitle, navigating to /pockets');
             navigate('/pockets');
         }
     };
@@ -204,9 +209,9 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Handle photo load completion
-    const handlePhotoLoad = (photoId: string) => {
+    const handlePhotoLoad = useCallback((photoId: string) => {
         setLoadedPhotos(prev => new Set([...prev, photoId]));
-    };
+    }, []);
 
     // Handle member avatar click
     const handleMemberClick = (member: PocketMember | any) => {
