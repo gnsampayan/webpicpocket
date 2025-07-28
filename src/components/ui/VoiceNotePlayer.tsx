@@ -163,37 +163,40 @@ const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({ objectUrl, className 
             }
         }, 5000); // 5 second timeout
 
-        // For blob URLs, use Web Audio API to get duration properly
-        if (isBlobUrl) {
-            const getDurationFromBlob = async () => {
-                try {
-                    // Fetch the blob data
-                    const response = await fetch(objectUrl);
-                    const arrayBuffer = await response.arrayBuffer();
+        // Use Web Audio API to get duration for all audio URLs (blob and regular URLs)
+        // This provides accurate duration before playback starts
+        const getDurationFromAudio = async () => {
+            try {
+                console.log('🎵 [VoicePlayer] Fetching audio for duration detection...');
+                // Fetch the audio data
+                const response = await fetch(objectUrl);
+                const arrayBuffer = await response.arrayBuffer();
 
-                    // Create audio context and decode
-                    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                // Create audio context and decode
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-                    // Get the duration from the decoded audio buffer
-                    const duration = audioBuffer.duration;
+                // Get the duration from the decoded audio buffer
+                const duration = audioBuffer.duration;
+                console.log('🎵 [VoicePlayer] Got duration from Web Audio API:', duration);
 
-                    if (isValidDuration(duration)) {
-                        setDuration(duration);
-                        setIsLoading(false);
-                    }
-
-                    // Clean up audio context
-                    await audioContext.close();
-                } catch (err) {
-                    // Fallback to natural loading
+                if (isValidDuration(duration)) {
+                    setDuration(duration);
                     setIsLoading(false);
                 }
-            };
 
-            // Run after a short delay to let natural loading try first
-            timeoutRef.current = setTimeout(getDurationFromBlob, 100);
-        }
+                // Clean up audio context
+                await audioContext.close();
+            } catch (err) {
+                console.log('🎵 [VoicePlayer] Web Audio API failed, falling back to natural loading:', err);
+                // Fallback to natural loading
+                setIsLoading(false);
+            }
+        };
+
+        // Run Web Audio API detection for all URLs (blob and regular)
+        // Use a short delay to let natural loading try first, but always run as backup
+        timeoutRef.current = setTimeout(getDurationFromAudio, isBlobUrl ? 100 : 200);
 
         return () => {
             clearTimeout(loadingTimeoutRef);

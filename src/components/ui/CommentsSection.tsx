@@ -204,11 +204,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                                 (edited)
                                             </span>
                                         )}
-                                        {isVoiceNote(comment) && (
-                                            <span className="voice-note-indicator" title="Voice note">
-                                                🎤
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                                 {editingCommentId === comment.id ? (

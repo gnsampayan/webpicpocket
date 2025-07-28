@@ -226,11 +226,15 @@
 
 .profileBio p {
   font-size: 16px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   line-height: 1.6;
   margin: 0;
-  font-style: italic;
   transition: color 0.3s ease;
+}
+
+.profileBio .noBio {
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .activityPlaceholder {

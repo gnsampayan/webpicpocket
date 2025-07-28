@@ -23,7 +23,8 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
     const [memberSearch, setMemberSearch] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<ContactUser[]>([]);
     const [searchResults, setSearchResults] = useState<ContactUser[]>([]);
-    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [allContacts, setAllContacts] = useState<ContactUser[]>([]);
+
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const [loadingContacts, setLoadingContacts] = useState(false);
     const [abortController, setAbortController] = useState<AbortController | null>(null);
@@ -79,10 +80,11 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
 
             setMemberSearch('');
             setSelectedMembers([]);
+            setSearchResults([]);
+            setAllContacts([]);
             setError(null);
             setShouldShowDropdown(false);
             shouldShowDropdownRef.current = false;
-            setShowSearchResults(false);
             setLoadingContacts(false);
             currentRequestRef.current = null;
             onClose();
@@ -114,21 +116,45 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
 
             setShouldShowDropdown(false);
             shouldShowDropdownRef.current = false;
-            setShowSearchResults(false);
             setLoadingContacts(false);
         }
     };
 
     const handleMemberSelect = (contact: ContactUser) => {
         if (!selectedMembers.find(member => member.id === contact.id)) {
-            setSelectedMembers(prev => [...prev, contact]);
+            setSelectedMembers(prev => {
+                const newSelectedMembers = [...prev, contact];
+
+                // Update search results to filter out the newly selected member
+                const newSelectedMemberIds = newSelectedMembers.map(member => member.id);
+                const filteredContacts = allContacts.filter(c =>
+                    !existingMembers.includes(c.id) && !newSelectedMemberIds.includes(c.id)
+                );
+                setSearchResults(filteredContacts);
+
+                return newSelectedMembers;
+            });
         }
         setMemberSearch('');
-        setShowSearchResults(false);
+        setShouldShowDropdown(false);
+        shouldShowDropdownRef.current = false;
     };
 
     const handleRemoveMember = (contactId: string) => {
-        setSelectedMembers(prev => prev.filter(member => member.id !== contactId));
+        setSelectedMembers(prev => {
+            const newSelectedMembers = prev.filter(member => member.id !== contactId);
+
+            // If dropdown is open, refresh search results to include the removed member
+            if (shouldShowDropdownRef.current && allContacts.length > 0) {
+                const newSelectedMemberIds = newSelectedMembers.map(member => member.id);
+                const filteredContacts = allContacts.filter(c =>
+                    !existingMembers.includes(c.id) && !newSelectedMemberIds.includes(c.id)
+                );
+                setSearchResults(filteredContacts);
+            }
+
+            return newSelectedMembers;
+        });
     };
 
     const handleMemberSearchClick = async (e: React.MouseEvent<HTMLInputElement>) => {
@@ -183,14 +209,17 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
                     return;
                 }
 
-                // Filter out existing members
+                // Store all contacts for future filtering
+                setAllContacts(contacts.contacts);
+
+                // Filter out existing members and currently selected members
+                const selectedMemberIds = selectedMembers.map(member => member.id);
                 const availableContacts = contacts.contacts.filter(contact =>
-                    !existingMembers.includes(contact.id)
+                    !existingMembers.includes(contact.id) && !selectedMemberIds.includes(contact.id)
                 );
 
                 console.log('✅ Loading contacts completed, updating UI');
                 setSearchResults(availableContacts);
-                setShowSearchResults(true);
                 setLoadingContacts(false);
             } catch (err) {
                 console.log('❌ API call failed or was cancelled:', err);
@@ -204,7 +233,6 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
             }
         } else {
             // Hide dropdown
-            setShowSearchResults(false);
             setLoadingContacts(false);
 
             // Cancel any ongoing request
@@ -255,7 +283,7 @@ const AddEventMembersModal: React.FC<AddEventMembersModalProps> = ({
                                 placeholder="Search contacts by name or username..."
                                 disabled={loading}
                             />
-                            {shouldShowDropdown && (showSearchResults || loadingContacts) && (
+                            {shouldShowDropdown && (searchResults.length > 0 || loadingContacts) && (
                                 <div
                                     className="search-results"
                                     style={{

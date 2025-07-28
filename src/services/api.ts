@@ -720,6 +720,9 @@ export const api = {
 		}
 	},
 
+	/**
+	 * Update the currently logged in user's profile
+	 */
 	async updateProfile(
 		data: ApiTypes.UpdateProfileRequest
 	): Promise<ApiTypes.UserInfo> {
@@ -748,6 +751,13 @@ export const api = {
 		}
 	},
 
+	// =============================================
+	// PROFILE PICTURE FUNCTIONS
+	// =============================================
+
+	/**
+	 * Upload a new profile picture for the currently logged in user to S3 and claim the object key. (full flow upload)
+	 */
 	async uploadProfilePicture(file: Blob): Promise<ApiTypes.UserInfo> {
 		const fileSizeMB = file.size / (1024 * 1024);
 		if (fileSizeMB > 10) {
@@ -809,6 +819,9 @@ export const api = {
 		}
 	},
 
+	/**
+	 * Delete the currently logged in user's profile picture
+	 */
 	async deleteProfilePicture(): Promise<void> {
 		const url = `${API_URL}${API_CONFIG.endpoints.profile}`;
 		try {

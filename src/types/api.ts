@@ -23,6 +23,7 @@ export interface UserInfo {
 	username: string;
 	first_name: string;
 	last_name: string;
+	description?: string;
 	profile_picture_default: boolean;
 	profile_picture: {
 		url_small?: string;
@@ -38,6 +39,7 @@ export interface PublicUserInfo {
 	username: string;
 	first_name: string;
 	last_name: string;
+	description?: string;
 	profile_picture_default: boolean;
 	profile_picture: {
 		url_small?: string;
@@ -55,6 +57,7 @@ export interface RegisterResponse {
 	email: string;
 	first_name: string;
 	last_name: string;
+	description?: string;
 }
 
 export interface AuthResponse {
@@ -121,6 +124,7 @@ export interface UpdateProfileRequest {
 	profile_object_key?: string;
 	first_name?: string;
 	last_name?: string;
+	description?: string;
 	email?: string;
 	old_password?: string;
 	new_password?: string;
@@ -143,6 +147,7 @@ export interface ContactUser {
 	first_name: string;
 	last_name: string;
 	email: string;
+	description?: string;
 	profile_picture_default: boolean;
 	profile_picture: {
 		url_small?: string;
@@ -158,6 +163,7 @@ export interface UserProfile {
 	first_name: string;
 	last_name: string;
 	email: string;
+	description?: string;
 	profile_picture_url?: string;
 	profile_picture_default?: boolean;
 	profile_picture?: {
@@ -218,6 +224,7 @@ export interface UserProfilePictureResponse {
 	first_name: string;
 	last_name: string;
 	email: string;
+	description?: string;
 	profile_picture_default: boolean;
 	profile_picture: {
 		url_small?: string;
@@ -235,6 +242,7 @@ export interface PocketMember {
 	username: string;
 	first_name: string;
 	last_name: string;
+	description?: string;
 	profile_picture_default: boolean;
 	profile_picture: {
 		url_small?: string;

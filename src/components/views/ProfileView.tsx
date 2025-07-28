@@ -160,7 +160,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
                             {/* Profile Bio Section */}
                             <section className={styles.profileBio}>
                                 <h2>About</h2>
-                                <p>This user hasn't added a bio yet.</p>
+                                {userInfo.description ? (
+                                    <p>{userInfo.description}</p>
+                                ) : (
+                                    <p className={styles.noBio}>This user hasn't added a bio yet.</p>
+                                )}
                             </section>
 
                             {/* Activity Section */}

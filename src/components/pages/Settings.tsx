@@ -21,11 +21,14 @@ const Settings: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [updating, setUpdating] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
     const [profileForm, setProfileForm] = useState({
         first_name: '',
-        last_name: ''
+        last_name: '',
+        description: ''
     });
 
     const [passwordForm, setPasswordForm] = useState({
@@ -57,10 +60,12 @@ const Settings: React.FC = () => {
                     throw new Error('No user data found');
                 }
 
+                console.log('🔍 [Settings] Loaded user data from cache:', userData);
                 setUserInfo(userData as UserInfo);
                 setProfileForm({
                     first_name: userData.first_name || '',
-                    last_name: userData.last_name || ''
+                    last_name: userData.last_name || '',
+                    description: userData.description ?? '' // Use nullish coalescing for consistency
                 });
 
                 // Fetch masked email from API
@@ -114,6 +119,7 @@ const Settings: React.FC = () => {
             console.log('✅ Profile picture updated successfully');
         } catch (err) {
             console.error('❌ [Settings] Failed to upload profile picture:', err);
+            setSuccessMessage(null);
             setError(err instanceof Error ? err.message : 'Failed to upload profile picture');
         } finally {
             setUploading(false);
@@ -145,6 +151,7 @@ const Settings: React.FC = () => {
             console.log('✅ Profile picture deleted successfully');
         } catch (err) {
             console.error('❌ [Settings] Failed to delete profile picture:', err);
+            setSuccessMessage(null);
             setError(err instanceof Error ? err.message : 'Failed to delete profile picture');
         } finally {
             setDeleting(false);
@@ -157,23 +164,47 @@ const Settings: React.FC = () => {
 
         try {
             setError(null);
+            setSuccessMessage(null);
+            setUpdating(true);
 
             const updateData: any = {};
             if (profileForm.first_name) updateData.first_name = profileForm.first_name;
             if (profileForm.last_name) updateData.last_name = profileForm.last_name;
+            // Always send description, even if empty string (to allow clearing description)
+            updateData.description = profileForm.description;
 
-            await api.updateProfile(updateData);
+            const updatedUserInfo = await api.updateProfile(updateData);
 
-            // Refresh user data
-            const userData = await getUserData();
-            if (userData) {
-                setUserInfo(userData as UserInfo);
+            // Update both userInfo and profileForm with the response data
+            setUserInfo(updatedUserInfo);
+            setProfileForm({
+                first_name: updatedUserInfo.first_name || '',
+                last_name: updatedUserInfo.last_name || '',
+                description: updatedUserInfo.description ?? '' // Use nullish coalescing to handle null/undefined
+            });
+
+            // Update localStorage cache to persist changes across refreshes
+            try {
+                const userKeys = await getCurrentUserStorageKeys();
+                await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
+                console.log('✅ [Settings] localStorage cache updated successfully with:', updatedUserInfo);
+            } catch (cacheError) {
+                console.error('❌ [Settings] Failed to update localStorage cache:', cacheError);
+                // Don't show error to user since the profile was updated successfully
             }
+
+            // Show success message
+            setSuccessMessage('Profile updated successfully!');
+
+            // Clear success message after 3 seconds
+            setTimeout(() => setSuccessMessage(null), 3000);
 
             console.log('✅ Profile updated successfully');
         } catch (err) {
             console.error('❌ [Settings] Failed to update profile:', err);
             setError(err instanceof Error ? err.message : 'Failed to update profile');
+        } finally {
+            setUpdating(false);
         }
     };
 
@@ -183,6 +214,7 @@ const Settings: React.FC = () => {
 
         try {
             setError(null);
+            setSuccessMessage(null);
 
             // Validate password confirmation
             if (passwordForm.new_password !== passwordForm.confirm_new_password) {
@@ -200,9 +232,14 @@ const Settings: React.FC = () => {
                 confirm_new_password: ''
             });
 
+            // Show success message
+            setSuccessMessage('Password updated successfully!');
+            setTimeout(() => setSuccessMessage(null), 3000);
+
             console.log('✅ Password updated successfully');
         } catch (err) {
             console.error('❌ [Settings] Failed to update password:', err);
+            setSuccessMessage(null);
             setError(err instanceof Error ? err.message : 'Failed to update password');
         }
     };
@@ -213,6 +250,7 @@ const Settings: React.FC = () => {
 
         try {
             setError(null);
+            setSuccessMessage(null);
 
             // Validate email confirmation
             if (emailForm.new_email !== emailForm.confirm_new_email) {
@@ -238,9 +276,14 @@ const Settings: React.FC = () => {
                 console.error('❌ [Settings] Error refreshing masked email after update:', profileError);
             }
 
+            // Show success message
+            setSuccessMessage('Email updated successfully!');
+            setTimeout(() => setSuccessMessage(null), 3000);
+
             console.log('✅ Email updated successfully');
         } catch (err) {
             console.error('❌ [Settings] Failed to update email:', err);
+            setSuccessMessage(null);
             setError(err instanceof Error ? err.message : 'Failed to update email');
         }
     };
@@ -302,6 +345,14 @@ const Settings: React.FC = () => {
                     <div className="error-message">
                         <span>❌ {error}</span>
                         <button onClick={() => setError(null)}>✕</button>
+                    </div>
+                )}
+
+                {/* Success Display */}
+                {successMessage && (
+                    <div className="success-message">
+                        <span>✅ {successMessage}</span>
+                        <button onClick={() => setSuccessMessage(null)}>✕</button>
                     </div>
                 )}
 
@@ -410,7 +461,36 @@ const Settings: React.FC = () => {
                                                 onChange={(e) => setProfileForm(prev => ({ ...prev, last_name: e.target.value }))}
                                             />
                                         </div>
-                                        <button type="submit" className="save-button">Save Changes</button>
+                                        <div className="form-group">
+                                            <label>Description</label>
+                                            <textarea
+                                                value={profileForm.description}
+                                                onChange={(e) => setProfileForm(prev => ({ ...prev, description: e.target.value }))}
+                                                placeholder="Share a brief description about yourself (optional)..."
+                                                maxLength={200}
+                                                rows={3}
+                                                className="description-textarea"
+                                            />
+                                            <div className={`character-count ${profileForm.description.length > 180 ? 'error' :
+                                                profileForm.description.length > 150 ? 'warning' : ''
+                                                }`}>
+                                                {profileForm.description.length}/200 characters
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            className="save-button"
+                                            disabled={updating}
+                                        >
+                                            {updating ? (
+                                                <>
+                                                    <div className="button-spinner"></div>
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save Changes'
+                                            )}
+                                        </button>
                                     </form>
                                 </div>
                             </div>
