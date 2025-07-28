@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
-import type { Photo } from "../types";
+import type { Media } from "../types";
 import { extractFileMetadata } from "../utils/metadata";
 
 // Query keys for better cache management
@@ -174,6 +174,52 @@ export const useClaimPhotosToEventMutation = () => {
 	});
 };
 
+// Hook for claiming videos to an event
+export const useClaimVideosToEventMutation = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			eventId,
+			videoData,
+		}: {
+			eventId: string;
+			videoData: Array<{ objectKey: string; file: File }>;
+		}) => {
+			console.log(`🔄 [ClaimVideos] Processing ${videoData.length} videos for event ${eventId}`);
+
+			// For videos, we don't include metadata at all
+			const filesWithoutMetadata = videoData.map(({ objectKey }) => ({
+				object_key: objectKey,
+			}));
+
+			// Associate uploaded files with event
+			const addVideoRequest = {
+				add_videos: filesWithoutMetadata,
+			};
+
+			console.log('🎥 [ClaimVideos] Request body:', JSON.stringify(addVideoRequest, null, 2));
+
+			return await api.uploadVideosToEvent(eventId, addVideoRequest);
+		},
+		onSuccess: (_, { eventId }) => {
+			// Invalidate event photos query to refetch with new videos
+			queryClient.invalidateQueries({
+				queryKey: photoKeys.eventPhotos(eventId),
+			});
+			// Invalidate all events queries to update preview photos in EventView
+			queryClient.invalidateQueries({
+				queryKey: [...photoKeys.all, "events"],
+			});
+			// Also invalidate pockets query to update photo counts
+			queryClient.invalidateQueries({ queryKey: photoKeys.pockets() });
+		},
+		onError: (error) => {
+			console.error("Failed to claim videos to event:", error);
+		},
+	});
+};
+
 // Hook to fetch all pockets
 export const usePockets = () => {
 	return useQuery({
@@ -310,7 +356,7 @@ export const usePhotoByShortId = (
 	const photoData = eventData
 		? (() => {
 				const foundPhotoIndex = eventData.photos.findIndex(
-					(p: Photo) => p.id.slice(-6) === photoShortId
+					(p: Media) => p.id.slice(-6) === photoShortId
 				);
 				if (foundPhotoIndex === -1) return null;
 
@@ -359,7 +405,7 @@ export const useFavoriteMutation = () => {
 					if (oldData.photos) {
 						return {
 							...oldData,
-							photos: oldData.photos.map((photo: Photo) =>
+							photos: oldData.photos.map((photo: Media) =>
 								photo.id === photoId
 									? { ...photo, is_favorite: !isFavorite }
 									: photo
@@ -397,7 +443,7 @@ export const useDeletePhotoMutation = () => {
 						return {
 							...oldData,
 							photos: oldData.photos.filter(
-								(photo: Photo) => photo.id !== photoId
+								(photo: Media) => photo.id !== photoId
 							),
 							photo_count: oldData.photo_count - 1,
 						};
@@ -438,14 +484,7 @@ export const useAddMediaMutation = () => {
 
 			for (const file of mediaFiles) {
 				// Step 1: Extract metadata from the file (including EXIF data like date taken)
-				console.log(`📸 [Upload] Extracting metadata for: ${file.name}`);
 				const metadata = await extractFileMetadata(file);
-				console.log(`📸 [Upload] Extracted metadata:`, {
-					dateTimeOriginal: metadata.dateTimeOriginal,
-					camera: metadata.camera,
-					fileSize: metadata.fileSize,
-					dimensions: metadata.dimensions,
-				});
 
 				// Step 2: Get upload URL
 				const uploadResponse = await api.uploadMedia({

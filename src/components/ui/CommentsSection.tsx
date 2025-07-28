@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { PhotoCommentView, PocketMember } from '../../types/api';
-import { useComments, useAddCommentMutation, useEditCommentMutation, useDeleteCommentMutation } from '../../hooks/usePhotos';
+import { useComments, useAddCommentMutation, useEditCommentMutation, useDeleteCommentMutation } from '../../hooks/useMedia';
 import './CommentsSection.css';
 
 interface CommentsSectionProps {

@@ -65,6 +65,9 @@ export const API_CONFIG = {
 			getDetails: "/v1/photo", // Append with: /{photo-id}
 			favorite: "/v1/favorite",
 		},
+		videos: {
+			upload: "/v1/videos", // Append with: /{event-id}
+		},
 		events: {
 			list: "/v1/pockets", // Append with: /{pocket-id}
 			create: "/v1/events",

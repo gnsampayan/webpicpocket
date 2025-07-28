@@ -583,6 +583,30 @@
   display: block;
 }
 
+/* Video Preview Styles */
+.video-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-gradient);
+  border-radius: 4px;
+  gap: 0.5rem;
+}
+
+.video-icon {
+  font-size: 2rem;
+  opacity: 0.7;
+}
+
+.video-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .photo-overlay {
   position: absolute;
   top: 0;

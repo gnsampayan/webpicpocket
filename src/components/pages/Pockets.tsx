@@ -8,7 +8,7 @@ import AddPocketPhotosModal from '../modals/AddPocketPhotosModal';
 import AddPocketMembersModal from '../modals/AddPocketMembersModal';
 import EditPocketModal from '../modals/EditPocketModal';
 import MembersModal from '../modals/MembersModal';
-import { usePockets } from '../../hooks/usePhotos';
+import { usePockets } from '../../hooks/useMedia';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import { type Pocket, type PocketMember } from '../../types';
 

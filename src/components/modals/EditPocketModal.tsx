@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
-import { useUpdatePocketMutation } from '../../hooks/usePhotos';
+import { useUpdatePocketMutation } from '../../hooks/useMedia';
 import { type Pocket, type ContactUser } from '../../types';
 import './EditPocketModal.css';
 

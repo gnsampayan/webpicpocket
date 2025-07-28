@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
-import { useEditEventMutation } from '../../hooks/usePhotos';
+import { useEditEventMutation } from '../../hooks/useMedia';
 import { type Event, type ContactUser, type Pocket } from '../../types';
 import './EditEventModal.css';
 

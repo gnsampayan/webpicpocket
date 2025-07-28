@@ -9,7 +9,7 @@ import AddEventMembersModal from '../modals/AddEventMembersModal';
 import EditEventModal from '../modals/EditEventModal';
 import MembersModal from '../modals/MembersModal';
 
-import { usePocketFromUrl, useEvents, usePockets } from '../../hooks/usePhotos';
+import { usePocketFromUrl, useEvents, usePockets } from '../../hooks/useMedia';
 import { type Pocket, type Event, type PreviewPhoto, type PocketMember, type ContactUser } from '../../types';
 
 const EventView: React.FC = () => {
@@ -424,6 +424,11 @@ const EventView: React.FC = () => {
 
         // If it doesn't start with http, add https:// (fallback)
         return `https://${rawUrl}`;
+    };
+
+    // Helper function to check if media is a video
+    const isVideo = (photo: PreviewPhoto): boolean => {
+        return photo.media_type === "video";
     };
 
     // Helper function to format date as month and year for display
@@ -939,13 +944,20 @@ const EventView: React.FC = () => {
                                                 handleOpenPhotoDetails(e, photo, event);
                                             }}
                                         >
-                                            <img
-                                                src={getPhotoUrl(photo)}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
+                                            {isVideo(photo) ? (
+                                                <div className={styles.videoPreview}>
+                                                    <div className={styles.videoIcon}>🎥</div>
+                                                    <span className={styles.videoLabel}>Video</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={getPhotoUrl(photo)}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            )}
                                             {/* Show "more" overlay logic */}
                                             {((index === 9 && maxPhotosInRow >= 10 && totalPhotoCount > 10) ||
                                                 (index === maxPhotosInRow - 1 && maxPhotosInRow < 10 && totalPhotoCount > maxPhotosInRow)) && (
@@ -975,13 +987,20 @@ const EventView: React.FC = () => {
                                                 handleOpenPhotoDetails(e, previewPhotos[0], event);
                                             }}
                                         >
-                                            <img
-                                                src={getPhotoUrl(previewPhotos[0])}
-                                                alt="Event photo"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                }}
-                                            />
+                                            {isVideo(previewPhotos[0]) ? (
+                                                <div className={styles.videoPreview}>
+                                                    <div className={styles.videoIcon}>🎥</div>
+                                                    <span className={styles.videoLabel}>Video</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={getPhotoUrl(previewPhotos[0])}
+                                                    alt="Event photo"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                     )}
 
@@ -996,13 +1015,20 @@ const EventView: React.FC = () => {
                                                         handleOpenPhotoDetails(e, previewPhotos[1], event);
                                                     }}
                                                 >
-                                                    <img
-                                                        src={getPhotoUrl(previewPhotos[1])}
-                                                        alt="Event photo"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                        }}
-                                                    />
+                                                    {isVideo(previewPhotos[1]) ? (
+                                                        <div className={styles.videoPreview}>
+                                                            <div className={styles.videoIcon}>🎥</div>
+                                                            <span className={styles.videoLabel}>Video</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={getPhotoUrl(previewPhotos[1])}
+                                                            alt="Event photo"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                             {previewPhotos[2] && (
@@ -1013,13 +1039,20 @@ const EventView: React.FC = () => {
                                                         handleOpenPhotoDetails(e, previewPhotos[2], event);
                                                     }}
                                                 >
-                                                    <img
-                                                        src={getPhotoUrl(previewPhotos[2])}
-                                                        alt="Event photo"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                        }}
-                                                    />
+                                                    {isVideo(previewPhotos[2]) ? (
+                                                        <div className={styles.videoPreview}>
+                                                            <div className={styles.videoIcon}>🎥</div>
+                                                            <span className={styles.videoLabel}>Video</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={getPhotoUrl(previewPhotos[2])}
+                                                            alt="Event photo"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1032,13 +1065,20 @@ const EventView: React.FC = () => {
                                                         handleOpenPhotoDetails(e, previewPhotos[3], event);
                                                     }}
                                                 >
-                                                    <img
-                                                        src={getPhotoUrl(previewPhotos[3])}
-                                                        alt="Event photo"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                        }}
-                                                    />
+                                                    {isVideo(previewPhotos[3]) ? (
+                                                        <div className={styles.videoPreview}>
+                                                            <div className={styles.videoIcon}>🎥</div>
+                                                            <span className={styles.videoLabel}>Video</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={getPhotoUrl(previewPhotos[3])}
+                                                            alt="Event photo"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                             {previewPhotos[4] && (
@@ -1049,13 +1089,20 @@ const EventView: React.FC = () => {
                                                         handleOpenPhotoDetails(e, previewPhotos[4], event);
                                                     }}
                                                 >
-                                                    <img
-                                                        src={getPhotoUrl(previewPhotos[4])}
-                                                        alt="Event photo"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
-                                                        }}
-                                                    />
+                                                    {isVideo(previewPhotos[4]) ? (
+                                                        <div className={styles.videoPreview}>
+                                                            <div className={styles.videoIcon}>🎥</div>
+                                                            <span className={styles.videoLabel}>Video</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img
+                                                            src={getPhotoUrl(previewPhotos[4])}
+                                                            alt="Event photo"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = DEFAULT_EVENT_PLACEHOLDER;
+                                                            }}
+                                                        />
+                                                    )}
                                                     {/* Show "more" overlay if there are more than 5 photos (since grid shows 5) */}
                                                     {totalPhotoCount > 5 && (
                                                         <div

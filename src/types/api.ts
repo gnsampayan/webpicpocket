@@ -97,7 +97,6 @@ export type MimeType =
 
 export interface UploadRequest {
 	files: string[];
-	type?: "profile" | "cover" | "photo" | "video" | "comment";
 }
 
 export interface UploadResponse {
@@ -287,13 +286,21 @@ export interface EditCommentRequest {
 // =============================================
 export type MediaTypeInEvent = "photo" | "video";
 
-export interface MediaToAddInEvent {
+export interface PhotosToAddInEvent {
 	object_key: string;
 	metadata?: string | null | Record<string, any>;
 }
 
+export interface VideosToAddInEvent {
+	object_key: string;
+}
+
 export interface AddPhotoRequest {
-	add_photos: MediaToAddInEvent[];
+	add_photos: PhotosToAddInEvent[];
+}
+
+export interface AddVideoRequest {
+	add_videos: VideosToAddInEvent[];
 }
 
 export interface PhotoView {
@@ -336,16 +343,17 @@ export interface PhotoMetadata {
 	[key: string]: any;
 }
 
-export interface Photo {
+export interface Media {
 	id: string;
 	owner_id: string;
-	photo_url:
+	photo_url?:
 		| string
 		| {
 				url_small: string;
 				url_med: string;
 				url_large?: string;
 		  };
+	video_url?: string;
 	is_favorite: boolean;
 	media_type: "photo" | "video";
 	comment_count: number;

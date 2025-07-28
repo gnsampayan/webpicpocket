@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Photo, PocketMember, ContactUser } from '../../types';
+import type { Media, PocketMember, ContactUser } from '../../types';
 import AddMediaModal from '../modals/AddMediaModal';
 import MembersModal from '../modals/MembersModal';
-import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation, useAddMediaMutation } from '../../hooks/usePhotos';
+import { usePocketAndEventFromUrl, useEventPhotos, useFavoriteMutation, useDeletePhotoMutation, useAddMediaMutation } from '../../hooks/useMedia';
 import { getInitialSortFilter, saveSortFilter, sortPhotos } from '../../utils/sorting';
 import './GridPhotoView.css';
 
@@ -53,7 +53,7 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Helper function to get photo URL
-    const getPhotoUrl = (photo: Photo): string => {
+    const getPhotoUrl = (photo: Media): string => {
         let rawUrl: string | undefined;
 
         if (typeof photo.photo_url === "string") {
@@ -72,6 +72,18 @@ const GridPhotoView: React.FC = () => {
         }
 
         return `https://${rawUrl}`;
+    };
+
+    // // Helper function to get video URL
+    // const getVideoUrl = (photo: Media): string => {
+    //     if (!photo.video_url) return DEFAULT_PHOTO_PLACEHOLDER;
+    //     if (photo.video_url.startsWith('http')) return photo.video_url;
+    //     return `https://${photo.video_url}`;
+    // };
+
+    // Helper function to check if media is a video
+    const isVideo = (photo: Media): boolean => {
+        return photo.media_type === "video";
     };
 
     // Helper function to get profile picture URL - similar to EventView implementation
@@ -107,7 +119,7 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Handle photo click
-    const handlePhotoClick = (photo: Photo) => {
+    const handlePhotoClick = (photo: Media) => {
         // Navigate to the new photo details route
         if (pocketTitle && eventTitle) {
             const shortId = photo.id.slice(-6);
@@ -116,7 +128,7 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Handle photo favorite toggle
-    const handleToggleFavorite = async (photo: Photo) => {
+    const handleToggleFavorite = async (photo: Media) => {
         try {
             console.log('🔄 [GridPhotoView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
 
@@ -143,7 +155,7 @@ const GridPhotoView: React.FC = () => {
     };
 
     // Handle photo delete
-    const handleDeletePhoto = async (photo: Photo) => {
+    const handleDeletePhoto = async (photo: Media) => {
         if (!photo.can_delete) {
             console.log('❌ User cannot delete this photo');
             return;
@@ -534,15 +546,22 @@ const GridPhotoView: React.FC = () => {
                                 e.stopPropagation();
                                 handlePhotoClick(photo);
                             }}>
-                                <img
-                                    src={getPhotoUrl(photo)}
-                                    alt="Event photo"
-                                    onLoad={() => handlePhotoLoad(photo.id)}
-                                    onError={(e) => {
-                                        e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
-                                        handlePhotoLoad(photo.id); // Mark as loaded even on error
-                                    }}
-                                />
+                                {isVideo(photo) ? (
+                                    <div className="video-preview">
+                                        <div className="video-icon">🎥</div>
+                                        <span className="video-label">Video</span>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={getPhotoUrl(photo)}
+                                        alt="Event photo"
+                                        onLoad={() => handlePhotoLoad(photo.id)}
+                                        onError={(e) => {
+                                            e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
+                                            handlePhotoLoad(photo.id); // Mark as loaded even on error
+                                        }}
+                                    />
+                                )}
                                 <div className="photo-overlay">
                                     <div className="photo-actions">
                                         <button

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { api } from '../../services/api';
-import { useCreatePocketMutation } from '../../hooks/usePhotos';
+import { useCreatePocketMutation } from '../../hooks/useMedia';
 import type { Pocket, ContactUser } from '../../types';
 import styles from './CreatePocketWizard.module.css';
 import { API_CONFIG } from '../../config/api';

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useClaimPhotosToEventMutation, useMultipleFileUpload, type UploadFile } from '../../hooks/usePhotos';
+import { useClaimPhotosToEventMutation, useClaimVideosToEventMutation, useMultipleFileUpload, type UploadFile } from '../../hooks/useMedia';
 import './AddMediaModal.css';
 
 interface AddMediaModalProps {
@@ -26,6 +26,7 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
     // Use shared upload hooks
     const { uploadFile } = useMultipleFileUpload();
     const claimPhotosMutation = useClaimPhotosToEventMutation();
+    const claimVideosMutation = useClaimVideosToEventMutation();
 
     // Note: Metadata extraction is now handled by the useAddMediaMutation hook
     // which uses our comprehensive metadata extraction utility
@@ -47,7 +48,17 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
 
         console.log(`📁 [AddMediaModal] Selected ${files.length} files for upload`);
 
-        const newFiles: UploadFile[] = files.map(file => ({
+        // Filter for image and video files
+        const mediaFiles = files.filter(file =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+        );
+
+        if (mediaFiles.length === 0) {
+            setError('Please select image or video files only.');
+            return;
+        }
+
+        const newFiles: UploadFile[] = mediaFiles.map(file => ({
             id: Math.random().toString(36).substr(2, 9),
             file,
             preview: URL.createObjectURL(file),
@@ -87,16 +98,18 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
         const files = Array.from(e.dataTransfer.files);
         if (files.length === 0) return;
 
-        // Filter for image files
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
-        if (imageFiles.length === 0) {
-            setError('Please select image files only.');
+        // Filter for image and video files
+        const mediaFiles = files.filter(file =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+        );
+        if (mediaFiles.length === 0) {
+            setError('Please select image or video files only.');
             return;
         }
 
-        console.log(`📁 [AddMediaModal] Dropped ${imageFiles.length} files for upload`);
+        console.log(`📁 [AddMediaModal] Dropped ${mediaFiles.length} files for upload`);
 
-        const newFiles: UploadFile[] = imageFiles.map(file => ({
+        const newFiles: UploadFile[] = mediaFiles.map(file => ({
             id: Math.random().toString(36).substr(2, 9),
             file,
             preview: URL.createObjectURL(file),
@@ -129,7 +142,7 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
     // Submit media to event
     const handleSubmit = async () => {
         if (selectedFiles.length === 0) {
-            setError('Please select at least one photo');
+            setError('Please select at least one photo or video');
             return;
         }
 
@@ -144,26 +157,46 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
         setError(null);
 
         try {
-            console.log('🔄 [AddMediaModal] Claiming photos to event');
+            // Separate photos and videos
+            const photos = selectedFiles.filter(file =>
+                file.objectKey && file.file.type.startsWith('image/')
+            );
+            const videos = selectedFiles.filter(file =>
+                file.objectKey && file.file.type.startsWith('video/')
+            );
 
-            // Prepare photo data for claiming
-            const photoData = selectedFiles
-                .filter(file => file.objectKey) // Only include files that have been uploaded
-                .map(file => ({
+            console.log('🔄 [AddMediaModal] Claiming media to event');
+            console.log('🔄 [AddMediaModal] Photos:', photos.length, 'Videos:', videos.length);
+
+            // Claim photos if any
+            if (photos.length > 0) {
+                const photoData = photos.map(file => ({
                     objectKey: file.objectKey!,
                     file: file.file
                 }));
 
-            console.log('🔄 [AddMediaModal] Selected files:', selectedFiles.length);
-            console.log('🔄 [AddMediaModal] Files with object keys:', photoData.length);
+                await claimPhotosMutation.mutateAsync({
+                    eventId,
+                    photoData
+                });
 
-            // Use the claim photos mutation
-            await claimPhotosMutation.mutateAsync({
-                eventId,
-                photoData
-            });
+                console.log('✅ [AddMediaModal] Photos claimed successfully to event');
+            }
 
-            console.log('✅ [AddMediaModal] Photos claimed successfully to event');
+            // Claim videos if any
+            if (videos.length > 0) {
+                const videoData = videos.map(file => ({
+                    objectKey: file.objectKey!,
+                    file: file.file
+                }));
+
+                await claimVideosMutation.mutateAsync({
+                    eventId,
+                    videoData
+                });
+
+                console.log('✅ [AddMediaModal] Videos claimed successfully to event');
+            }
 
             // Call the callback to trigger a refetch of event data
             onMediaAdded?.();
@@ -171,8 +204,8 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
             // Close modal and reset state
             handleClose();
         } catch (err) {
-            console.error('❌ [AddMediaModal] Failed to claim photos:', err);
-            setError(err instanceof Error ? err.message : 'Failed to add photos to event');
+            console.error('❌ [AddMediaModal] Failed to claim media:', err);
+            setError(err instanceof Error ? err.message : 'Failed to add media to event');
         } finally {
             setSubmitting(false);
         }
@@ -201,6 +234,20 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
         }
     };
 
+    // Helper function to check if file is a video
+    const isVideoFile = (file: File): boolean => {
+        return file.type.startsWith('video/');
+    };
+
+    // Helper function to format file size
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
+
     // Get files that are ready to submit (have object keys)
     const readyFiles = selectedFiles.filter(f => f.objectKey);
     const uploadingFiles = selectedFiles.filter(f => f.uploading);
@@ -214,7 +261,7 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
             <div className="add-media-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2>
-                        {eventTitle ? `Add Photos to "${eventTitle}"` : 'Add Photos to Event'}
+                        {eventTitle ? `Add Media to "${eventTitle}"` : 'Add Media to Event'}
                     </h2>
                     <button onClick={handleClose} className="close-button" disabled={submitting}>
                         ✕
@@ -246,7 +293,7 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                 ref={fileInputRef}
                                 type="file"
                                 multiple
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 onChange={handleFileSelect}
                                 style={{ display: 'none' }}
                             />
@@ -255,14 +302,14 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                 isDragOver ? (
                                     <>
                                         <div className="drag-over-icon">📁</div>
-                                        <h3>Drop your photos here</h3>
-                                        <p>Release to upload your photos to this event.</p>
+                                        <h3>Drop your media here</h3>
+                                        <p>Release to upload your photos and videos to this event.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="upload-icon">📷</div>
-                                        <h3>Add Photos to Event</h3>
-                                        <p>Start capturing memories by adding your first photos!</p>
+                                        <div className="upload-icon">📷🎥</div>
+                                        <h3>Add Media to Event</h3>
+                                        <p>Start capturing memories by adding your first photos and videos!</p>
                                         <div
                                             className="empty-state-cta"
                                             onClick={(e) => {
@@ -273,7 +320,7 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                             <div className="cta-content">
                                                 <div className="cta-icon">✨</div>
                                                 <div className="cta-text">
-                                                    <span className="cta-title">Select Photos</span>
+                                                    <span className="cta-title">Select Media</span>
                                                     <span className="cta-subtitle">Click here or drag and drop</span>
                                                 </div>
                                             </div>
@@ -285,8 +332,8 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                 <div className="selected-files-container">
                                     <div className="files-header">
                                         <div className="files-header-content">
-                                            <h3>Selected Photos ({selectedFiles.length})</h3>
-                                            <p>You can still drag and drop more photos here</p>
+                                            <h3>Selected Media ({selectedFiles.length})</h3>
+                                            <p>You can still drag and drop more photos and videos here</p>
                                         </div>
                                         <button
                                             className="clear-all-button"
@@ -303,7 +350,14 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                         {selectedFiles.map((file) => (
                                             <div key={file.id} className="file-item">
                                                 <div className="file-preview">
-                                                    <img src={file.preview} alt="Preview" />
+                                                    {isVideoFile(file.file) ? (
+                                                        <div className="video-preview">
+                                                            <div className="video-icon">🎥</div>
+                                                            <span className="video-label">Video</span>
+                                                        </div>
+                                                    ) : (
+                                                        <img src={file.preview} alt="Preview" />
+                                                    )}
                                                     <button
                                                         className="remove-file-button"
                                                         onClick={(e) => {
@@ -318,7 +372,8 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                                                 <div className="file-info">
                                                     <span className="file-name">{file.file.name}</span>
                                                     <span className="file-size">
-                                                        {(file.file.size / 1024 / 1024).toFixed(1)} MB
+                                                        {formatFileSize(file.file.size)}
+                                                        {isVideoFile(file.file) && ' • Video'}
                                                     </span>
                                                 </div>
                                                 <div className="file-status">
@@ -390,12 +445,13 @@ const AddMediaModal: React.FC<AddMediaModalProps> = ({
                         disabled={
                             submitting ||
                             claimPhotosMutation.isPending ||
+                            claimVideosMutation.isPending ||
                             hasUploadingFiles ||
                             selectedFiles.length === 0 ||
                             readyFiles.length !== selectedFiles.length
                         }
                     >
-                        {submitting || claimPhotosMutation.isPending ? 'Adding to Event...' : 'Add to Event'}
+                        {submitting || claimPhotosMutation.isPending || claimVideosMutation.isPending ? 'Adding to Event...' : 'Add to Event'}
                     </button>
                 </div>
             </div>

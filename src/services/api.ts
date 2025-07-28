@@ -1336,6 +1336,41 @@ export const api = {
 		}
 	},
 
+	async uploadVideosToEvent(
+		eventId: string,
+		body: ApiTypes.AddVideoRequest
+	): Promise<ApiTypes.PhotoView> {
+		const url = `${API_URL}${API_CONFIG.endpoints.videos.upload}/${eventId}`;
+		console.log('🎥 [API] Uploading videos to:', url);
+		console.log('🎥 [API] Request body:', JSON.stringify(body, null, 2));
+		try {
+			const response = await this.authenticatedRequest(url, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+			});
+
+			const responseText = await response.text();
+
+			if (!response.ok) {
+				console.error("❌ [API] Add video failed:", {
+					status: response.status,
+					error: responseText,
+				});
+				throw new Error(responseText || "Failed to add video");
+			}
+
+			const responseData = JSON.parse(responseText);
+			console.log("[API] uploadVideosToEvent responseData:", responseData);
+			return responseData;
+		} catch (error) {
+			console.error("❌ [API] Error adding video:", error);
+			throw error;
+		}
+	},
+
 	async deletePhoto(photoId: string): Promise<void> {
 		const url = `${API_URL}${API_CONFIG.endpoints.photos.delete}/${photoId}`;
 		try {

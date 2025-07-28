@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api';
 import { type Event } from '../../types';
-import { useClaimPhotosToEventMutation, useMultipleFileUpload, type UploadFile } from '../../hooks/usePhotos';
+import { useClaimPhotosToEventMutation, useMultipleFileUpload, type UploadFile } from '../../hooks/useMedia';
 import './AddMediaModal.css';
 
 interface AddPocketPhotosModalProps {

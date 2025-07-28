@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import './CreateEventModal.css';
 import { api } from '../../services/api';
-import { useCreateEventMutation, photoKeys } from '../../hooks/usePhotos';
+import { useCreateEventMutation, photoKeys } from '../../hooks/useMedia';
 import { type ContactUser, type Event, type Pocket } from '../../types';
 
 interface CreateEventModalProps {

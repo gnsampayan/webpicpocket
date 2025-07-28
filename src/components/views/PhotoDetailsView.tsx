@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import type { Photo } from '../../types/api';
+import type { Media } from '../../types/api';
 import CommentsSection from '../ui/CommentsSection';
-import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails, useDeletePhotoMutation } from '../../hooks/usePhotos';
+import { usePhotoByShortId, useFavoriteMutation, useComments, usePhotoDetails, useDeletePhotoMutation } from '../../hooks/useMedia';
 import { getCurrentSortFilter, sortPhotos } from '../../utils/sorting';
 import { getFlashDescription } from '../../utils/metadata';
 import './PhotoDetailsView.css';
@@ -141,7 +141,7 @@ const PhotoDetailsView: React.FC = () => {
         }
     };
 
-    const handleToggleFavorite = async (photo: Photo) => {
+    const handleToggleFavorite = async (photo: Media) => {
         try {
             console.log('🔄 [PhotoDetailsView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
 
@@ -167,7 +167,7 @@ const PhotoDetailsView: React.FC = () => {
         }
     };
 
-    const handleDeletePhoto = async (photo: Photo) => {
+    const handleDeletePhoto = async (photo: Media) => {
         if (!photo.can_delete) {
             console.log('❌ User cannot delete this photo');
             return;
@@ -204,7 +204,7 @@ const PhotoDetailsView: React.FC = () => {
         }
     };
 
-    const getPhotoUrl = (photo: Photo): string => {
+    const getPhotoUrl = (photo: Media): string => {
         let rawUrl: string | undefined;
         if (typeof photo.photo_url === 'string') {
             rawUrl = photo.photo_url;
@@ -214,6 +214,16 @@ const PhotoDetailsView: React.FC = () => {
         if (!rawUrl) return DEFAULT_PHOTO_PLACEHOLDER;
         if (rawUrl.startsWith('http')) return rawUrl;
         return `https://${rawUrl}`;
+    };
+
+    const getVideoUrl = (photo: Media): string => {
+        if (!photo.video_url) return DEFAULT_PHOTO_PLACEHOLDER;
+        if (photo.video_url.startsWith('http')) return photo.video_url;
+        return `https://${photo.video_url}`;
+    };
+
+    const isVideo = (photo: Media): boolean => {
+        return photo.media_type === "video";
     };
 
     const handlePrevious = () => {
@@ -369,7 +379,7 @@ const PhotoDetailsView: React.FC = () => {
                 <div className="header-top">
                     <div className="back-button-section">
                         <button onClick={handleBack} className="back-button"><span>←</span></button>
-                        <h1 className="event-title">Photo Details</h1>
+                        <h1 className="event-title">{isVideo(photo) ? 'Video Details' : 'Photo Details'}</h1>
                     </div>
                     <div className="photo-navigation">
                         <span className="photo-counter">
@@ -389,13 +399,27 @@ const PhotoDetailsView: React.FC = () => {
                         ‹
                     </button>
                     <div className="photo-detail-image">
-                        <img
-                            src={getPhotoUrl(photo)}
-                            alt="Event photo"
-                            onError={(e) => {
-                                e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
-                            }}
-                        />
+                        {isVideo(photo) ? (
+                            <video
+                                src={getVideoUrl(photo)}
+                                controls
+                                preload="metadata"
+                                poster={DEFAULT_PHOTO_PLACEHOLDER}
+                                onError={(e) => {
+                                    console.error('Video failed to load:', e);
+                                }}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <img
+                                src={getPhotoUrl(photo)}
+                                alt="Event photo"
+                                onError={(e) => {
+                                    e.currentTarget.src = DEFAULT_PHOTO_PLACEHOLDER;
+                                }}
+                            />
+                        )}
                         {/* Favorite button positioned at top left of photo */}
                         <button
                             className={`photo-favorite-button ${photo.is_favorite ? 'favorited' : ''}`}
