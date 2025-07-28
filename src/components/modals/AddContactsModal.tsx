@@ -16,7 +16,7 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedUsers, setSelectedUsers] = useState<ApiTypes.ContactUser[]>([]);
-    const [showSearchResults, setShowSearchResults] = useState(false);
+
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const [shouldShowDropdown, setShouldShowDropdown] = useState(false);
     const shouldShowDropdownRef = useRef(false);
@@ -61,7 +61,6 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
             setError(null);
             setShouldShowDropdown(false);
             shouldShowDropdownRef.current = false;
-            setShowSearchResults(false);
             onClose();
         }
     };
@@ -81,7 +80,6 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
             console.log('🔄 Clicking outside, hiding dropdown');
             setShouldShowDropdown(false);
             shouldShowDropdownRef.current = false;
-            setShowSearchResults(false);
         }
     };
 
@@ -90,7 +88,8 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
             setSelectedUsers(prev => [...prev, user]);
         }
         setSearchQuery('');
-        setShowSearchResults(false);
+        setShouldShowDropdown(false);
+        shouldShowDropdownRef.current = false;
     };
 
     const handleRemoveUser = (userId: string) => {
@@ -124,12 +123,6 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
         const shouldShow = !shouldShowDropdownRef.current;
         setShouldShowDropdown(shouldShow);
         shouldShowDropdownRef.current = shouldShow;
-
-        if (shouldShow) {
-            setShowSearchResults(true);
-        } else {
-            setShowSearchResults(false);
-        }
     };
 
     const handleModalOverlayClick = (e: React.MouseEvent) => {
@@ -176,7 +169,7 @@ const AddContactsModal: React.FC<AddContactsModalProps> = ({
                                 placeholder="Search by username, first name, or last name..."
                                 disabled={loading}
                             />
-                            {shouldShowDropdown && (showSearchResults || searching) && (
+                            {shouldShowDropdown && (filteredSearchResults.length > 0 || searching || searchQuery.length > 0) && (
                                 <div
                                     className="search-results"
                                     style={{
