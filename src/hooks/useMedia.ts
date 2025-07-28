@@ -667,11 +667,13 @@ export const useAddCommentMutation = () => {
 		mutationFn: async ({
 			photoId,
 			text,
+			object_key,
 		}: {
 			photoId: string;
-			text: string;
+			text?: string;
+			object_key?: string;
 		}) => {
-			return api.addComment(photoId, { text });
+			return api.addComment(photoId, { text, object_key });
 		},
 		onSuccess: (_, { photoId }) => {
 			// Invalidate comments query for this photo

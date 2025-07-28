@@ -1,0 +1,303 @@
+.voice-note-recorder {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.voice-note-error {
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.voice-note-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.voice-note-record-button {
+    padding: 0.75rem 1.5rem;
+    background: var(--button-primary-bg);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.voice-note-record-button:hover:not(:disabled) {
+    background: var(--button-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.voice-note-record-button:disabled {
+    background: var(--border-medium);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.voice-note-recording {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.recording-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--error-text);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+.voice-note-stop-button {
+    padding: 0.75rem 1.5rem;
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.voice-note-stop-button:hover:not(:disabled) {
+    background: var(--error-text);
+    color: var(--text-inverse);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Preview Styles */
+.voice-note-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-medium);
+    border-radius: 12px;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.voice-note-preview h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.voice-note-preview h4::before {
+    content: '🎵';
+    font-size: 1.2rem;
+}
+
+.preview-player {
+    width: 100%;
+    max-width: 450px;
+    margin: 0.5rem 0;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.retry-button {
+    padding: 0.75rem 1.25rem;
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.retry-button:hover:not(:disabled) {
+    background: var(--button-secondary-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.retry-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.post-voice-note-button {
+    padding: 0.75rem 1.25rem;
+    background: var(--button-primary-bg);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    position: relative;
+}
+
+.post-voice-note-button:hover:not(:disabled) {
+    background: var(--button-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.post-voice-note-button:disabled {
+    background: var(--border-medium);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+}
+
+.post-voice-note-button .uploading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--text-inverse);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.voice-note-uploading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.uploading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-light);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.voice-note-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.voice-note-cancel-button {
+    padding: 0.5rem 1rem;
+    background: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-note-cancel-button:hover:not(:disabled) {
+    background: var(--button-secondary-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.voice-note-cancel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .voice-note-recorder {
+        padding: 0.75rem;
+    }
+    
+    .voice-note-record-button,
+    .voice-note-stop-button {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .retry-button,
+    .post-voice-note-button {
+        width: 100%;
+        justify-content: center;
+    }
+} 

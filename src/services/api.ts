@@ -1460,14 +1460,22 @@ export const api = {
 	): Promise<ApiTypes.Comment> {
 		const url = `${API_URL}${API_CONFIG.endpoints.comments.add}/${photoId}`;
 		try {
+			// Prepare request body based on comment type
+			let requestBody: any = {};
+			if (data.text) {
+				requestBody.content = data.text;
+			} else if (data.object_key) {
+				requestBody.object_key = data.object_key;
+			} else {
+				throw new Error("Comment must have either text content or object_key");
+			}
+
 			const response = await this.authenticatedRequest(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ content: data.text }),
-				//TODO: add "object_key" later for audio comments.
-				// Content and object_key are required but mutually exclusive.
+				body: JSON.stringify(requestBody),
 			});
 			if (!response.ok) {
 				const errorText = await response.text();

@@ -93,6 +93,10 @@ export type MimeType =
 	| "image/png"
 	| "video/mp4"
 	| "audio/mpeg"
+	| "audio/webm"
+	| "audio/mp4"
+	| "audio/wav"
+	| "audio/ogg"
 	| "image/webp";
 
 export interface UploadRequest {
@@ -121,7 +125,7 @@ export type AcceptedMimeTypes = {
 	cover: ("image/jpeg" | "image/png" | "image/webp")[];
 	photo: ("image/jpeg" | "image/png" | "image/webp")[];
 	video: "video/mp4"[];
-	comment: "audio/mpeg"[];
+	comment: ("audio/mpeg" | "audio/webm" | "audio/mp4" | "audio/wav" | "audio/ogg")[];
 };
 
 // =============================================
@@ -274,7 +278,8 @@ export interface Comment {
 }
 
 export interface CreateCommentRequest {
-	text: string;
+	text?: string;
+	object_key?: string;
 }
 
 export interface EditCommentRequest {

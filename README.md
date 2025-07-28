@@ -1,69 +1,88 @@
-# React + TypeScript + Vite
+# PicPocket Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React + TypeScript + Vite application for sharing and organizing photos with friends and family.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Photo Management
 
-## Expanding the ESLint configuration
+- Upload and organize photos in events
+- Create and manage photo pockets
+- Add friends and family as members
+- View photos in grid and detail views
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Comments System
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Text Comments**: Add text-based comments to photos
+- **Voice Notes**: Record and share voice notes as comments
+  - Click the microphone button (🎤) to start recording
+  - Voice notes are uploaded to S3 and associated with photos
+  - Voice notes cannot be edited, only deleted
+  - Supports audio/webm format for optimal quality
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Voice Note Features
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Real-time recording with visual feedback
+- Automatic upload to S3 after recording
+- Audio playback with progress bar and seek functionality
+- Microphone access with proper error handling
+- Recording time display and controls
+
+## Technical Stack
+
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: CSS with CSS Variables for theming
+- **State Management**: React Query for server state
+- **Audio**: Web Audio API with MediaRecorder
+- **File Upload**: Direct S3 upload with presigned URLs
+
+## Voice Note Implementation
+
+The voice note functionality includes:
+
+1. **VoiceNoteRecorder Component**: Handles microphone access and recording
+2. **VoiceNotePlayer Component**: Provides audio playback with controls
+3. **Updated CommentsSection**: Integrates voice notes with existing comment system
+4. **API Integration**: Supports both text and voice note comments
+
+### Voice Note Flow
+
+1. User clicks microphone button
+2. Browser requests microphone access
+3. User records voice note
+4. Audio is uploaded to S3 via presigned URL
+5. Object key is sent to backend to create comment
+6. Voice note appears in comments with playback controls
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## API Endpoints
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The application supports the following comment endpoints:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `POST /v1/photo/{photo-id}` - Add text or voice note comment
+- `PATCH /v1/comment/{comment-id}` - Edit text comment (voice notes cannot be edited)
+- `DELETE /v1/comment/{comment-id}` - Delete comment
+
+Voice notes are uploaded using the existing media upload infrastructure and associated with photos via object keys.
+
+## Browser Compatibility
+
+Voice notes require:
+
+- HTTPS (for microphone access)
+- Modern browser with MediaRecorder API support
+- User permission for microphone access
+
+Supported browsers: Chrome, Firefox, Safari, Edge (latest versions)

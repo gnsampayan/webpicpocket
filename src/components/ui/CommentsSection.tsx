@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { PhotoCommentView, PocketMember } from '../../types/api';
 import { useComments, useAddCommentMutation, useEditCommentMutation, useDeleteCommentMutation } from '../../hooks/useMedia';
+import VoiceNoteRecorder from './VoiceNoteRecorder';
+import VoiceNotePlayer from './VoiceNotePlayer';
 import './CommentsSection.css';
 
 interface CommentsSectionProps {
@@ -16,6 +18,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editText, setEditText] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const DEFAULT_PROFILE_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2NjdlZWEiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyMCIgcj0iOCIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEwIDQwQzEwIDM1IDE1IDMwIDI1IDMwQzM1IDMwIDQwIDM1IDQwIDQwIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
     // React Query hooks
@@ -64,6 +68,22 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }
     };
 
+    const handleVoiceNoteReady = async (objectKey: string) => {
+        try {
+            setError(null);
+            await addCommentMutation.mutateAsync({
+                photoId,
+                object_key: objectKey
+            });
+
+            // Hide voice recorder
+            setShowVoiceRecorder(false);
+        } catch (err) {
+            console.error('❌ [CommentsSection] Failed to add voice note:', err);
+            setError('Failed to add voice note');
+        }
+    };
+
     const handleEditComment = async (commentId: string) => {
         if (!editText.trim()) return;
 
@@ -98,6 +118,9 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     };
 
     const startEditing = (comment: PhotoCommentView) => {
+        // Only allow editing text comments, not voice notes
+        if (comment.object_url) return;
+
         setEditingCommentId(comment.id);
         setEditText(comment.content || '');
     };
@@ -105,6 +128,10 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     const cancelEditing = () => {
         setEditingCommentId(null);
         setEditText('');
+    };
+
+    const toggleVoiceRecorder = () => {
+        setShowVoiceRecorder(!showVoiceRecorder);
     };
 
     const formatDate = (dateString: string): string => {
@@ -128,6 +155,14 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             return DEFAULT_PROFILE_PLACEHOLDER;
         }
         return member.profile_picture?.url_small || member.profile_picture?.url_medium || DEFAULT_PROFILE_PLACEHOLDER;
+    };
+
+    const isVoiceNote = (comment: PhotoCommentView): boolean => {
+        const hasObjectUrl = !!comment.object_url;
+        if (hasObjectUrl) {
+            console.log('🎵 [CommentsSection] Voice note detected:', comment.id, 'object_url:', comment.object_url);
+        }
+        return hasObjectUrl;
     };
 
     return (
@@ -175,6 +210,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                                 (edited)
                                             </span>
                                         )}
+                                        {isVoiceNote(comment) && (
+                                            <span className="voice-note-indicator" title="Voice note">
+                                                🎤
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 {editingCommentId === comment.id ? (
@@ -205,17 +245,26 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        <p className="comment-text">
-                                            {comment.content}
-                                        </p>
+                                        {isVoiceNote(comment) ? (
+                                            <VoiceNotePlayer
+                                                objectUrl={comment.object_url!}
+                                                className="comment-voice-note"
+                                            />
+                                        ) : (
+                                            <p className="comment-text">
+                                                {comment.content}
+                                            </p>
+                                        )}
                                         <div className="comment-actions">
-                                            <button
-                                                onClick={() => startEditing(comment)}
-                                                className="edit-comment-button"
-                                                title="Edit comment"
-                                            >
-                                                ✏️
-                                            </button>
+                                            {!isVoiceNote(comment) && (
+                                                <button
+                                                    onClick={() => startEditing(comment)}
+                                                    className="edit-comment-button"
+                                                    title="Edit comment"
+                                                >
+                                                    ✏️
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleDeleteComment(comment.id)}
                                                 disabled={deleteCommentMutation.isPending}
@@ -233,6 +282,16 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                 )}
             </div>
 
+            {/* Voice Note Recorder */}
+            {showVoiceRecorder && (
+                <VoiceNoteRecorder
+                    onVoiceNoteReady={handleVoiceNoteReady}
+                    onCancel={() => setShowVoiceRecorder(false)}
+                    isRecording={isRecording}
+                    onRecordingChange={setIsRecording}
+                />
+            )}
+
             {/* Add Comment Form */}
             <form onSubmit={handleSubmitComment} className="add-comment-form">
                 <div className="comment-input-container">
@@ -241,16 +300,27 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Add a comment..."
-                        disabled={addCommentMutation.isPending}
+                        disabled={addCommentMutation.isPending || isRecording}
                         className="comment-input"
                     />
-                    <button
-                        type="submit"
-                        disabled={addCommentMutation.isPending || !newComment.trim()}
-                        className="submit-comment-button"
-                    >
-                        {addCommentMutation.isPending ? 'Posting...' : 'Post'}
-                    </button>
+                    <div className="comment-buttons">
+                        <button
+                            type="button"
+                            onClick={toggleVoiceRecorder}
+                            disabled={addCommentMutation.isPending || isRecording}
+                            className="voice-note-button"
+                            title="Record voice note"
+                        >
+                            🎤
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={addCommentMutation.isPending || !newComment.trim() || isRecording}
+                            className="submit-comment-button"
+                        >
+                            {addCommentMutation.isPending ? 'Posting...' : 'Post'}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

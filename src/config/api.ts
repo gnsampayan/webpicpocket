@@ -22,7 +22,7 @@ export const API_CONFIG = {
 			cover: ["image/jpeg", "image/png", "image/webp"] as const,
 			photo: ["image/jpeg", "image/png", "image/webp"] as const,
 			video: ["video/mp4"] as const,
-			comment: ["audio/mpeg"] as const,
+			comment: ["audio/mpeg", "audio/webm", "audio/mp4", "audio/wav", "audio/ogg"] as const,
 		} as const,
 	},
 
