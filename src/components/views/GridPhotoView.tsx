@@ -60,14 +60,10 @@ const GridPhotoView: React.FC = () => {
 
     // Handle back to event view
     const handleBackToEventView = () => {
-        console.log('🔄 [GridPhotoView] Back navigation - pocketTitle:', pocketTitle, 'eventTitle:', eventTitle);
-
         if (pocketTitle) {
             const targetUrl = `/pockets/${pocketTitle}`;
-            console.log('🔄 [GridPhotoView] Navigating to:', targetUrl);
             navigate(targetUrl);
         } else {
-            console.log('🔄 [GridPhotoView] No pocketTitle, navigating to /pockets');
             navigate('/pockets');
         }
     };
@@ -83,7 +79,6 @@ const GridPhotoView: React.FC = () => {
         }
 
         if (!rawUrl) {
-            console.log('No photo URL found for photo:', photo);
             return DEFAULT_PHOTO_PLACEHOLDER;
         }
 
@@ -150,14 +145,10 @@ const GridPhotoView: React.FC = () => {
     // Handle photo favorite toggle
     const handleToggleFavorite = async (photo: Media) => {
         try {
-            console.log('🔄 [GridPhotoView] Toggling favorite for photo:', photo.id, 'Current state:', photo.is_favorite);
-
             await favoriteMutation.mutateAsync({
                 photoId: photo.id,
                 isFavorite: photo.is_favorite
             });
-
-            console.log('✅ Photo favorite status updated');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to toggle favorite:', err);
 
@@ -177,7 +168,6 @@ const GridPhotoView: React.FC = () => {
     // Handle photo delete
     const handleDeletePhoto = async (photo: Media) => {
         if (!photo.can_delete) {
-            console.log('❌ User cannot delete this photo');
             return;
         }
 
@@ -188,10 +178,7 @@ const GridPhotoView: React.FC = () => {
         }
 
         try {
-            console.log('🔄 [GridPhotoView] Deleting photo:', photo.id);
-
             await deletePhotoMutation.mutateAsync(photo.id);
-            console.log('✅ Photo deleted successfully');
         } catch (err) {
             console.error('❌ [GridPhotoView] Failed to delete photo:', err);
 
