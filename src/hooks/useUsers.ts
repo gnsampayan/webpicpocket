@@ -8,8 +8,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
-import { getUserData, setStorageItem, getCurrentUserStorageKeys } from "../utils/storage";
-import type { UserInfo, UserProfilePictureResponse, UpdateProfileRequest } from "../types/api";
+import { setStorageItem, getCurrentUserStorageKeys } from "../utils/storage";
+import type { UserInfo, UpdateProfileRequest } from "../types/api";
 
 // Query keys for user-related queries
 export const userKeys = {

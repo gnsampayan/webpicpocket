@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
-import { useCurrentUser, useUpdateCurrentUser } from '../../hooks/useUsers';
+import { useCurrentUser, useUpdateCurrentUser, userKeys as userQueryKeys } from '../../hooks/useUsers';
 import { getCurrentUserStorageKeys, setStorageItem } from '../../utils/storage';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import './Settings.css';
@@ -20,6 +21,7 @@ const Settings: React.FC = () => {
     // Use React Query hooks for current user data
     const { data: userInfo, isLoading: loading, error: userError } = useCurrentUser();
     const updateUserMutation = useUpdateCurrentUser();
+    const queryClient = useQueryClient();
 
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -34,6 +36,7 @@ const Settings: React.FC = () => {
     });
 
     const [passwordForm, setPasswordForm] = useState({
+        old_password: '',
         new_password: '',
         confirm_new_password: ''
     });
@@ -49,6 +52,11 @@ const Settings: React.FC = () => {
     // Collapsible state
     const [isPasswordExpanded, setIsPasswordExpanded] = useState(false);
     const [isEmailExpanded, setIsEmailExpanded] = useState(false);
+
+    // Add show/hide state for each password field
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Initialize form data when user data loads
     useEffect(() => {
@@ -95,9 +103,12 @@ const Settings: React.FC = () => {
             const updatedUserInfo = await api.uploadProfilePicture(file);
             console.log('✅ [Settings] Profile picture uploaded successfully:', updatedUserInfo);
 
-            // Update localStorage to keep it in sync (React Query cache will be updated automatically)
+            // Update localStorage to keep it in sync
             const userKeys = await getCurrentUserStorageKeys();
             await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
+
+            // Invalidate and refetch current user data to show new profile picture
+            await queryClient.invalidateQueries({ queryKey: userQueryKeys.currentUser() });
 
             console.log('✅ Profile picture updated successfully');
         } catch (err) {
@@ -125,9 +136,12 @@ const Settings: React.FC = () => {
                     profile_picture: {}
                 };
 
-                // Update localStorage to keep it in sync (React Query cache will be updated automatically)
+                // Update localStorage to keep it in sync
                 const userKeys = await getCurrentUserStorageKeys();
                 await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
+
+                // Invalidate and refetch current user data to show removed profile picture
+                await queryClient.invalidateQueries({ queryKey: userQueryKeys.currentUser() });
             }
 
             console.log('✅ Profile picture deleted successfully');
@@ -177,6 +191,13 @@ const Settings: React.FC = () => {
         }
     };
 
+    // Client-side password validation
+    const passwordsMatch = passwordForm.new_password === passwordForm.confirm_new_password;
+    const passwordFormValid = passwordForm.old_password.length > 0 &&
+        passwordForm.new_password.length > 0 &&
+        passwordForm.confirm_new_password.length > 0 &&
+        passwordsMatch;
+
     // Handle password change submission
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -185,21 +206,31 @@ const Settings: React.FC = () => {
             setError(null);
             setSuccessMessage(null);
 
-            // Validate password confirmation
+            // Validate password confirmation (double-check on submit)
             if (passwordForm.new_password !== passwordForm.confirm_new_password) {
                 setError('New passwords do not match');
                 return;
             }
 
+            if (!passwordForm.old_password) {
+                setError('Current password is required');
+                return;
+            }
+
             await api.updateProfile({
+                old_password: passwordForm.old_password,
                 new_password: passwordForm.new_password
             });
 
             // Clear password form
             setPasswordForm({
+                old_password: '',
                 new_password: '',
                 confirm_new_password: ''
             });
+
+            // Invalidate current user cache to ensure any related data is fresh
+            await queryClient.invalidateQueries({ queryKey: userQueryKeys.currentUser() });
 
             // Show success message
             setSuccessMessage('Password updated successfully!');
@@ -237,7 +268,10 @@ const Settings: React.FC = () => {
                 confirm_new_email: ''
             });
 
-            // Refresh masked email after successful update
+            // Invalidate current user cache to get updated email data
+            await queryClient.invalidateQueries({ queryKey: userQueryKeys.currentUser() });
+
+            // Refresh masked email after successful update (this will also be updated via cache invalidation)
             try {
                 const profileData = await api.getProfilePicture();
                 setMaskedEmail(profileData.email);
@@ -487,24 +521,86 @@ const Settings: React.FC = () => {
                                     {isPasswordExpanded && (
                                         <form onSubmit={handlePasswordSubmit} className="security-form">
                                             <div className="form-group">
+                                                <label>Current Password</label>
+                                                <div className="password-input-wrapper">
+                                                    <input
+                                                        type={showOldPassword ? 'text' : 'password'}
+                                                        value={passwordForm.old_password}
+                                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, old_password: e.target.value }))}
+                                                        placeholder="Enter current password"
+                                                        required
+                                                    />
+                                                    <span
+                                                        className="password-eye"
+                                                        onClick={() => setShowOldPassword((v) => !v)}
+                                                        tabIndex={0}
+                                                        role="button"
+                                                        aria-label={showOldPassword ? 'Hide password' : 'Show password'}
+                                                    >
+                                                        {showOldPassword ? '🙈' : '👁️'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
                                                 <label>New Password</label>
-                                                <input
-                                                    type="password"
-                                                    value={passwordForm.new_password}
-                                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
-                                                    placeholder="Enter new password"
-                                                />
+                                                <div className="password-input-wrapper">
+                                                    <input
+                                                        type={showNewPassword ? 'text' : 'password'}
+                                                        value={passwordForm.new_password}
+                                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
+                                                        placeholder="Enter new password"
+                                                        required
+                                                    />
+                                                    <span
+                                                        className="password-eye"
+                                                        onClick={() => setShowNewPassword((v) => !v)}
+                                                        tabIndex={0}
+                                                        role="button"
+                                                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                                                    >
+                                                        {showNewPassword ? '🙈' : '👁️'}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div className="form-group">
                                                 <label>Confirm New Password</label>
-                                                <input
-                                                    type="password"
-                                                    value={passwordForm.confirm_new_password}
-                                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm_new_password: e.target.value }))}
-                                                    placeholder="Confirm new password"
-                                                />
+                                                <div className="password-input-wrapper">
+                                                    <input
+                                                        type={showConfirmPassword ? 'text' : 'password'}
+                                                        value={passwordForm.confirm_new_password}
+                                                        onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm_new_password: e.target.value }))}
+                                                        placeholder="Confirm new password"
+                                                        required
+                                                        className={passwordForm.confirm_new_password && !passwordsMatch ? 'password-mismatch' : ''}
+                                                    />
+                                                    <span
+                                                        className="password-eye"
+                                                        onClick={() => setShowConfirmPassword((v) => !v)}
+                                                        tabIndex={0}
+                                                        role="button"
+                                                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                                                    >
+                                                        {showConfirmPassword ? '🙈' : '👁️'}
+                                                    </span>
+                                                </div>
+                                                {passwordForm.confirm_new_password && !passwordsMatch && (
+                                                    <div className="validation-message error">
+                                                        Passwords do not match
+                                                    </div>
+                                                )}
+                                                {passwordForm.confirm_new_password && passwordsMatch && passwordForm.new_password && (
+                                                    <div className="validation-message success">
+                                                        Passwords match ✓
+                                                    </div>
+                                                )}
                                             </div>
-                                            <button type="submit" className="save-button">Update Password</button>
+                                            <button
+                                                type="submit"
+                                                className="save-button"
+                                                disabled={!passwordFormValid}
+                                            >
+                                                Update Password
+                                            </button>
                                         </form>
                                     )}
                                 </div>

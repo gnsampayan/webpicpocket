@@ -450,6 +450,29 @@
   opacity: 0.7;
 }
 
+/* Password validation styles */
+.password-mismatch {
+  border-color: var(--error-border) !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+}
+
+.validation-message {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.validation-message.error {
+  color: var(--error-text);
+}
+
+.validation-message.success {
+  color: var(--success-text);
+}
+
 
 
 .button-spinner {
@@ -1214,4 +1237,40 @@ body .settings-page label,
 .settings-page label:not([class]) {
   color: var(--text-primary) !important;
   transition: color 0.3s ease !important;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input[type="password"],
+.password-input-wrapper input[type="text"] {
+  width: 100%;
+  padding-right: 2.2rem;
+  box-sizing: border-box;
+}
+
+.password-eye {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 1.15rem;
+  color: var(--text-tertiary);
+  user-select: none;
+  transition: color 0.2s;
+  z-index: 2;
+  opacity: 0.5;
+}
+.password-eye:hover {
+  opacity: 1;
+}
+
+.password-eye:active,
+.password-eye:focus {
+  color: var(--primary-color);
+  outline: none;
 }
