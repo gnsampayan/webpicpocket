@@ -146,11 +146,9 @@ const NavBar: React.FC = React.memo(() => {
     // Memoize the footer content
     const footerContent = useMemo(() => (
         <div className={styles.sidebarFooter}>
-            {!isMinimized && (
-                <div className={styles.themeToggleContainer}>
-                    <DarkModeToggle size="small" showLabel={true} />
-                </div>
-            )}
+            <div className={styles.themeToggleContainer}>
+                <DarkModeToggle size="small" showLabel={!isMinimized} />
+            </div>
             <button className={styles.logoutButton} onClick={handleLogout} title="Sign Out">
                 <span className={styles.navIcon}>🚪</span>
                 {!isMinimized && <span>Sign Out</span>}
