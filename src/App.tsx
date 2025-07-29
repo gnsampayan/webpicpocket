@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import LandingPage from './components/pages/LandingPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
@@ -53,7 +53,7 @@ function App() {
             </div>
           </Router>
         </EmailVerificationProvider>
-        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
+        {/* <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> */}
       </QueryClientProvider>
     </ThemeProvider>
   );

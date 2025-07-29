@@ -1,0 +1,202 @@
+/* NavBar CSS Modules */
+.sidebar {
+    width: 280px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.sidebar.minimized {
+    width: 70px;
+}
+
+.sidebarHeader {
+    padding: 2rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    transition: border-color 0.3s ease;
+}
+
+.sidebarHeader h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: var(--bg-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.navMenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.navItem {
+    margin: 0.5rem 1rem;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+}
+
+.sidebar.minimized .navLink {
+    justify-content: center;
+    padding: 0.875rem 0.5rem;
+}
+
+/* Static colors - no dynamic color changes */
+.navLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.navLink.active {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-left: 3px solid var(--primary-color);
+    font-weight: 600;
+}
+
+/* Ensure consistent styling for minimized state */
+.sidebar.minimized .navLink.active {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-left: 3px solid var(--primary-color);
+    font-weight: 600;
+}
+
+/* Remove any inheritance and ensure static colors */
+.sidebar .navLink,
+.sidebar .navLink:hover,
+.sidebar .navLink.active,
+.sidebar.minimized .navLink,
+.sidebar.minimized .navLink:hover,
+.sidebar.minimized .navLink.active {
+    color: var(--text-secondary) !important;
+}
+
+.navIcon {
+    font-size: 1.2rem;
+}
+
+.sidebarFooter {
+    padding: 1rem 1.5rem 2rem;
+    border-top: 1px solid var(--border-light);
+    transition: border-color 0.3s ease;
+}
+
+.themeToggleContainer {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1rem;
+}
+
+.logoutButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: 2px solid var(--error-text);
+    color: var(--error-text);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.logoutButton:hover {
+    background: var(--error-text);
+    color: var(--text-inverse);
+}
+
+.sidebar.minimized .logoutButton {
+    justify-content: center;
+    padding: 0.875rem 0.5rem;
+}
+
+/* Minimize/Expand Toggle Button - Elegant & Subtle */
+.minimizeToggle {
+    position: absolute;
+    top: 50%;
+    right: -12px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-medium);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 101;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    opacity: 0.9;
+}
+
+.minimizeToggle:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-medium);
+    transform: translateY(-50%) translateX(1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    opacity: 1;
+}
+
+.minimizeToggle:active {
+    transform: translateY(-50%) translateX(0px) scale(0.95);
+    transition: all 0.1s ease;
+}
+
+.toggleIcon {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.minimizeToggle:hover .toggleIcon {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+/* Hide elements when minimized */
+.sidebar.minimized .sidebarHeader {
+    padding: 1rem 0.5rem 0.5rem;
+}
+
+.sidebar.minimized .themeToggleContainer {
+    display: none;
+}
+
+/* Disable transitions on mount to prevent unwanted animations */
+.sidebar.noTransition,
+.sidebar.noTransition *,
+.noTransition {
+    transition: none !important;
+} 

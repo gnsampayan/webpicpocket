@@ -115,8 +115,9 @@
 /* Main Content */
 .main-content {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--sidebar-width, 280px);
   padding: 2rem;
+  transition: margin-left 0.3s ease;
 }
 
 /* Settings-specific main content styles */
@@ -207,16 +208,19 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-secondary);
+  position: relative;
 }
 
 .settings-nav-item:hover {
   background: var(--bg-tertiary);
   color: var(--primary-color);
+  transform: translateX(2px);
 }
 
 .settings-nav-item.active {
-  background: var(--primary-color);
-  color: var(--text-inverse);
+  background: var(--primary-light);
+  border-right: 3px solid var(--primary-color);
+  font-weight: 600;
 }
 
 /* Settings Content */

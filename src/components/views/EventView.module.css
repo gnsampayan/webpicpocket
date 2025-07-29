@@ -25,13 +25,14 @@
 /* Main Content */
 .mainContent {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--sidebar-width, 280px);
   padding: 2rem;
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-y: auto; /* Make main content scrollable */
   overflow-x: hidden;
+  transition: margin-left 0.3s ease;
 }
 
 /* Loading Container */
