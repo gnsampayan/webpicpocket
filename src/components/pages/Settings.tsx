@@ -6,7 +6,6 @@ import { api } from '../../services/api';
 import { useCurrentUser, useUpdateCurrentUser } from '../../hooks/useUsers';
 import { getCurrentUserStorageKeys, setStorageItem } from '../../utils/storage';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
-import type { UserInfo } from '../../types/api';
 import './Settings.css';
 
 const Settings: React.FC = () => {
