@@ -3,7 +3,8 @@ import NavBar from '../ui/NavBar';
 import UserAvatar from '../ui/UserAvatar';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
-import { getUserData, setStorageItem, getCurrentUserStorageKeys } from '../../utils/storage';
+import { useCurrentUser, useUpdateCurrentUser } from '../../hooks/useUsers';
+import { getCurrentUserStorageKeys, setStorageItem } from '../../utils/storage';
 import { useEmailVerification } from '../../context/EmailVerificationContext';
 import type { UserInfo } from '../../types/api';
 import './Settings.css';
@@ -16,12 +17,14 @@ const Settings: React.FC = () => {
         push: true,
         sms: false
     });
-    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-    const [loading, setLoading] = useState(true);
+
+    // Use React Query hooks for current user data
+    const { data: userInfo, isLoading: loading, error: userError } = useCurrentUser();
+    const updateUserMutation = useUpdateCurrentUser();
+
     const [error, setError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const [updating, setUpdating] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const { showEmailVerification, setEmailVerifiedCallback } = useEmailVerification();
@@ -48,27 +51,17 @@ const Settings: React.FC = () => {
     const [isPasswordExpanded, setIsPasswordExpanded] = useState(false);
     const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
-    // Load user data on component mount
+    // Initialize form data when user data loads
     useEffect(() => {
-        const loadUserData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const userData = await getUserData();
+        if (userInfo) {
+            setProfileForm({
+                first_name: userInfo.first_name || '',
+                last_name: userInfo.last_name || '',
+                description: userInfo.description ?? ''
+            });
 
-                if (!userData) {
-                    throw new Error('No user data found');
-                }
-
-                console.log('🔍 [Settings] Loaded user data from cache:', userData);
-                setUserInfo(userData as UserInfo);
-                setProfileForm({
-                    first_name: userData.first_name || '',
-                    last_name: userData.last_name || '',
-                    description: userData.description ?? '' // Use nullish coalescing for consistency
-                });
-
-                // Fetch masked email from API
+            // Fetch masked email from API
+            const fetchMaskedEmail = async () => {
                 try {
                     const profileData = await api.getProfilePicture();
                     setMaskedEmail(profileData.email);
@@ -76,17 +69,11 @@ const Settings: React.FC = () => {
                     console.error('❌ [Settings] Error fetching masked email:', profileError);
                     // Don't show error to user, it's not critical
                 }
-            } catch (err) {
-                console.error('❌ [Settings] Failed to load user data:', err);
-                // Don't set error here since ProtectedRoute will handle the redirect
-                // Just log the error for debugging
-            } finally {
-                setLoading(false);
-            }
-        };
+            };
 
-        loadUserData();
-    }, []);
+            fetchMaskedEmail();
+        }
+    }, [userInfo]);
 
 
 
@@ -109,10 +96,7 @@ const Settings: React.FC = () => {
             const updatedUserInfo = await api.uploadProfilePicture(file);
             console.log('✅ [Settings] Profile picture uploaded successfully:', updatedUserInfo);
 
-            // Update the user info with the new data
-            setUserInfo(updatedUserInfo);
-
-            // Update localStorage to keep it in sync
+            // Update localStorage to keep it in sync (React Query cache will be updated automatically)
             const userKeys = await getCurrentUserStorageKeys();
             await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
 
@@ -141,9 +125,8 @@ const Settings: React.FC = () => {
                     profile_picture_default: true,
                     profile_picture: {}
                 };
-                setUserInfo(updatedUserInfo);
 
-                // Update localStorage to keep it in sync
+                // Update localStorage to keep it in sync (React Query cache will be updated automatically)
                 const userKeys = await getCurrentUserStorageKeys();
                 await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
             }
@@ -165,7 +148,6 @@ const Settings: React.FC = () => {
         try {
             setError(null);
             setSuccessMessage(null);
-            setUpdating(true);
 
             const updateData: any = {};
             if (profileForm.first_name) updateData.first_name = profileForm.first_name;
@@ -173,25 +155,15 @@ const Settings: React.FC = () => {
             // Always send description, even if empty string (to allow clearing description)
             updateData.description = profileForm.description;
 
-            const updatedUserInfo = await api.updateProfile(updateData);
+            // Use React Query mutation
+            const updatedUserInfo = await updateUserMutation.mutateAsync(updateData);
 
-            // Update both userInfo and profileForm with the response data
-            setUserInfo(updatedUserInfo);
+            // Update form with the response data
             setProfileForm({
                 first_name: updatedUserInfo.first_name || '',
                 last_name: updatedUserInfo.last_name || '',
-                description: updatedUserInfo.description ?? '' // Use nullish coalescing to handle null/undefined
+                description: updatedUserInfo.description ?? ''
             });
-
-            // Update localStorage cache to persist changes across refreshes
-            try {
-                const userKeys = await getCurrentUserStorageKeys();
-                await setStorageItem(userKeys.USER_DATA, JSON.stringify(updatedUserInfo));
-                console.log('✅ [Settings] localStorage cache updated successfully with:', updatedUserInfo);
-            } catch (cacheError) {
-                console.error('❌ [Settings] Failed to update localStorage cache:', cacheError);
-                // Don't show error to user since the profile was updated successfully
-            }
 
             // Show success message
             setSuccessMessage('Profile updated successfully!');
@@ -203,8 +175,6 @@ const Settings: React.FC = () => {
         } catch (err) {
             console.error('❌ [Settings] Failed to update profile:', err);
             setError(err instanceof Error ? err.message : 'Failed to update profile');
-        } finally {
-            setUpdating(false);
         }
     };
 
@@ -308,6 +278,13 @@ const Settings: React.FC = () => {
             userInfo.profile_picture.url_medium ||
             userInfo.profile_picture.url_small;
     };
+
+    // Set error from React Query if it exists
+    useEffect(() => {
+        if (userError) {
+            setError(userError instanceof Error ? userError.message : 'Failed to load user data');
+        }
+    }, [userError]);
 
     if (loading) {
         return (
@@ -480,9 +457,9 @@ const Settings: React.FC = () => {
                                         <button
                                             type="submit"
                                             className="save-button"
-                                            disabled={updating}
+                                            disabled={updateUserMutation.isPending}
                                         >
-                                            {updating ? (
+                                            {updateUserMutation.isPending ? (
                                                 <>
                                                     <div className="button-spinner"></div>
                                                     Saving...
