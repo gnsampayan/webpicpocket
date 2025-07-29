@@ -68,9 +68,22 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
         }
 
         // Use the best available URL from backend response
-        return userInfo.profile_picture.url_large ||
+        const rawUrl = userInfo.profile_picture.url_large ||
             userInfo.profile_picture.url_medium ||
             userInfo.profile_picture.url_small;
+
+        if (!rawUrl) {
+            return null;
+        }
+
+        // URLs from backend are already complete URLs (S3 signed URLs), 
+        // so only add https:// if they don't already have a protocol
+        if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+            return rawUrl;
+        }
+
+        // Add https:// prefix for URLs that don't have it (fallback)
+        return `https://${rawUrl}`;
     };
 
     const profilePictureUrl = getProfilePictureUrl();
@@ -104,7 +117,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
                                     {/* Directly use backend response data - make it clickable */}
                                     {profilePictureUrl ? (
                                         <img
-                                            src={`https://${profilePictureUrl}`}
+                                            src={profilePictureUrl}
                                             alt={`${userInfo.first_name} ${userInfo.last_name}`}
                                             className={`${styles.profileAvatar} ${styles.profileAvatarClickable}`}
                                             onClick={handleAvatarClick}
@@ -198,7 +211,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ userId: propUserId }) => {
                                 </div>
                             ) : (
                                 <img
-                                    src={`https://${profilePictureUrl}`}
+                                    src={profilePictureUrl}
                                     alt={`${userInfo.first_name} ${userInfo.last_name}`}
                                     className={styles.profileModalImage}
                                     onError={(e) => {

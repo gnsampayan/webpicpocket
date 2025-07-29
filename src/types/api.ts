@@ -380,6 +380,7 @@ export interface Media {
 	can_delete: boolean;
 	locks_at: string;
 	updated_at: string;
+	date_taken?: string;
 }
 
 export interface PreviewPhoto {
@@ -414,6 +415,19 @@ export interface Event {
 	source_pocket_id?: string;
 	date_range_start?: string;
 	date_range_end?: string;
+}
+
+export interface EventDetailsResponse {
+	additional_member_count: number;
+	additional_members: ContactUser[];
+	created_at: string;
+	current_user_add_permissions: boolean;
+	current_user_added: boolean;
+	event_id: string;
+	photo_count: number;
+	photos: Media[];
+	title: string;
+	updated_at: string;
 }
 
 export interface CreateEventRequest {

@@ -516,7 +516,7 @@ const PhotoDetailsView: React.FC = () => {
                                             {/* Date Taken (from EXIF) */}
                                             {metadata?.dateTimeOriginal && (
                                                 <div className="info-row">
-                                                    <span className="info-label">�� Date Taken:</span>
+                                                    <span className="info-label">📅 Date Taken:</span>
                                                     <span className="info-value">{formatDate(metadata.dateTimeOriginal)}</span>
                                                 </div>
                                             )}

@@ -32,9 +32,22 @@ const MembersModal: React.FC<MembersModalProps> = ({ isOpen, onClose, members, t
         if (member.profile_picture_default || !member.profile_picture) {
             return null;
         }
-        return member.profile_picture.url_medium ||
+        const rawUrl = member.profile_picture.url_medium ||
             member.profile_picture.url_small ||
             member.profile_picture.url_large;
+
+        if (!rawUrl) {
+            return null;
+        }
+
+        // URLs from backend are already complete URLs (S3 signed URLs), 
+        // so only add https:// if they don't already have a protocol
+        if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+            return rawUrl;
+        }
+
+        // Add https:// prefix for URLs that don't have it (fallback)
+        return `https://${rawUrl}`;
     };
 
     const handleMemberClick = (member: Member) => {
@@ -71,7 +84,7 @@ const MembersModal: React.FC<MembersModalProps> = ({ isOpen, onClose, members, t
                                     <div className="member-avatar-container">
                                         {profilePictureUrl ? (
                                             <img
-                                                src={`https://${profilePictureUrl}`}
+                                                src={profilePictureUrl}
                                                 alt={`${member.first_name} ${member.last_name}`}
                                                 className="member-avatar-image"
                                                 onError={(e) => {

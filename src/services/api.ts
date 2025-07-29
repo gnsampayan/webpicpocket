@@ -1559,7 +1559,7 @@ export const api = {
 	},
 
 	//TODO: Update with config api.ts
-	async getEventDetails(eventId: string): Promise<any> {
+	async getEventDetails(eventId: string): Promise<ApiTypes.EventDetailsResponse> {
 		const url = `${API_URL}${API_CONFIG.endpoints.events.getDetails}/${eventId}`;
 		try {
 			const response = await this.authenticatedRequest(url, {
@@ -1577,6 +1577,11 @@ export const api = {
 				throw new Error(errorText || "Failed to get event details");
 			}
 			const responseData = await response.json();
+			
+			// Log the backend response for debugging
+			console.log("🔍 [API] Event Details Response:", { responseData
+			});
+			
 			return responseData;
 		} catch (error) {
 			console.error("❌ [API] Error getting event details:", error);
