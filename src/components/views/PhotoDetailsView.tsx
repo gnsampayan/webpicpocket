@@ -485,7 +485,7 @@ const PhotoDetailsView: React.FC = () => {
                                 className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('info')}
                             >
-                                Photo Info
+                                {isVideo(photo) ? 'Video Info' : 'Photo Info'}
                             </button>
                         </div>
                         <div className="tab-content">
@@ -499,19 +499,19 @@ const PhotoDetailsView: React.FC = () => {
                             {activeTab === 'info' && (
                                 <div className="info-tab">
                                     <div className="photo-detail-info">
-                                        {/* Loading state for photo details */}
+                                        {/* Loading state for media details */}
                                         {isLoadingPhotoDetails && (
                                             <div className="info-section">
                                                 <div className="loading-metadata">
                                                     <div className="loading-spinner-small"></div>
-                                                    <span>Loading photo details...</span>
+                                                    <span>Loading {isVideo(photo) ? 'video' : 'photo'} details...</span>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Photo Details Section */}
+                                        {/* Media Details Section */}
                                         <div className="info-section">
-                                            <h4 className="info-section-title">Photo Details</h4>
+                                            <h4 className="info-section-title">{isVideo(photo) ? 'Video Details' : 'Photo Details'}</h4>
 
                                             {/* Date Taken (from EXIF) */}
                                             {metadata?.dateTimeOriginal && (
@@ -526,7 +526,7 @@ const PhotoDetailsView: React.FC = () => {
                                                 <span className="info-value">{formatDate(photo.created_at)}</span>
                                             </div>
 
-                                            {/* Photo Author */}
+                                            {/* Media Author */}
                                             {photoDetails?.photo_author && (
                                                 <div className="info-row">
                                                     <span className="info-label">👤 Author:</span>
@@ -566,16 +566,47 @@ const PhotoDetailsView: React.FC = () => {
                                                     <span className="info-value">{metadata.mimeType}</span>
                                                 </div>
                                             )}
+
+                                            {/* Video-specific metadata */}
+                                            {isVideo(photo) && metadata?.duration && (
+                                                <div className="info-row">
+                                                    <span className="info-label">⏱️ Duration:</span>
+                                                    <span className="info-value">
+                                                        {Math.floor(metadata.duration / 60)}:{(metadata.duration % 60).toString().padStart(2, '0')}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {isVideo(photo) && metadata?.frameRate && (
+                                                <div className="info-row">
+                                                    <span className="info-label">🎬 Frame Rate:</span>
+                                                    <span className="info-value">{metadata.frameRate} fps</span>
+                                                </div>
+                                            )}
+
+                                            {isVideo(photo) && metadata?.codec && (
+                                                <div className="info-row">
+                                                    <span className="info-label">🎞️ Codec:</span>
+                                                    <span className="info-value">{metadata.codec}</span>
+                                                </div>
+                                            )}
+
+                                            {isVideo(photo) && metadata?.bitrate && (
+                                                <div className="info-row">
+                                                    <span className="info-label">📊 Bitrate:</span>
+                                                    <span className="info-value">{Math.round(metadata.bitrate / 1000)} kbps</span>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        {/* Camera Information Section */}
+                                        {/* Camera/Device Information Section */}
                                         {metadata?.camera && (
                                             <div className="info-section">
-                                                <h4 className="info-section-title">Camera Information</h4>
+                                                <h4 className="info-section-title">{isVideo(photo) ? 'Recording Device' : 'Camera Information'}</h4>
 
                                                 {metadata.camera.make && (
                                                     <div className="info-row">
-                                                        <span className="info-label">📷 Camera:</span>
+                                                        <span className="info-label">{isVideo(photo) ? '📹 Device:' : '📷 Camera:'}</span>
                                                         <span className="info-value">
                                                             {metadata.camera.make} {metadata.camera.model}
                                                         </span>
@@ -642,13 +673,13 @@ const PhotoDetailsView: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {/* Show basic info when photo details not loaded yet */}
+                                        {/* Show basic info when media details not loaded yet */}
                                         {!photoDetails && !isLoadingPhotoDetails && (
                                             <div className="info-section">
                                                 <h4 className="info-section-title">File Information</h4>
                                                 <div className="info-row">
                                                     <span className="info-label">ℹ️ Status:</span>
-                                                    <span className="info-value">Photo details not loaded</span>
+                                                    <span className="info-value">{isVideo(photo) ? 'Video details not loaded' : 'Photo details not loaded'}</span>
                                                 </div>
                                                 <div className="info-row">
                                                     <span className="info-label">📁 Type:</span>
@@ -672,7 +703,7 @@ const PhotoDetailsView: React.FC = () => {
                                                     <span className="info-value">{photo.media_type}</span>
                                                 </div>
                                                 <div className="info-note">
-                                                    This photo was uploaded without EXIF metadata, or the metadata could not be extracted during upload.
+                                                    This {isVideo(photo) ? 'video' : 'photo'} was uploaded without metadata, or the metadata could not be extracted {isVideo(photo) ? 'by the backend' : 'during upload'}.
                                                 </div>
                                             </div>
                                         )}
